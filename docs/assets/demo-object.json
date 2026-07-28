@@ -1,0 +1,36 @@
+{
+  "note": "Demo keypair, publicly disclosed on purpose. Never used for real publishing.",
+  "envelope": {
+    "oid": "onp:oid:regiopurmerend.nl:wheermolen-bommenonderzoek",
+    "publisher": {
+      "domain": "regiopurmerend.nl",
+      "key_id": "onp:key:demo-2026"
+    },
+    "signed_at": "2026-07-28T09:15:00Z",
+    "content_type": "onp:companion:article",
+    "content": {
+      "headline": "Bommenonderzoek Wheermolen-Oost afgerond",
+      "dek": "Twee locaties blijven verdacht; één zone is vrijgegeven.",
+      "body": "De gemeente heeft het historisch vooronderzoek naar niet-gesprongen explosieven in Wheermolen-Oost afgerond.",
+      "byline": [
+        "Rob"
+      ],
+      "section": "Purmerend"
+    },
+    "vid": "onp:vid:sha-256:q9LZfGB6GsmG2L_dDzuHmkF1pkSuOWBPz1Kqqfl-jJc",
+    "signature": "onp:sig:ed25519:bIRc_4U180Iveozj0_J3zd5PZG_YhiqrzRoPR0eR7-YEBnrBvNC26YJULGK8twjf_b8d_Dtej3N2xlqorVF3Dw"
+  },
+  "publisher_key_record": {
+    "onp_trust_anchor_type": "domain",
+    "publisher_domain": "regiopurmerend.nl",
+    "current_keys": [
+      {
+        "key_id": "onp:key:demo-2026",
+        "algorithm": "Ed25519",
+        "public_key": "cUPh9WrF25ptkttRwmfVY7ohWZcjyLjtoyJrAZWk0zU",
+        "valid_from": "2026-01-01T00:00:00Z"
+      }
+    ],
+    "previous_keys": []
+  }
+}

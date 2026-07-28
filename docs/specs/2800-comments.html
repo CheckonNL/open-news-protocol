@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-2800 Open News Protocol (ONP): Comments — Open News Protocol</title>
+<meta name="description" content="ONP-2800: Open News Protocol (ONP): Comments — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-2800</p>
+    <h1 id="top">Open News Protocol (ONP): Comments</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the Comments Companion:
+<code>content_type = "onp:companion:comments"</code>, closing the Companion
+series roadmap (ONP-2000-2800). It is the first Companion whose
+subject is an ordinary reader rather than publisher staff or a
+credentialed contributor. Readers typically control no domain and
+have no Trust Anchor of their own, so this document does not invent
+a third trust model — it reuses the publisher-attested pattern
+ONP-2300 (Identity) already established: a Comment Object proves the
+publisher attests a reader said this, not that the reader
+independently signed it. This Companion is deliberately OPTIONAL
+infrastructure; a publisher is never required to represent every
+comment on its site as a signed News Object.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Companion series (ONP-2000-2999)
+and is its closing document — every Companion named in ONP-0000
+Section 4.1's original roadmap (2000-2800) is now published. It is
+directly implementable. It is a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>Every Companion published so far represents something the publisher
+or its credentialed contributors produced. A reader's comment is
+different in kind: it comes from the public, who have no domain to
+anchor trust in and no reason to obtain one just to comment on an
+article. Rather than solving this as a new problem, this document
+recognizes it as the same problem ONP-2300 already solved for
+contributors without their own cryptographic identity, and reuses
+that solution: the publisher signs, and a Comment Object's
+authenticity claim is scoped accordingly (Section 4.8).</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>the <code>onp:companion:comments</code> content schema;</li>
+<li>the plain-text (not Markdown) body requirement, and why it differs
+  from Article;</li>
+<li>threading via <code>parent_ref</code>;</li>
+<li>the reused publisher-attestation trust model;</li>
+<li><code>moderation_status</code> as a Companion-level convenience, distinct
+  from Core-level retraction;</li>
+<li>the explicit statement that this Companion is optional
+  infrastructure, not a requirement to represent every comment.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>comment ranking, scoring, or recommendation algorithms — entirely
+  an application concern;</li>
+<li>spam or abuse detection — a publisher's own moderation tooling
+  concern, upstream of whatever a publisher chooses to represent as
+  a Comment Object;</li>
+<li>self-sovereign commenter identity — deferred exactly as ONP-2300
+  Section 2.2 already deferred it for contributors, for the same
+  reason;</li>
+<li>any requirement that a publisher use this Companion at all
+  (Section 4.10).</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document is the owning specification for the following terms.</p>
+<p><strong>Comment Object</strong>
+: An informal name for a News Object whose <code>content_type</code> is
+  <code>onp:companion:comments</code>.</p>
+<p><strong>Publisher-Attested Comment</strong>
+: A Comment Object's trust model: the signing publisher attests a
+  reader said this, reusing ONP-2300's Publisher-Asserted Identity
+  pattern rather than requiring the commenter's own signature
+  (Section 4.8).</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-content-type-declaration">4.1 content_type Declaration</h2>
+<p>Every Comment Object MUST declare <code>content_type</code> as exactly
+<code>onp:companion:comments</code>.</p>
+<h2 id="4-2-companion-vs-extension-classification">4.2 Companion-vs-Extension Classification</h2>
+<pre><code>Does &quot;Comment&quot; have independent identity and an independent
+lifecycle, separable from the Article it responds to?
+
+- A comment can be moderated, edited, or retracted on its own
+  lifecycle, independently of the Article's own Version history.
+- A comment can be independently referenced — most directly, by
+  another comment replying to it (Section 4.6), forming a thread
+  structure of its own.
+- YES -&gt; Companion.
+</code></pre>
+<h2 id="4-3-content-schema">4.3 Content Schema</h2>
+<ol>
+<li><code>body</code> is REQUIRED: a plain-text string (Section 4.4).</li>
+<li><code>subject_ref</code> is REQUIRED: an OID identifying the Article (or
+   other content Companion Object) this comment responds to (Section
+   4.5).</li>
+<li><code>posted_at</code> is REQUIRED: an ISO 8601 timestamp for when the reader
+   posted the comment, which MAY precede <code>signed_at</code> if a moderation
+   delay exists between posting and publisher attestation.</li>
+<li><code>parent_ref</code>, <code>commenter_ref</code>, <code>commenter_display_name</code>, and
+   <code>moderation_status</code> are OPTIONAL, per Sections 4.6-4.9.</li>
+</ol>
+<h2 id="4-4-plain-text-body">4.4 Plain-Text Body</h2>
+<p>Unlike <code>body</code> in ONP-2100 (Article), which permits the Safe Markdown
+Subset, a Comment Object's <code>body</code> MUST be plain text with no Markdown
+or HTML formatting of any kind. This is a deliberate, stricter
+default: the abuse surface of formatted text in a high-volume,
+publicly-writable context (link spam disguised as formatting, visual
+disruption) outweighs the presentational value formatting would add
+to a typical reader comment.</p>
+<h2 id="4-5-subject-reference">4.5 Subject Reference</h2>
+<p><code>subject_ref</code> MUST use OID form (ONP-2000 Section 4.3): a comment is
+understood to respond to the Article's lineage generally, not to one
+exact, VID-pinned Version. This document does not provide the finer-
+grained precision ONP-2700 (Corrections) uses for its own,
+structurally different purpose.</p>
+<h2 id="4-6-threading-via-parent-reference">4.6 Threading via Parent Reference</h2>
+<p><code>parent_ref</code>, if present, MUST use OID form: an OID identifying
+another Comment Object this one replies to, forming a thread. A
+top-level comment (one not replying to another comment) MUST omit
+<code>parent_ref</code>.</p>
+<h2 id="4-7-commenter-representation">4.7 Commenter Representation</h2>
+<ol>
+<li><code>commenter_ref</code>, if present, MUST be an Object Reference (OID
+   form) to an Identity Object (ONP-2300) — for a reader who is
+   authenticated or otherwise linked to a persistent identity the
+   publisher maintains.</li>
+<li><code>commenter_display_name</code>, if present, MUST be a plain string: an
+   unverified, publisher-asserted display name or handle. It is
+   explicitly provisional from this document's first published
+   version — unlike <code>byline</code> (ONP-2100) and <code>credit</code> (ONP-2200),
+   whose provisional nature was inconsistently documented at first
+   (ONP-2300 Section 10.3), this document states it plainly from the
+   outset: <code>commenter_display_name</code> MUST NOT be treated as verified
+   identity.</li>
+<li>Both fields MAY be absent, representing a fully anonymous comment
+   with no persistent or display identity at all.</li>
+</ol>
+<h2 id="4-8-publisher-attestation-trust-model">4.8 Publisher Attestation (Trust Model)</h2>
+<p>A Comment Object's authenticity, like every News Object's, rests
+entirely on its own <code>publisher</code>/<code>signature</code> fields and Trust Anchor
+resolution (ONP-0004). A Node MUST NOT treat a Comment Object as
+proof that the named or displayed commenter independently controls
+any cryptographic key — it is proof only that the publisher attests
+this comment was posted as represented, reusing exactly the
+limitation ONP-2300 Section 4.4 already states for contributor
+Identity Objects.</p>
+<h2 id="4-9-moderation-status">4.9 Moderation Status</h2>
+<ol>
+<li><code>moderation_status</code>, if present, MUST be one of <code>"approved"</code>,
+   <code>"pending"</code>, or <code>"flagged"</code>.</li>
+<li><code>moderation_status</code> is a Companion-level convenience field and is
+   NOT a substitute for Core-level retraction (ONP-0006 Section 4.4).
+   Full removal of a comment MUST use the Core lifecycle mechanism
+   (<code>lifecycle_state: "retracted"</code>), not merely a <code>moderation_status</code>
+   change — a <code>"flagged"</code> comment remains a normal, fully valid News
+   Object until and unless actually retracted.</li>
+</ol>
+<h2 id="4-10-optional-infrastructure">4.10 Optional Infrastructure</h2>
+<p>A publisher is NOT required to represent any or all reader comments
+as Comment Objects. This Companion exists for publishers who choose
+to make some or all of their comment activity part of the verifiable
+ONP record — for example, featured or notable comments, or an entire
+comment section, depending on the publisher's own editorial and
+technical choices. An ordinary comment section handled entirely
+within a publisher's existing CMS, with no corresponding Comment
+Objects at all, remains fully consistent with Principle P1 (Adjacent
+Publishing, ONP-0003).</p>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:comments&quot;,
+  &quot;content&quot;: {
+    &quot;body&quot;: &quot;string, REQUIRED — plain text, no Markdown/HTML&quot;,
+    &quot;subject_ref&quot;: &quot;onp:oid:..., REQUIRED&quot;,
+    &quot;posted_at&quot;: &quot;string (ISO 8601), REQUIRED&quot;,
+    &quot;parent_ref&quot;: &quot;onp:oid:..., OPTIONAL&quot;,
+    &quot;commenter_ref&quot;: &quot;onp:oid:..., OPTIONAL&quot;,
+    &quot;commenter_display_name&quot;: &quot;string, OPTIONAL, provisional&quot;,
+    &quot;moderation_status&quot;: &quot;'approved' | 'pending' | 'flagged', OPTIONAL&quot;
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>body</code></td>
+<td>REQUIRED</td>
+<td>Plain text only (Section 4.4)</td>
+</tr>
+<tr>
+<td><code>subject_ref</code></td>
+<td>REQUIRED</td>
+<td>OID form (Section 4.5)</td>
+</tr>
+<tr>
+<td><code>posted_at</code></td>
+<td>REQUIRED</td>
+<td>May precede <code>signed_at</code></td>
+</tr>
+<tr>
+<td><code>parent_ref</code></td>
+<td>OPTIONAL</td>
+<td>OID form, threading (Section 4.6)</td>
+</tr>
+<tr>
+<td><code>commenter_ref</code></td>
+<td>OPTIONAL</td>
+<td>Object Reference to Identity Object</td>
+</tr>
+<tr>
+<td><code>commenter_display_name</code></td>
+<td>OPTIONAL</td>
+<td>Provisional, unverified</td>
+</tr>
+<tr>
+<td><code>moderation_status</code></td>
+<td>OPTIONAL</td>
+<td>Convenience only; not a substitute for Core retraction</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-thread-resolution">6.1 Thread Resolution</h2>
+<p>A Node MAY reconstruct a comment thread by following <code>parent_ref</code>
+chains, analogous in mechanism (though not in purpose) to how
+ONP-0006 Section 6.1 walks <code>supersedes</code> chains — here, the chain
+represents reply structure, not version succession, and has no
+Current/Superseded distinction of its own.</p>
+<h2 id="6-2-interoperability">6.2 Interoperability</h2>
+<p>A Node without Comments Companion support simply does not see
+comment activity — the Article itself remains fully verifiable and
+usable regardless (ONP-1000 Section 4.4, rule 3). This document does
+not require any Node to implement it, nor any publisher to use it.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-a-top-level-anonymous-comment">7.1 A Top-Level, Anonymous Comment</h2>
+<pre><code class="language-json">{
+  &quot;oid&quot;: &quot;onp:oid:regiopurmerend.nl:comment-a1b2&quot;,
+  &quot;vid&quot;: &quot;onp:vid:sha-256:VwX234-example-digest-bytes&quot;,
+  &quot;publisher&quot;: { &quot;domain&quot;: &quot;regiopurmerend.nl&quot;, &quot;key_id&quot;: &quot;onp:key:2026-07-01&quot; },
+  &quot;signed_at&quot;: &quot;2026-07-29T12:05:00Z&quot;,
+  &quot;signature&quot;: &quot;onp:sig:ed25519:base64url-signature-bytes&quot;,
+  &quot;content_type&quot;: &quot;onp:companion:comments&quot;,
+  &quot;content&quot;: {
+    &quot;body&quot;: &quot;Goed dat dit onderzoek nu openbaar is. Benieuwd naar de raadsvergadering hierover.&quot;,
+    &quot;subject_ref&quot;: &quot;onp:oid:regiopurmerend.nl:fusie-onderzoek-necker-van-naem&quot;,
+    &quot;posted_at&quot;: &quot;2026-07-29T12:00:00Z&quot;,
+    &quot;commenter_display_name&quot;: &quot;Lezer uit Purmerend-Noord&quot;,
+    &quot;moderation_status&quot;: &quot;approved&quot;
+  }
+}
+</code></pre>
+<h2 id="7-2-a-threaded-reply">7.2 A Threaded Reply</h2>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:comments&quot;,
+  &quot;content&quot;: {
+    &quot;body&quot;: &quot;De raadsvergadering staat gepland voor september, staat in het artikel.&quot;,
+    &quot;subject_ref&quot;: &quot;onp:oid:regiopurmerend.nl:fusie-onderzoek-necker-van-naem&quot;,
+    &quot;parent_ref&quot;: &quot;onp:oid:regiopurmerend.nl:comment-a1b2&quot;,
+    &quot;posted_at&quot;: &quot;2026-07-29T12:30:00Z&quot;,
+    &quot;moderation_status&quot;: &quot;approved&quot;
+  }
+}
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<h2 id="8-1-publisher-attestation-is-not-reader-non-repudiation">8.1 Publisher Attestation Is Not Reader Non-Repudiation</h2>
+<p>Because the publisher signs, a Comment Object cannot itself
+distinguish "a reader genuinely posted this" from "the publisher
+attributed this to a reader" — a publisher, if compromised or acting
+in bad faith, could fabricate favorable comments with no
+independently verifiable objection from any actual reader, since no
+reader-controlled signature exists in this design. This is not a new
+risk category relative to ONP-2300's Identity Objects, but it is
+worth restating plainly here given how directly it bears on comment
+authenticity specifically: a Comment Object proves attribution
+claimed by the publisher, not a reader's own non-repudiable act.</p>
+<h2 id="8-2-high-volume-signing-is-an-accepted-not-ignored-tradeoff">8.2 High-Volume Signing Is an Accepted, Not Ignored, Tradeoff</h2>
+<p>Representing every comment on a popular Article as an individually
+signed News Object could mean thousands of Objects per discussion.
+This document does not attempt to reduce that overhead through
+batching or aggregation; Section 4.10 instead resolves the tension by
+making the Companion optional at the publisher's discretion rather
+than compromising the per-Object verifiability every other Companion
+in this series relies on.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>Comment <code>body</code> text and <code>commenter_display_name</code> reflect a reader's
+own expressed opinions, which readers may wish to have genuinely
+removed later — a materially common real-world request for comment
+systems specifically. Per ONP-0006 Section 8.3, retraction never
+guarantees removal from Nodes that already hold a copy, exactly as
+already discussed for Identity Objects (ONP-2300 Section 9).
+Publishers using this Companion SHOULD make this limitation clear to
+commenters before publishing their comments as signed, independently
+distributable Objects, since the expectation a reader brings to an
+ordinary comment box ("I can delete this later") does not
+automatically hold once a comment has been distributed this way.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0003, Design Principles — Principle P1 (Adjacent Publishing,
+  Section 4.10), motivating this Companion's optional status.</li>
+<li>ONP-0006, News Object Lifecycle — Section 4.4 (retraction) and
+  Section 8.3 (retraction does not erase history), both directly
+  relevant to Sections 4.9 and 9 of this document.</li>
+<li>ONP-2000, Companion Framework — Section 4.3 (Object Reference
+  mechanism, OID and VID forms), used throughout.</li>
+<li>ONP-2100, Article — the <code>subject_ref</code> target; Section 4.4's Safe
+  Markdown Subset, contrasted with this document's stricter
+  plain-text choice (Section 4.4).</li>
+<li>ONP-2300, Identity — Section 4.4, the Publisher-Asserted Identity
+  pattern this document reuses in full (Section 4.8).</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>None beyond the normative set — this document closes the Companion
+  roadmap without introducing new forward references of its own.</li>
+</ul>
+<hr />
+<h1 id="appendix-a-full-schema-reference">Appendix A: Full Schema Reference</h1>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:comments&quot;,
+  &quot;content&quot;: {
+    &quot;body&quot;: &quot;string, REQUIRED, plain text only&quot;,
+    &quot;subject_ref&quot;: &quot;string (OID), REQUIRED&quot;,
+    &quot;posted_at&quot;: &quot;string (ISO 8601), REQUIRED&quot;,
+    &quot;parent_ref&quot;: &quot;string (OID), OPTIONAL&quot;,
+    &quot;commenter_ref&quot;: &quot;string (OID), OPTIONAL&quot;,
+    &quot;commenter_display_name&quot;: &quot;string, OPTIONAL, provisional&quot;,
+    &quot;moderation_status&quot;: &quot;enum, OPTIONAL, convenience only&quot;
+  }
+}
+</code></pre>
+<h1 id="appendix-b-comment-object-checklist">Appendix B: Comment Object Checklist</h1>
+<pre><code>[ ] body is plain text — no Markdown, no HTML
+[ ] subject_ref present, OID form
+[ ] posted_at present
+[ ] parent_ref, if present, points to another Comment Object
+[ ] commenter_ref and/or commenter_display_name, if present, are
+    both understood as publisher-attested, never independently
+    verified reader identity
+[ ] moderation_status, if used, is understood as convenience only —
+    actual removal requires Core-level retraction (ONP-0006)
+[ ] publisher has considered whether representing this comment as
+    a signed, independently distributable Object is appropriate,
+    given that retraction later will not guarantee removal
+    elsewhere (Section 9)
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-full-schema-reference">Appendix A: Full Schema Reference</a></li><li><a href="#appendix-b-comment-object-checklist">Appendix B: Comment Object Checklist</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/2800-comments.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

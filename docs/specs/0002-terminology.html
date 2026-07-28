@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-0002 Open News Protocol (ONP): Terminology — Open News Protocol</title>
+<meta name="description" content="ONP-0002: Open News Protocol (ONP): Terminology — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-0002</p>
+    <h1 id="top">Open News Protocol (ONP): Terminology</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.34.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document is the canonical terminology registry for the Open
+News Protocol. It does not define term meanings itself — each term
+is defined by exactly one owning specification, per the single-owner
+rule established in ONP-0000 Section 3.4 — but it indexes every term
+in use across the series, records which document owns it, and
+provides the process by which a new specification registers a new
+term. Where ONP-0000 states the rule that term ownership must be
+singular, this document is the enforcement mechanism: the place that
+rule is actually checked against.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Foundation series (ONP-0000-0999).
+It is normative with respect to process (Section 4) and is the
+authoritative index of term ownership (Appendix A), but it is not
+the authoritative source of any term's <em>definition</em> — for that,
+consult the owning document listed in the registry. It supersedes
+the informal placeholder registry that appeared as Section 14 of
+<code>draft-onp-architecture-00</code>; any citation of that section SHOULD be
+read as a citation of Appendix A of this document going forward.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>A term used inconsistently across a specification series is a
+verification risk, not merely a readability problem: if two
+documents define "Signature" differently, an implementer may
+validate an Object against the wrong definition and believe it
+verified when it did not. ONP-0000 Section 3.4 established the rule
+that every term has exactly one owner. This document is where that
+rule becomes checkable: a single table (Appendix A) that any author
+or reviewer can consult to determine, before writing a new
+definition, whether a term already has an owner.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>the structure of a Registry Entry;</li>
+<li>the registration process for new terms;</li>
+<li>the current, complete index of owned terms across all published
+  ONP specifications as of this document's version.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define the meaning of any listed term beyond
+a short, non-normative gloss for navigability. The normative
+definition always lives in the owning document. This document also
+does not define new terms of its own beyond the small set needed to
+describe the registry itself (Section 3).</p>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document owns the following terms:</p>
+<p><strong>Term</strong>
+: A word or short phrase given a specific technical meaning
+  somewhere in the ONP series (e.g. "OID", "Companion", "Pillar").</p>
+<p><strong>Owning Document</strong>
+: The single ONP specification that defines a Term's authoritative
+  meaning. Exactly one per Term (ONP-0000 Section 3.4).</p>
+<p><strong>Registry Entry</strong>
+: A row in Appendix A recording a Term, its Owning Document, and a
+  short gloss.</p>
+<p><strong>Gloss</strong>
+: A short, non-normative, one-line description of a Term, included
+  in the registry for navigability. A Gloss MUST NOT be treated as a
+  definition; it is a pointer to one.</p>
+<p><strong>Reserved Term</strong>
+: A Term listed in the registry with an Owning Document that has not
+  yet been published (a forward reference). A Reserved Term MUST NOT
+  be used with a specific meaning by any other document until its
+  Owning Document is published.</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-registration-obligation">4.1 Registration Obligation</h2>
+<ol>
+<li>Any ONP specification that introduces a new Term MUST add a
+   Registry Entry to Appendix A as part of that specification's
+   publication, per ONP-0000 Section 3.4.</li>
+<li>A specification MUST NOT introduce a Term that already has a
+   Registry Entry owned by a different document. It MAY use an
+   existing Term, consistent with its Owning Document's definition.</li>
+<li>If a specification believes an existing Term's definition is
+   wrong or incomplete, it MUST propose a change to that Term's
+   Owning Document (via that document's own versioning process,
+   ONP-0007), not redefine the Term locally.</li>
+</ol>
+<h2 id="4-2-reservation">4.2 Reservation</h2>
+<ol>
+<li>A Term MAY be listed in Appendix A as Reserved, with its intended
+   future Owning Document named, before that document is published.
+   This allows the roadmap in ONP-0000 Section 4.1 to pre-allocate
+   vocabulary (e.g. "Corrections" is reserved for ONP-2700) without
+   requiring every Foundation document to avoid the word entirely.</li>
+<li>Reserving a Term does NOT define it. Any specification MUST treat
+   a Reserved Term as undefined until its Owning Document is
+   published, and MUST NOT rely on assumed meaning in the interim.</li>
+</ol>
+<h2 id="4-3-deprecation-and-withdrawal">4.3 Deprecation and Withdrawal</h2>
+<ol>
+<li>A Term MUST NOT be removed from Appendix A once published; its
+   status MAY be changed to <code>deprecated</code> or <code>withdrawn</code>, but the
+   entry itself remains for historical traceability, consistent with
+   the "NNNN MUST NOT be reused" principle in ONP-0000 Section 3.1.</li>
+<li>A <code>deprecated</code> Term MAY still be used but SHOULD be migrated away
+   from per its Owning Document's guidance.</li>
+<li>A <code>withdrawn</code> Term MUST NOT be used in any new specification.</li>
+</ol>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<p>A Registry Entry has the following structure:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>term</code></td>
+<td>REQUIRED</td>
+<td>The exact term string, as used in specification text.</td>
+</tr>
+<tr>
+<td><code>owning_document</code></td>
+<td>REQUIRED</td>
+<td>The ONP-NNNN document that defines it, or a named future document if Reserved.</td>
+</tr>
+<tr>
+<td><code>gloss</code></td>
+<td>REQUIRED</td>
+<td>One-line, non-normative description.</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>REQUIRED</td>
+<td>One of <code>active</code>, <code>reserved</code>, <code>deprecated</code>, <code>withdrawn</code>.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-lookup-process">6.1 Lookup Process</h2>
+<p>An author or implementer encountering an unfamiliar term in any ONP
+specification resolves it by:</p>
+<ol>
+<li>Consulting Appendix A of this document for the term's Owning
+   Document.</li>
+<li>Reading the term's authoritative definition in that Owning
+   Document.</li>
+<li>If the term is not listed, treating it as undefined and, if
+   authoring a new specification, either registering it (Section
+   4.1) or replacing it with an already-registered term.</li>
+</ol>
+<h2 id="6-2-review-time-enforcement">6.2 Review-Time Enforcement</h2>
+<p>Per ONP-0003 Section 6.1 (Specification Review Against Principles),
+the ONP-WG's Candidate-status review of any specification MUST
+include a terminology check: every term the specification introduces
+MUST be registered here with this document as a dependency update,
+and every term it uses MUST already appear in Appendix A with a
+different Owning Document, consistent with its published definition.
+A specification MUST NOT advance to Candidate status with an
+unregistered new term or a silently redefined existing one.</p>
+<h2 id="6-3-interoperability">6.3 Interoperability</h2>
+<p>A shared, single-owner vocabulary is what allows independent
+implementations of different ONP specifications to interoperate
+semantically. Two Nodes built by different teams, each reading
+"Signature" from ONP-1003's definition rather than from a locally
+reinvented one, can be confident they mean the same cryptographic
+property when they use the word — without this registry, that
+confidence would depend on informal convention rather than a
+checkable process.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-correct-registration">7.1 Correct Registration</h2>
+<pre><code>New specification: ONP-2400, Rights
+New term introduced: &quot;License Declaration&quot;
+Action: add Registry Entry:
+  term: License Declaration
+  owning_document: ONP-2400
+  gloss: A structured statement of permitted uses attached to a
+         News Object.
+  status: active
+</code></pre>
+<h2 id="7-2-incorrect-silent-redefinition">7.2 Incorrect: Silent Redefinition</h2>
+<pre><code>New specification: ONP-3300, Analytics
+Attempts to define: &quot;Signature&quot; (already owned by ONP-1003)
+Result: REJECTED at Candidate review per Section 6.2.
+Correct action: ONP-3300 must use &quot;Signature&quot; as defined by
+ONP-1003, or introduce a differently-named term (e.g.
+&quot;Analytics Attestation&quot;) if the concept is genuinely distinct.
+</code></pre>
+<h2 id="7-3-reserved-term-example">7.3 Reserved Term Example</h2>
+<pre><code>Term: &quot;Correction&quot;
+Owning document: ONP-2700 (not yet published)
+Status: reserved
+Effect: ONP-0000 and other Foundation documents MAY use the word
+&quot;correction&quot; descriptively (as in &quot;corrections and retractions
+linked to the original&quot;), but MUST NOT assign it a specific
+structural meaning until ONP-2700 is published and the entry's
+status changes to active.
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<p>This document's core security function is preventing terminology
+drift, which is analyzed as a security concern in ONP-0000 Section
+5.1 and is not repeated in full here. Concretely: this document is
+the artifact that makes ONP-0000 Section 5.1's stated risk
+detectable in practice, by giving reviewers a single table to check
+new specifications against rather than relying on institutional
+memory.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>This document defines no data fields and carries no privacy impact
+of its own. Terms whose definitions involve personal data (e.g.
+"Publisher Identity," to be owned by ONP-2300) are subject to
+Privacy Considerations in their own owning documents, not here.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0000, Introduction — Section 3.4 (Terminology Ownership),
+  Section 5.1 (terminology drift as a security risk).</li>
+<li>ONP-0001, Architecture — owns the architectural vocabulary listed
+  in Appendix A (Core, Companion, Extension, and related terms).</li>
+<li>ONP-0003, Design Principles — Section 6.1 (specification review
+  process) and Section 6.2 (interoperability process referenced in
+  Section 6.3 of this document).</li>
+</ul>
+<h2 id="10-2-historical-reference">10.2 Historical Reference</h2>
+<ul>
+<li><code>draft-onp-architecture-00</code>, Section 14 ("Terminology Registry")
+  — the informal placeholder this document formalizes and
+  supersedes.</li>
+</ul>
+<hr />
+<h1 id="appendix-a-terminology-registry">Appendix A: Terminology Registry</h1>
+<h2 id="registry-meta-terms-owned-by-onp-0002">Registry meta-terms (owned by ONP-0002)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Term</td>
+<td>ONP-0002</td>
+<td>A word or short phrase given a specific technical meaning somewhere in the ONP series.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Gloss</td>
+<td>ONP-0002</td>
+<td>The one-line summary of a Term's meaning recorded in Appendix A.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Owning Document</td>
+<td>ONP-0002</td>
+<td>The single specification in which a Term's authoritative definition lives.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Registry Entry</td>
+<td>ONP-0002</td>
+<td>A row in Appendix A recording a Term, its Owning Document, and a Gloss.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Reserved Term</td>
+<td>ONP-0002</td>
+<td>A Term listed in Appendix A before its Owning Document is published.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="foundation-terms-owned-by-onp-0000">Foundation terms (owned by ONP-0000)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ONP (Open News Protocol)</td>
+<td>ONP-0000</td>
+<td>The overall architecture and specification series.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>News Object</td>
+<td>ONP-0000 (structurally defined in ONP-1000)</td>
+<td>The unit of published content and its trust/rights/payment metadata.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Specification</td>
+<td>ONP-0000</td>
+<td>A single ONP-nnnn document.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Series</td>
+<td>ONP-0000</td>
+<td>The identifier range (Foundation/Core/Companion/Extension/Reference) a specification belongs to.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Working Group (ONP-WG)</td>
+<td>ONP-0000</td>
+<td>The editorial body authoring and publishing ONP specifications.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Node</td>
+<td>ONP-0000</td>
+<td>Any system that creates, signs, stores, verifies, or relays News Objects.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Pillar</td>
+<td>ONP-0000</td>
+<td>One of the four foundational commitments: Trusted News, Open Distribution, Rights, Payments.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="architecture-terms-owned-by-onp-0001">Architecture terms (owned by ONP-0001)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Layer</td>
+<td>ONP-0001</td>
+<td>One of the three architectural tiers: Core, Companion, Extension.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Core</td>
+<td>ONP-0001</td>
+<td>The layer owning Object truth: identity, integrity, lineage, signature.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Companion</td>
+<td>ONP-0001</td>
+<td>A specification defining an independent domain object model with its own identity/lifecycle.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Extension</td>
+<td>ONP-0001</td>
+<td>A specification adding domain meaning to an existing Object without its own identity.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Vertical Invariant</td>
+<td>ONP-0001</td>
+<td>The rule that no Companion or Extension may override Core.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Horizontal Invariant</td>
+<td>ONP-0001</td>
+<td>The rule that Extensions/Companions may not override each other's domain truth.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>onp:extensions</td>
+<td>ONP-0001</td>
+<td>The reserved container field carrying Extension data on a News Object.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>OID (Object Identifier)</td>
+<td>ONP-0001 (structurally defined in ONP-1001)</td>
+<td>The globally unique identifier of a News Object.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>VID (Version Identifier)</td>
+<td>ONP-0001 (structurally defined in ONP-1001)</td>
+<td>The identifier of a specific version in an Object's lineage.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Signature</td>
+<td>ONP-0001 (structurally defined in ONP-1003)</td>
+<td>The cryptographic proof of an Object's origin and integrity.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Tombstone state</td>
+<td>ONP-0001 (realized by the <code>lifecycle_state</code> field, value <code>retracted</code>; see ONP-1000 Section 4.5)</td>
+<td>The Core-owned condition indicating an Object has been retracted; not a separate field from <code>lifecycle_state</code>.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Version lineage</td>
+<td>ONP-0001 (mechanism defined in ONP-0006, ONP-1000/1001)</td>
+<td>The Core-owned chain of an Object's successive versions.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="design-principles-terms-owned-by-onp-0003">Design Principles terms (owned by ONP-0003)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Principle</td>
+<td>ONP-0003</td>
+<td>A numbered, binding design constraint on all ONP specifications.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Adjacent Publishing</td>
+<td>ONP-0003</td>
+<td>The posture of deploying ONP alongside, not instead of, existing publisher systems (Principle P1).</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Minimal Viable Object</td>
+<td>ONP-0003</td>
+<td>The smallest field set a News Object can carry and remain verifiable (Principle P2).</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Deviation</td>
+<td>ONP-0003</td>
+<td>A formally recorded, WG-approved exception to a Principle.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Settlement</td>
+<td>ONP-0003</td>
+<td>The actual execution of a payment, as distinct from the declaration of its terms (Principle P4).</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="trust-model-terms-owned-by-onp-0004">Trust Model terms (owned by ONP-0004)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Trust Anchor</td>
+<td>ONP-0004</td>
+<td>The mechanism by which a Node establishes that a signing key belongs to a claimed publisher.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Trust Anchor Type</td>
+<td>ONP-0004</td>
+<td>A named resolution mechanism (<code>domain</code> REQUIRED; <code>eudi</code> reserved for ONP-2300).</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Publisher Key Record</td>
+<td>ONP-0004 (structurally finalized in ONP-1003)</td>
+<td>The resolvable document listing a publisher's current and previous signing keys.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Current Keys</td>
+<td>ONP-0004</td>
+<td>The set of keys a Publisher Key Record declares presently authorized.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Previous Keys</td>
+<td>ONP-0004</td>
+<td>The set of keys a Publisher Key Record declares no longer current but valid within a historical window.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Resolution</td>
+<td>ONP-0004</td>
+<td>The act of fetching, validating, and interpreting a Publisher Key Record.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Transparency Log</td>
+<td>ONP-0004</td>
+<td>An optional, publicly readable, non-consensus, append-only record of key changes.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Record Fingerprint</td>
+<td>ONP-0004 (added in v0.2.0)</td>
+<td>The deterministic digest of a Publisher Key Record (sha-256 over its JCS canonical form), used for optional DNS corroboration.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="security-model-terms-owned-by-onp-0005">Security Model terms (owned by ONP-0005)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Adversary</td>
+<td>ONP-0005</td>
+<td>A party modeled as potentially acting against ONP's security properties.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Attack Class</td>
+<td>ONP-0005</td>
+<td>A named category of attack technique against ONP's layered architecture.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Cryptographic Agility</td>
+<td>ONP-0005</td>
+<td>The property that ONP does not hardcode a single mandatory algorithm indefinitely.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Downgrade Attack</td>
+<td>ONP-0005</td>
+<td>An attack forcing acceptance of a weaker algorithm or Trust Anchor Type than actually declared.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Replay Attack (ONP-specific sense)</td>
+<td>ONP-0005</td>
+<td>Resubmitting a superseded but validly signed Object version as if current.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Algorithm Registry</td>
+<td>ONP-0005 (authoritative content in ONP-1003)</td>
+<td>The WG-maintained list of recognized algorithm identifiers and their status.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Security Review</td>
+<td>ONP-0005</td>
+<td>The mandatory adversary-model evaluation before a specification reaches Candidate status.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Security Advisory</td>
+<td>ONP-0005</td>
+<td>A WG-published notice deprecating/forbidding an algorithm or flagging a vulnerability.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="lifecycle-terms-owned-by-onp-0006">Lifecycle terms (owned by ONP-0006)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lifecycle State</td>
+<td>ONP-0006</td>
+<td>The status of a Version: <code>published</code>, derived <code>superseded</code>, or <code>retracted</code>.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>News Object Version</td>
+<td>ONP-0006 (structurally finalized in ONP-1000/1001)</td>
+<td>A single signed instance within a lineage; not to be confused with a Specification's own <code>Version</code> field (ONP-0007).</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Supersession</td>
+<td>ONP-0006</td>
+<td>The publisher-attested relationship by which one Version replaces a prior one.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Current Version</td>
+<td>ONP-0006</td>
+<td>The Version in a lineage not superseded and not retracted (Section 4.3 of ONP-0006).</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Superseded Version</td>
+<td>ONP-0006</td>
+<td>A derived, non-Current status; never set directly by a publisher.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Retraction</td>
+<td>ONP-0006</td>
+<td>The terminal, publisher-attested withdrawal of an entire lineage from current status.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Revision Reason</td>
+<td>ONP-0006</td>
+<td>An optional, lightweight, Core-level string explaining a supersession, pending ONP-2700.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Lineage Fork</td>
+<td>ONP-0006</td>
+<td>The condition of two or more Versions each claiming to supersede the same prior Version.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="versioning-policy-terms-owned-by-onp-0007">Versioning Policy terms (owned by ONP-0007)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pre-1.0 Phase</td>
+<td>ONP-0007</td>
+<td>The period during which a Specification's Version remains below 1.0.0, governed by distinct rules from post-1.0.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Change Classification</td>
+<td>ONP-0007</td>
+<td>Determining whether a proposed edit is MAJOR, MINOR, or PATCH.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Status Transition</td>
+<td>ONP-0007</td>
+<td>Moving a Specification from one Status level to the next, subject to stated preconditions.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Version History Entry</td>
+<td>ONP-0007</td>
+<td>A recorded Version change: number, date, classification, and summary.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="core-terms-owned-by-onp-1000">Core terms (owned by ONP-1000)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Envelope</td>
+<td>ONP-1000</td>
+<td>The complete top-level JSON structure of a News Object.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Content Region</td>
+<td>ONP-1000</td>
+<td>The <code>content</code> field: opaque to Core, schema owned by the named Companion.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Content Type</td>
+<td>ONP-1000</td>
+<td>The namespaced identifier (<code>onp:companion:&lt;name&gt;</code>) declaring which Companion defines <code>content</code>'s schema.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Publisher Reference</td>
+<td>ONP-1000</td>
+<td>The <code>publisher</code> field: domain and key identifier used for Trust Anchor resolution (ONP-0004).</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Claimed Signing Time (<code>signed_at</code>)</td>
+<td>ONP-1000 (added in v0.2.0; consumed by ONP-0004 and ONP-1003)</td>
+<td>The ISO 8601 UTC timestamp a publisher claims as this Version's signing time.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="identifiers-terms-owned-by-onp-1001">Identifiers terms (owned by ONP-1001)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Local Identifier</td>
+<td>ONP-1001</td>
+<td>The publisher-chosen component of an OID, unique within that publisher's own domain namespace.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>VID Pre-Image</td>
+<td>ONP-1001 (mechanism generalized in ONP-1002 as the <code>vid-preimage</code> Pre-Image Profile)</td>
+<td>The canonical serialization of an envelope excluding <code>vid</code> and <code>signature</code>, used to compute VID.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="serialization-terms-owned-by-onp-1002">Serialization terms (owned by ONP-1002)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Canonical Form</td>
+<td>ONP-1002</td>
+<td>The deterministic byte sequence RFC 8785 (JCS) produces for a JSON value.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Pre-Image Profile</td>
+<td>ONP-1002</td>
+<td>A named, registered set of excluded top-level fields used to construct a Pre-Image.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Pre-Image</td>
+<td>ONP-1002</td>
+<td>The Canonical Form bytes resulting from applying a Pre-Image Profile.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="digital-signatures-terms-owned-by-onp-1003">Digital Signatures terms (owned by ONP-1003)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Signature String</td>
+<td>ONP-1003</td>
+<td>The exact wire encoding of the <code>signature</code> field: <code>onp:sig:&lt;algorithm-id&gt;:&lt;digest&gt;</code>.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="validation-terms-owned-by-onp-1004">Validation terms (owned by ONP-1004)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Validation Level</td>
+<td>ONP-1004</td>
+<td>One of Core, Companion, Extension, or Application.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Core-Authenticated</td>
+<td>ONP-1004 (used descriptively since ONP-1003)</td>
+<td>Status of an Object that has passed every Core-level check.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Validation Result</td>
+<td>ONP-1004</td>
+<td>The structured output of running an Object through every implemented Validation Level.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Extension Conflict</td>
+<td>ONP-1004</td>
+<td>A detected Horizontal Invariant violation between two Extensions on the same Object.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="core-metadata-terms-owned-by-onp-1005">Core Metadata terms (owned by ONP-1005)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Core Metadata</td>
+<td>ONP-1005</td>
+<td>The <code>onp:metadata</code> container and its fields: <code>language</code>, <code>title</code>, <code>summary</code>, <code>tags</code>.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Generic Field</td>
+<td>ONP-1005</td>
+<td>A Core Metadata field, Companion-agnostic by design.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="retrieval-terms-owned-by-onp-1006">Retrieval terms (owned by ONP-1006)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Object URL</td>
+<td>ONP-1006</td>
+<td>The canonical HTTPS URL at which a News Object's current Version is retrievable, derived mechanically from its OID.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Version URL</td>
+<td>ONP-1006</td>
+<td>The optional HTTPS URL at which one specific Version is retrievable, derived from OID and VID.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="companion-framework-terms-owned-by-onp-2000">Companion Framework terms (owned by ONP-2000)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Companion Namespace</td>
+<td>ONP-2000</td>
+<td>A registered <code>content_type</code> identifier of the form <code>onp:companion:&lt;name&gt;</code>.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Object Reference</td>
+<td>ONP-2000</td>
+<td>A field value consisting of another News Object's OID or VID (ONP-2000 v0.2.0), relating two Objects without transferring ownership.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Reference Target</td>
+<td>ONP-2000</td>
+<td>The News Object an Object Reference's OID identifies.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="article-terms-owned-by-onp-2100">Article terms (owned by ONP-2100)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Article (Companion)</td>
+<td>ONP-2100</td>
+<td>content_type = "onp:companion:article" — the first published content Companion.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Article Object</td>
+<td>ONP-2100</td>
+<td>Informal name for a News Object whose content_type is onp:companion:article.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Safe Markdown Subset</td>
+<td>ONP-2100</td>
+<td>CommonMark with raw HTML blocks and inline HTML disallowed.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="media-terms-owned-by-onp-2200">Media terms (owned by ONP-2200)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Media (Companion)</td>
+<td>ONP-2200</td>
+<td>content_type = "onp:companion:media" — photos, video, and audio.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Media Object</td>
+<td>ONP-2200</td>
+<td>Informal name for a News Object whose content_type is onp:companion:media.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Verified Asset Reference</td>
+<td>ONP-2200</td>
+<td>Pairing an externally-hosted asset's URL with a content hash, reusable by future Companions.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Asset Hash</td>
+<td>ONP-2200</td>
+<td>The <code>asset_hash</code> field: a hash of an externally-hosted asset's actual bytes.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="identity-terms-owned-by-onp-2300">Identity terms (owned by ONP-2300)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Identity (Companion)</td>
+<td>ONP-2300</td>
+<td>content_type = "onp:companion:identity" — a publisher-asserted contributor record.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Identity Object</td>
+<td>ONP-2300</td>
+<td>Informal name for a News Object whose content_type is onp:companion:identity.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Publisher-Asserted Identity</td>
+<td>ONP-2300</td>
+<td>The trust model: an Identity Object proves the publisher vouches for it, not that the individual controls a key.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Contributor Reference</td>
+<td>ONP-2300</td>
+<td>An Object Reference from an Article or Media Object to an Identity Object.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="rights-terms-owned-by-onp-2400">Rights terms (owned by ONP-2400)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rights (Companion)</td>
+<td>ONP-2400</td>
+<td>content_type = "onp:companion:rights" — a declarative, jurisdiction-neutral license/permissions record.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Rights Object</td>
+<td>ONP-2400</td>
+<td>Informal name for a News Object whose content_type is onp:companion:rights.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>License Reference</td>
+<td>ONP-2400</td>
+<td>The authoritative license statement: <code>license_identifier</code>, <code>license_url</code>, or both.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Permission Flag</td>
+<td>ONP-2400</td>
+<td>An OPTIONAL boolean convenience field, never authoritative over the License Reference.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="payments-terms-owned-by-onp-2500">Payments terms (owned by ONP-2500)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Payments Object</td>
+<td>ONP-2500</td>
+<td>Informal name for a News Object whose content_type is onp:companion:payments.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Payment Model</td>
+<td>ONP-2500</td>
+<td>The <code>payment_model</code> field: a declared category, never a settlement mechanism.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Revenue Share</td>
+<td>ONP-2500</td>
+<td>A declared, partial allocation of payment proceeds to a named recipient.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Payment Provider Hint</td>
+<td>ONP-2500</td>
+<td>A non-exclusive, informational pointer to a compatible Payment Provider.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sources-terms-owned-by-onp-2600">Sources terms (owned by ONP-2600)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source Object</td>
+<td>ONP-2600</td>
+<td>Informal name for a News Object whose content_type is onp:companion:sources.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Visibility (Sources sense)</td>
+<td>ONP-2600</td>
+<td>The <code>visibility</code> field: <code>named</code>/<code>anonymous</code>/<code>protected</code>, governing identifying-information constraints.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Protected Source</td>
+<td>ONP-2600</td>
+<td>A Source Object with <code>visibility: "protected"</code>, signaling an explicit confidentiality commitment.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="corrections-terms-owned-by-onp-2700">Corrections terms (owned by ONP-2700)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Corrections Object</td>
+<td>ONP-2700</td>
+<td>Informal name for a News Object whose content_type is onp:companion:corrections.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Corrected Version</td>
+<td>ONP-2700</td>
+<td>The exact, VID-pinned prior Version a Corrections Object identifies as erroneous.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Correcting Version</td>
+<td>ONP-2700</td>
+<td>The exact, VID-pinned Version that fixed it.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="comments-terms-owned-by-onp-2800">Comments terms (owned by ONP-2800)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Comment Object</td>
+<td>ONP-2800</td>
+<td>Informal name for a News Object whose content_type is onp:companion:comments.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Publisher-Attested Comment</td>
+<td>ONP-2800</td>
+<td>A Comment Object's trust model, reusing ONP-2300's Publisher-Asserted Identity pattern.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="extension-framework-terms-owned-by-onp-3000">Extension Framework terms (owned by ONP-3000)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Extension Namespace</td>
+<td>ONP-3000</td>
+<td>A registered <code>org.onp.&lt;name&gt;</code> identifier under which an Extension's fields are carried.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Claim Domain</td>
+<td>ONP-3000</td>
+<td>A named category of assertion an Extension makes, enabling mechanical overlap detection.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="ai-metadata-terms-owned-by-onp-3100">AI Metadata terms (owned by ONP-3100)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>org.onp.ai-metadata</td>
+<td>ONP-3100</td>
+<td>Extension Namespace for AI generation disclosure and training/agent-use permission.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>ai-generation-disclosure (Claim Domain)</td>
+<td>ONP-3100</td>
+<td>Assertions about how content was produced.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>ai-training-permission (Claim Domain)</td>
+<td>ONP-3100</td>
+<td>Assertions about downstream AI training/agent use of content.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="search-terms-owned-by-onp-3200">Search terms (owned by ONP-3200)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>org.onp.search</td>
+<td>ONP-3200</td>
+<td>Extension Namespace for indexing consent and search snippet.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>search-indexing-consent (Claim Domain)</td>
+<td>ONP-3200</td>
+<td>Assertions about whether/how content may be indexed for search.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="analytics-terms-owned-by-onp-3300">Analytics terms (owned by ONP-3300)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>org.onp.analytics</td>
+<td>ONP-3300</td>
+<td>Extension Namespace for tracking-methodology transparency disclosure.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>analytics-tracking-disclosure (Claim Domain)</td>
+<td>ONP-3300</td>
+<td>Assertions about how engagement with content is tracked.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="geolocation-terms-owned-by-onp-3400">Geolocation terms (owned by ONP-3400)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>org.onp.geolocation</td>
+<td>ONP-3400</td>
+<td>Extension Namespace for story subject-matter location.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>geographic-subject-matter (Claim Domain)</td>
+<td>ONP-3400</td>
+<td>Assertions about where a story's subject matter is located.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="accessibility-terms-owned-by-onp-3500">Accessibility terms (owned by ONP-3500)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>org.onp.accessibility</td>
+<td>ONP-3500</td>
+<td>Extension Namespace for accessibility alternatives (transcript, captions, plain-language, etc.).</td>
+<td>active</td>
+</tr>
+<tr>
+<td>accessibility-alternatives (Claim Domain)</td>
+<td>ONP-3500</td>
+<td>Assertions pointing to alternative, accessible representations of content.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="reference-implementation-terms-owned-by-onp-9000">Reference Implementation terms (owned by ONP-9000)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reference Implementation</td>
+<td>ONP-9000</td>
+<td>A working implementation demonstrating the specification text is sufficient on its own.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Test Vector</td>
+<td>ONP-9000</td>
+<td>A published example input/output pair implementations can self-check against.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="security-checklist-terms-owned-by-onp-9002">Security Checklist terms (owned by ONP-9002)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Conformance Test (implementation sense)</td>
+<td>ONP-9002</td>
+<td>A check verifying a running implementation enforces a stated security requirement, distinct from spec-level Security Review.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="performance-terms-owned-by-onp-9003">Performance terms (owned by ONP-9003)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Resolution Fan-out</td>
+<td>ONP-9003</td>
+<td>The pattern by which following every Object Reference on one Object triggers many independent resolutions.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="migration-terms-owned-by-onp-9004">Migration terms (owned by ONP-9004)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Migration Guidance</td>
+<td>ONP-9004</td>
+<td>The structured explanation required to accompany any MAJOR version bump to a Standards-Track specification.</td>
+<td>active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="reserved-terms-future-documents">Reserved terms (future documents)</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Owning Document</th>
+<th>Gloss</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Correction</td>
+<td>ONP-2700</td>
+<td>Realized as the Corrections Object (ONP-2700 Section 3); this placeholder gloss is superseded by that term's actual definition.</td>
+<td>active</td>
+</tr>
+<tr>
+<td>Rights Declaration</td>
+<td>ONP-2400</td>
+<td>Realized as the Rights Object / License Reference (ONP-2400 Sections 3, 4.4); this placeholder gloss is superseded by those terms' actual definitions.</td>
+<td>deprecated</td>
+</tr>
+<tr>
+<td>Payment Terms</td>
+<td>ONP-2500</td>
+<td>Realized as the Payments Object / Payment Model (ONP-2500 Section 3); this placeholder gloss is superseded by those terms' actual definitions.</td>
+<td>deprecated</td>
+</tr>
+<tr>
+<td>eudi (Trust Anchor Type)</td>
+<td>ONP-2300</td>
+<td>Normative binding of the EU Digital Identity Wallet as an alternative Trust Anchor Type, reserved by ONP-0004 Section 4.6. ONP-2300 Section 2.2 explicitly acknowledges this is not yet defined.</td>
+<td>reserved</td>
+</tr>
+</tbody>
+</table>
+<p>Note: illustrative namespace strings from <code>draft-onp-architecture-00</code>
+(e.g. <code>org.onp.licensing</code>, <code>org.onp.media-rights</code>, <code>org.onp.syndication</code>)
+are NOT registered here, as they do not correspond one-to-one with
+the current roadmap in ONP-0000 Section 4.1. The authoritative
+namespace identifier for each Companion or Extension will be
+registered when that document is published.</p>
+<hr />
+<h1 id="appendix-version-history">Appendix: Version History</h1>
+<p>Per ONP-9001 Section 5.1's recommendation that specifications
+maintain a Version History appendix, and to explain why this
+document's <code>Version</code> is far higher than most others in the series:
+every publication of a new Companion or Extension registers new
+terms here (ONP-0002 Section 4.1's registration obligation), and
+ONP-0007 Section 4.4, rule 1 classifies each such addition as its
+own MINOR bump. This document is therefore expected to have the
+highest version number in the series by construction, not by error —
+its version number is a direct, visible count of how many
+specifications have been published so far, one MINOR bump per
+document (with occasional additional PATCH bumps for gloss
+corrections, e.g. the Tombstone state and VID Pre-Image entries).</p>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Classification</th>
+<th>Trigger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.1.0</td>
+<td>—</td>
+<td>Initial publication</td>
+</tr>
+<tr>
+<td>0.2.0-0.4.0</td>
+<td>MINOR (×3)</td>
+<td>Registry entries for ONP-0001, ONP-0003, ONP-0004</td>
+</tr>
+<tr>
+<td>0.5.0-0.9.0</td>
+<td>MINOR (×5)</td>
+<td>Registry entries for ONP-0005-0007, ONP-1000-1003</td>
+</tr>
+<tr>
+<td>0.10.0-0.16.0</td>
+<td>MINOR (×7)</td>
+<td>Registry entries for ONP-1004-1005, ONP-2000-2500</td>
+</tr>
+<tr>
+<td>0.17.0-0.26.0</td>
+<td>MINOR (×10)</td>
+<td>Registry entries for ONP-2600-3500</td>
+</tr>
+<tr>
+<td>0.27.0-0.30.0</td>
+<td>MINOR (×4)</td>
+<td>Registry entries for ONP-9000-9004</td>
+</tr>
+<tr>
+<td>0.31.0</td>
+<td>MINOR</td>
+<td><strong>Known bookkeeping gap:</strong> this bump is present in the document header's history but its change summary was never recorded here — a violation of this document's own Section 4.1 discipline, noted rather than reconstructed. Candidate cause: an unlogged registration round; no ONP-9005 terms appear in Appendix A, so it was not that.</td>
+</tr>
+<tr>
+<td>0.32.0</td>
+<td>MINOR</td>
+<td>Registry entry for Record Fingerprint (ONP-0004 v0.2.0)</td>
+</tr>
+<tr>
+<td>0.33.0</td>
+<td>MINOR</td>
+<td>Registered this document's own five meta-terms (Term, Gloss, Owning Document, Registry Entry, Reserved Term) — Appendix A previously did not practice its own Section 4.2 rule on itself. Also set the self-described placeholder rows 'Rights Declaration' and 'Payment Terms' to <code>deprecated</code>: their glosses already stated they were superseded by ONP-2400/2500's actual terms, but their status was never updated. Both caught by <code>tools/check-specs.py</code></td>
+</tr>
+<tr>
+<td>0.34.0</td>
+<td>MINOR</td>
+<td>Registry entries for ONP-1006 (Object URL, Version URL)</td>
+</tr>
+<tr>
+<td>(various PATCH bumps interleaved)</td>
+<td>PATCH</td>
+<td>Gloss corrections: Tombstone state (ONP-1000), VID Pre-Image precision (ONP-1002)</td>
+</tr>
+</tbody>
+</table>
+<p>This table summarizes rather than itemizes every single bump; the
+full per-term history is reconstructable from each citing
+specification's own "Corresponding Update to ONP-0002" references
+section, not repeated exhaustively here.</p>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-terminology-registry">Appendix A: Terminology Registry</a></li><li><a href="#appendix-version-history">Appendix: Version History</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/0002-terminology.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

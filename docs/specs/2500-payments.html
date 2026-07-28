@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-2500 Open News Protocol (ONP): Payments — Open News Protocol</title>
+<meta name="description" content="ONP-2500: Open News Protocol (ONP): Payments — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-2500</p>
+    <h1 id="top">Open News Protocol (ONP): Payments</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the Payments Companion:
+<code>content_type = "onp:companion:payments"</code>, fulfilling the fourth and
+final pillar named in ONP-0000 Section 1.3.4. It declares <em>what</em> is
+owed and <em>to whom</em> — price, currency, recipient, revenue distribution
+— and, per Principle P4 (Settlement Neutrality, ONP-0003), never
+<em>how</em> payment is executed. No money moves through ONP itself; this
+document is the binding instance that ONP-1002 Section 4.4, rule 2
+anticipated when it required monetary amounts to be represented as
+strings rather than JSON numbers. Like Rights (ONP-2400), a Payments
+Object declares without enforcing: it names terms a Payment Provider
+ecosystem MAY act upon, never a specific provider ONP requires.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Companion series (ONP-2000-2999).
+It is directly implementable. Concurrently with its publication,
+ONP-2100 (Article) and ONP-2200 (Media) are each updated with a new
+OPTIONAL <code>payment_ref</code> field (Section 10.3). It is a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>ONP-0000 Section 1.3.4 stated the pillar plainly: "not how paid, but
+for what and to whom." ONP-0003 Principle P4 turned that into a
+binding constraint before any Payments Companion existed to test it
+against. ONP-1002 Section 4.4, rule 2 went further and pre-committed
+this future document to a specific representational choice — money
+as strings, never JSON numbers — years, in specification-time,
+before this document was written. This is where all three
+commitments finally meet an actual schema.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>the <code>onp:companion:payments</code> content schema: <code>payment_model</code>,
+  <code>price</code>, <code>currency</code>, <code>recipient_ref</code>, <code>revenue_shares</code>,
+  <code>subscription_period</code>, <code>payment_provider_hint</code>;</li>
+<li>the settlement-neutrality boundary, restated as a binding
+  requirement specific to this Companion;</li>
+<li>revenue-share declaration and its deliberately partial nature.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>any settlement mechanism, payment processor, card network,
+  micropayment rail, or wallet protocol — per Principle P4, that
+  remains entirely the concern of independent Payment Providers,
+  never ONP;</li>
+<li>verification that revenue shares actually get paid out — a
+  Payments Object is a declaration of intent, not a ledger of
+  completed transactions;</li>
+<li>tax treatment, VAT, or any jurisdiction-specific financial
+  regulation — consistent with Principle P5 (Jurisdiction
+  Neutrality), applied here to money exactly as ONP-2400 applied it
+  to law.</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document is the owning specification for the following terms.</p>
+<p><strong>Payments Object</strong>
+: An informal name for a News Object whose <code>content_type</code> is
+  <code>onp:companion:payments</code>.</p>
+<p><strong>Payment Model</strong>
+: The <code>payment_model</code> field: a declared category
+  (<code>free</code>/<code>one-time</code>/<code>subscription</code>/<code>donation</code>/<code>micropayment</code>)
+  describing the general payment posture, not a settlement mechanism.</p>
+<p><strong>Revenue Share</strong>
+: A declared, partial allocation of payment proceeds to a named
+  recipient, expressed as a percentage (Section 4.7).</p>
+<p><strong>Payment Provider Hint</strong>
+: A non-exclusive, informational pointer to a Payment Provider known
+  to support these terms (Section 4.8) — never a requirement that
+  only that provider may settle.</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-content-type-declaration">4.1 content_type Declaration</h2>
+<p>Every Payments Object MUST declare <code>content_type</code> as exactly
+<code>onp:companion:payments</code>.</p>
+<h2 id="4-2-companion-vs-extension-classification">4.2 Companion-vs-Extension Classification</h2>
+<p>Unlike Rights (ONP-2400 Section 4.2), no prior worked example exists
+for Payments; the test is applied fresh here, per ONP-0001 Section
+4.4:</p>
+<pre><code>Does &quot;Payments&quot; have independent identity and an independent
+lifecycle, separable from any Object it applies to?
+
+- Payment terms (a subscription's price, a standing revenue-share
+  agreement) commonly apply across many Articles or Media Objects
+  and are updated independently of any single one of them — a price
+  change does not require touching every Article that references it.
+- A Payments Object can be created, revised, and retracted on its
+  own lifecycle, exactly as Rights already established for a
+  structurally similar case.
+- YES -&gt; Companion.
+</code></pre>
+<h2 id="4-3-content-schema">4.3 Content Schema</h2>
+<ol>
+<li><code>payment_model</code> is REQUIRED: one of <code>"free"</code>, <code>"one-time"</code>,
+   <code>"subscription"</code>, <code>"donation"</code>, <code>"micropayment"</code>.</li>
+<li><code>price</code>, <code>currency</code>, <code>recipient_ref</code>, <code>revenue_shares</code>,
+   <code>subscription_period</code>, and <code>payment_provider_hint</code> are OPTIONAL,
+   per Sections 4.4-4.8.</li>
+</ol>
+<h2 id="4-4-payment-model-and-price">4.4 Payment Model and Price</h2>
+<ol>
+<li>When <code>payment_model</code> is <code>"free"</code>, <code>price</code> and <code>currency</code> SHOULD
+   be absent.</li>
+<li>When <code>price</code> is present, <code>currency</code> MUST also be present, and
+   MUST be a well-formed ISO 4217 currency code.</li>
+<li><code>price</code> MUST be represented as a string, never a JSON number,
+   per ONP-1002 Section 4.4, rule 2 — this document is the binding
+   case that rule was written for.</li>
+</ol>
+<h2 id="4-5-settlement-neutrality-restated-as-a-binding-requirement">4.5 Settlement Neutrality (Restated as a Binding Requirement)</h2>
+<p>A Payments Object MUST NOT specify, require, or presume a specific
+settlement mechanism, payment processor, card network, micropayment
+rail, or wallet protocol. It declares terms only. This restates
+Principle P4 (ONP-0003) as a concrete, checkable requirement now
+that an actual schema exists to hold it to.</p>
+<h2 id="4-6-recipient-reference">4.6 Recipient Reference</h2>
+<ol>
+<li><code>recipient_ref</code>, if present, MUST be a single Object Reference
+   (ONP-2000 Section 4.3): an OID identifying an Identity Object
+   (ONP-2300).</li>
+<li>If <code>recipient_ref</code> is absent, the default recipient MUST be
+   understood as the referencing Object's own <code>publisher.domain</code>
+   (ONP-1000 Section 4.3) — the publisher is the implicit recipient
+   unless a Payments Object explicitly names someone else.</li>
+</ol>
+<h2 id="4-7-revenue-shares">4.7 Revenue Shares</h2>
+<ol>
+<li><code>revenue_shares</code>, if present, MUST be an array of objects, each
+   with a <code>recipient_ref</code> (Object Reference to an Identity Object)
+   and a <code>percentage</code> (string, e.g. <code>"20.00"</code>, following the same
+   string-encoding rationale as <code>price</code>, Section 4.4, rule 3, for
+   the same precision reasons).</li>
+<li><code>revenue_shares</code> MAY be a partial specification. This document
+   does NOT require declared percentages to sum to 100; a Node MUST
+   NOT reject a Payments Object solely because its shares do not
+   total 100. Any undeclared remainder is understood informally as
+   accruing to the default recipient (Section 4.6, rule 2) unless a
+   Payments Object states otherwise in a form outside this schema
+   (e.g. via <code>onp:extensions</code>, forward-looking, not defined here).</li>
+</ol>
+<h2 id="4-8-payment-provider-hint">4.8 Payment Provider Hint</h2>
+<p><code>payment_provider_hint</code>, if present, MUST be an array of strings
+(informally, domain names or identifiers of Payment Providers known
+to support these declared terms). It MUST NOT be interpreted as
+exclusive or exhaustive: any Payment Provider MAY act on a Payments
+Object's declared terms, whether or not it is named in this field.
+This field exists purely as a discovery convenience, never as a
+restriction — a restriction would violate Section 4.5.</p>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:payments&quot;,
+  &quot;content&quot;: {
+    &quot;payment_model&quot;: &quot;'free' | 'one-time' | 'subscription' | 'donation' | 'micropayment', REQUIRED&quot;,
+    &quot;price&quot;: &quot;string, OPTIONAL — decimal amount, never a JSON number&quot;,
+    &quot;currency&quot;: &quot;string (ISO 4217), REQUIRED if price present&quot;,
+    &quot;recipient_ref&quot;: &quot;onp:oid:..., OPTIONAL — default: publisher.domain&quot;,
+    &quot;revenue_shares&quot;: [
+      { &quot;recipient_ref&quot;: &quot;onp:oid:...&quot;, &quot;percentage&quot;: &quot;string&quot; }
+    ],
+    &quot;subscription_period&quot;: &quot;string (ISO 8601 duration), OPTIONAL&quot;,
+    &quot;payment_provider_hint&quot;: [&quot;string&quot;, &quot;...&quot;]
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>payment_model</code></td>
+<td>REQUIRED</td>
+<td>Section 4.4</td>
+</tr>
+<tr>
+<td><code>price</code></td>
+<td>OPTIONAL</td>
+<td>String, never a number (Section 4.4, rule 3)</td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>REQUIRED if <code>price</code> present</td>
+<td>ISO 4217</td>
+</tr>
+<tr>
+<td><code>recipient_ref</code></td>
+<td>OPTIONAL</td>
+<td>Default: publisher.domain (Section 4.6)</td>
+</tr>
+<tr>
+<td><code>revenue_shares</code></td>
+<td>OPTIONAL</td>
+<td>Partial specification permitted (Section 4.7)</td>
+</tr>
+<tr>
+<td><code>subscription_period</code></td>
+<td>OPTIONAL</td>
+<td>ISO 8601 duration, e.g. <code>"P1M"</code></td>
+</tr>
+<tr>
+<td><code>payment_provider_hint</code></td>
+<td>OPTIONAL</td>
+<td>Non-exclusive discovery aid (Section 4.8)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-resolution-and-default-recipient">6.1 Resolution and Default Recipient</h2>
+<pre><code>1. Resolve payment_ref on the referencing Article/Media Object
+   (ONP-2000 Section 6.2) to obtain the Payments Object.
+2. If recipient_ref is present on the Payments Object, resolve it
+   to an Identity Object (Section 4.6, rule 1).
+3. If recipient_ref is absent, treat the referencing Object's own
+   publisher.domain as the recipient (Section 4.6, rule 2).
+4. If revenue_shares is present, apply each declared share; treat
+   any undeclared remainder as accruing to the default recipient
+   from step 2/3 (Section 4.7, rule 2).
+</code></pre>
+<h2 id="6-2-interoperability">6.2 Interoperability</h2>
+<p>A Node without Payments Companion support simply does not see
+declared terms — the Article or Media Object it references remains
+fully verifiable and usable, exactly as for any unrecognized
+Companion (ONP-1000 Section 4.4, rule 3). This document does not
+require every Object to carry a <code>payment_ref</code>, and free content
+requires no Payments Object at all (Section 4.4, rule 1's own
+guidance already covers the explicit case).</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-a-micropayment-payments-object">7.1 A Micropayment Payments Object</h2>
+<pre><code class="language-json">{
+  &quot;oid&quot;: &quot;onp:oid:regiopurmerend.nl:payments-fusie-onderzoek&quot;,
+  &quot;vid&quot;: &quot;onp:vid:sha-256:PqR678-example-digest-bytes&quot;,
+  &quot;publisher&quot;: { &quot;domain&quot;: &quot;regiopurmerend.nl&quot;, &quot;key_id&quot;: &quot;onp:key:2026-07-01&quot; },
+  &quot;signed_at&quot;: &quot;2026-07-28T10:00:00Z&quot;,
+  &quot;signature&quot;: &quot;onp:sig:ed25519:base64url-signature-bytes&quot;,
+  &quot;content_type&quot;: &quot;onp:companion:payments&quot;,
+  &quot;content&quot;: {
+    &quot;payment_model&quot;: &quot;micropayment&quot;,
+    &quot;price&quot;: &quot;0.05&quot;,
+    &quot;currency&quot;: &quot;EUR&quot;
+  }
+}
+</code></pre>
+<p>This is the exact "this article costs €0.05" case discussed when
+Principle P4 was first motivated (ONP-0003) — now an actual,
+signed, verifiable declaration.</p>
+<h2 id="7-2-revenue-share-between-publisher-and-a-freelance-photographer">7.2 Revenue Share Between Publisher and a Freelance Photographer</h2>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:payments&quot;,
+  &quot;content&quot;: {
+    &quot;payment_model&quot;: &quot;one-time&quot;,
+    &quot;price&quot;: &quot;1.50&quot;,
+    &quot;currency&quot;: &quot;EUR&quot;,
+    &quot;revenue_shares&quot;: [
+      {
+        &quot;recipient_ref&quot;: &quot;onp:oid:regiopurmerend.nl:freelance-fotograaf-jansen&quot;,
+        &quot;percentage&quot;: &quot;20.00&quot;
+      }
+    ]
+  }
+}
+</code></pre>
+<p>The remaining 80% is undeclared and accrues to the default recipient
+(the publisher), per Section 6.1, step 4.</p>
+<h2 id="7-3-subscription">7.3 Subscription</h2>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:payments&quot;,
+  &quot;content&quot;: {
+    &quot;payment_model&quot;: &quot;subscription&quot;,
+    &quot;price&quot;: &quot;8.00&quot;,
+    &quot;currency&quot;: &quot;EUR&quot;,
+    &quot;subscription_period&quot;: &quot;P1M&quot;,
+    &quot;payment_provider_hint&quot;: [&quot;example-payment-provider.eu&quot;]
+  }
+}
+</code></pre>
+<p><code>payment_provider_hint</code> names one known-compatible provider; any
+other Payment Provider MAY still process these terms (Section 4.8).</p>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<p>No funds move through ONP itself; a Payments Object is a declaration,
+not a custody or settlement event. The material risk a compromised
+publisher key (ONP-0004 Section 8.1) introduces here is
+<em>misattribution</em>, not theft directly through ONP: a forged Payments
+Object could misstate a price or redirect a <code>revenue_shares</code> entry
+toward an attacker-controlled <code>recipient_ref</code>. Because ONP itself
+never moves money, the actual financial harm depends entirely on
+whether some external Payment Provider acts on the forged
+declaration — this document does not, and cannot, prevent that; it
+only makes the declaration itself tamper-evident and attributable to
+whichever key signed it (Section 8's parallel already established in
+ONP-2400 Section 8 for Rights).</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>A <code>recipient_ref</code> naming a specific individual (a freelancer paid
+directly rather than through the publisher) reveals a financial
+relationship between that person and the publisher, which is more
+sensitive than the general personal-data considerations already
+noted for Identity Objects (ONP-2300 Section 9). This document
+introduces no new privacy mechanism beyond what ONP-2300 already
+establishes; publishers SHOULD apply the same consent guidance
+(ONP-2300 Section 4.6) when naming an individual as a payment
+recipient.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0000, Introduction — Section 1.3.4, the Payments pillar this
+  document fulfills.</li>
+<li>ONP-0001, Architecture — Section 4.4, the decision test applied
+  fresh in Section 4.2 of this document.</li>
+<li>ONP-0003, Design Principles — Principle P4 (Settlement Neutrality),
+  restated as a binding requirement in Section 4.5; Principle P5
+  (Jurisdiction Neutrality, Section 2.2).</li>
+<li>ONP-1002, Serialization — Section 4.4, rule 2, the money-as-string
+  rule this document is the binding instance of (Section 4.4, rule
+  3).</li>
+<li>ONP-2000, Companion Framework — Section 4.3 (Object Reference
+  mechanism, used for <code>recipient_ref</code>).</li>
+<li>ONP-2300, Identity — the recipient representation <code>recipient_ref</code>
+  and <code>revenue_shares</code> entries point to.</li>
+<li>ONP-2400, Rights — the structurally parallel declarative-not-
+  enforcing pattern this document follows for money instead of
+  permissions.</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>ONP-2100, Article; ONP-2200, Media (both updated concurrently,
+  Section 10.3) — the Companions expected to carry <code>payment_ref</code>.</li>
+<li>ISO 4217 — the currency code standard <code>currency</code> reuses.</li>
+<li>ISO 8601 durations — the format <code>subscription_period</code> reuses.</li>
+</ul>
+<h2 id="10-3-corresponding-updates-to-onp-2100-and-onp-2200">10.3 Corresponding Updates to ONP-2100 and ONP-2200</h2>
+<p>As part of this document's publication, both ONP-2100 (Article) and
+ONP-2200 (Media) are updated to add <code>payment_ref</code> (OPTIONAL, a
+single OID string referencing a Payments Object), following the same
+Object Reference pattern already established for <code>contributor_refs</code>,
+<code>creator_ref</code>, and <code>rights_ref</code>. Both changes are classified MINOR
+(additive) under ONP-0007 Section 4.1. This is now the third such
+addition to each of those documents; readers should expect this
+<code>_ref</code> convention to continue as further Companions are published.</p>
+<hr />
+<h1 id="appendix-a-full-schema-reference">Appendix A: Full Schema Reference</h1>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:payments&quot;,
+  &quot;content&quot;: {
+    &quot;payment_model&quot;: &quot;enum, REQUIRED&quot;,
+    &quot;price&quot;: &quot;string, OPTIONAL, never a JSON number&quot;,
+    &quot;currency&quot;: &quot;string (ISO 4217), REQUIRED if price present&quot;,
+    &quot;recipient_ref&quot;: &quot;string (OID), OPTIONAL, default publisher.domain&quot;,
+    &quot;revenue_shares&quot;: &quot;array of {recipient_ref, percentage}, OPTIONAL, partial permitted&quot;,
+    &quot;subscription_period&quot;: &quot;string (ISO 8601 duration), OPTIONAL&quot;,
+    &quot;payment_provider_hint&quot;: &quot;array of strings, OPTIONAL, non-exclusive&quot;
+  }
+}
+</code></pre>
+<h1 id="appendix-b-payments-object-checklist">Appendix B: Payments Object Checklist</h1>
+<pre><code>[ ] payment_model present, one of the five recognized values
+[ ] if price present: currency also present, both as strings
+    (price) / ISO 4217 code (currency), never JSON numbers
+[ ] recipient_ref, if present, is an OID pointing to an Identity
+    Object; if absent, publisher.domain is understood as recipient
+[ ] revenue_shares percentages need not sum to 100
+[ ] payment_provider_hint, if present, is understood as
+    non-exclusive — no other provider is excluded by its presence
+[ ] no settlement mechanism, processor, or rail is specified
+    anywhere in this Object
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-full-schema-reference">Appendix A: Full Schema Reference</a></li><li><a href="#appendix-b-payments-object-checklist">Appendix B: Payments Object Checklist</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/2500-payments.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

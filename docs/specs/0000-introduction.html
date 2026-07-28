@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-0000 Open News Protocol (ONP): Introduction — Open News Protocol</title>
+<meta name="description" content="ONP-0000: Open News Protocol (ONP): Introduction — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-0000</p>
+    <h1 id="top">Open News Protocol (ONP): Introduction</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.4.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the Open News Protocol (ONP) specification
+series. It is published as an Informational document and defines no
+normative wire behavior of its own. It states the problem ONP exists
+to solve, ONP's mission and four pillars, and the numbering,
+structure, and editorial conventions that govern every other
+document in the series.</p>
+<p>This document is a Working Draft. Distribution of this document is
+unlimited. Comments should be sent to the ONP Working Group.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Status</td>
+<td>Working Draft</td>
+</tr>
+<tr>
+<td>Version</td>
+<td>0.3.2</td>
+</tr>
+<tr>
+<td>Category</td>
+<td>Informational</td>
+</tr>
+<tr>
+<td>Obsoletes</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Updates</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Series</td>
+<td>ONP-0000 (Foundation)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="abstract">Abstract</h1>
+<p>Open News Protocol (ONP) is an open standard for publishing,
+exchanging, verifying, and monetizing news objects.</p>
+<p>News today is produced inside closed systems and distributed through
+channels that were never designed to carry it: publishers hold
+authoritative content behind proprietary CMS databases and
+publisher-specific APIs; syndication relies on formats built for
+generic feeds rather than journalistic objects; and neither rights
+nor payment terms travel reliably with an article once it leaves its
+point of origin. ONP addresses this by making the news article
+itself — not the platform that hosts it — the unit of trust,
+distribution, rights, and payment. This document introduces the
+problem, states ONP's mission and four pillars, and defines the
+roadmap and editorial conventions that the rest of the ONP series
+follows.</p>
+<hr />
+<h1 id="1-scope">1. Scope</h1>
+<h2 id="1-1-problem-statement">1.1 Problem Statement</h2>
+<p>Digital journalism operates without a shared infrastructure layer
+for exchange. This produces concrete, recurring problems:</p>
+<ul>
+<li><strong>News is locked inside CMS platforms.</strong> An article's authoritative
+  form exists only inside one publisher's content management
+  system; every consumer of that article — a reader, an aggregator,
+  an AI system, an archive — receives a rendering of it, not the
+  object itself.</li>
+<li><strong>Every publisher exposes a different API.</strong> There is no common
+  interface for requesting, verifying, or subscribing to journalistic
+  content across publishers, which forces every integrator to build
+  and maintain publisher-specific integrations.</li>
+<li><strong>RSS is too limited.</strong> RSS carries a title, a summary, and a link;
+  it carries no cryptographic provenance, no structured rights, and
+  no payment terms, and it was never extended to do so.</li>
+<li><strong>ActivityPub is built for social interaction, not journalistic
+  objects.</strong> It standardizes how posts, likes, and follows move
+  between servers; it does not standardize authorship verification,
+  editorial versioning, licensing, or revenue terms for news content.</li>
+<li><strong>Rights and licenses are lost on republication.</strong> Once an article
+  is copied, embedded, syndicated, or summarized, the copyright
+  notice, license terms, attribution requirements, and usage
+  restrictions that governed the original are usually not carried
+  along with it — they live in separate systems, if they are
+  recorded at all.</li>
+<li><strong>AI systems cannot reliably establish provenance.</strong> A model that
+  ingests, summarizes, or cites a news article generally has no
+  cryptographically verifiable way to confirm who published it, when,
+  or whether it has been altered since.</li>
+<li><strong>Small and large publishers share no common standard for exchange
+  or monetization.</strong> A large publisher and a local newsroom each
+  build bespoke, incompatible solutions for syndication and payment,
+  which means neither benefits from network effects the way, for
+  example, email or the web itself does.</li>
+</ul>
+<p>These are not seven unrelated problems. They are symptoms of a
+single missing layer: there is no open, verifiable, and portable
+representation of a news object that carries its own trust, rights,
+and payment terms independent of the platform that happens to be
+distributing it. ONP is that missing layer.</p>
+<h2 id="1-2-mission">1.2 Mission</h2>
+<blockquote>
+<p><strong>Open News Protocol (ONP) is an open standard for publishing,
+exchanging, verifying and monetizing news objects.</strong></p>
+</blockquote>
+<p>Every other statement in this document, and every specification
+later in the series, exists in service of that one sentence.</p>
+<h2 id="1-3-the-four-pillars">1.3 The Four Pillars</h2>
+<p>ONP is organized around four pillars. Each pillar corresponds to one
+of the problems in Section 1.1, and each is expanded into its own
+Foundation, Core, Companion, or Extension specifications later in
+the series.</p>
+<h3>1.3.1 Trusted News</h3>
+<p>A news object is cryptographically signed. Any recipient — a reader,
+an application, a search index, an AI system — can independently
+verify:</p>
+<ul>
+<li><strong>who</strong> published it;</li>
+<li><strong>when</strong> it was published;</li>
+<li><strong>whether</strong> it has been modified since publication;</li>
+<li><strong>whether</strong> it is authentic, without needing to trust the channel
+  it arrived through.</li>
+</ul>
+<p>This pillar is realized through the Core layer (ONP-1000 series):
+the News Object model, identifiers, serialization, digital
+signatures, and validation.</p>
+<h3>1.3.2 Open Distribution</h3>
+<p>A news object can be published anywhere and remains the same object
+regardless of channel:</p>
+<pre><code>   Website   App   RSS   API   ActivityPub   E-mail   AI   Archive
+       \      |     |     |         |           |      |    /
+        \     |     |     |         |           |      |   /
+         +----+-----+-----+---------+-----------+------+--+
+                              |
+                     Same News Object,
+                     same OID, same signature,
+                     verifiable regardless of channel
+</code></pre>
+<p>The object's identity and trust properties do not change when its
+transport does. This pillar depends on the Core layer for object
+identity and on Companion and Extension specifications for
+channel-specific behavior; it does not require any channel to adopt
+ONP exclusively.</p>
+<h3>1.3.3 Rights</h3>
+<p>The object itself carries:</p>
+<ul>
+<li>copyright ownership;</li>
+<li>license terms;</li>
+<li>attribution requirements;</li>
+<li>usage conditions;</li>
+<li>redistribution and derivative-work permissions.</li>
+</ul>
+<p>Rights travel with the object instead of living in a separate,
+disconnected database that republication silently leaves behind.
+This pillar is realized primarily through the Rights Companion
+(ONP-2400).</p>
+<h3>1.3.4 Payments</h3>
+<p>The object carries information about:</p>
+<ul>
+<li>price;</li>
+<li>payment model;</li>
+<li>revenue distribution;</li>
+<li>subscription terms;</li>
+<li>donation options;</li>
+<li>micropayment terms.</li>
+</ul>
+<p>ONP standardizes <em>what</em> is owed and <em>to whom</em>, not <em>how</em> a payment
+is executed. Settlement mechanisms (card networks, wallets,
+micropayment rails) remain outside ONP's scope by design; the
+Payments Companion (ONP-2500) defines the declarative terms that any
+settlement mechanism can act upon.</p>
+<h2 id="1-4-the-ecosystem">1.4 The Ecosystem</h2>
+<p>ONP is designed as shared infrastructure that every kind of
+participant builds on, rather than a product that competes with any
+one of them:</p>
+<pre><code>                              AI
+                               |
+              Reader ---------+--------- Search
+                               |
+             Archive ----------+--------- Library
+                               |
+            Publisher ---------+--------- CMS
+                               |
+             Payments ---------+--------- Analytics
+                               |
+                    Open News Protocol
+</code></pre>
+<p>A publisher signs a News Object once. A CMS plugin, a search index,
+an archive, an AI system, a payments processor, and an analytics
+platform can each consume that same object and independently verify
+its authenticity, rights, and payment terms, without individually
+negotiating trust with the publisher or with each other.</p>
+<h2 id="1-5-what-is-in-scope-this-document">1.5 What Is In Scope (This Document)</h2>
+<p>This document is in scope for:</p>
+<ul>
+<li>the problem statement, mission, and four pillars stated above;</li>
+<li>the document series structure (Foundation, Core, Companion
+  Framework, Extensions, Reference) and its numbering scheme;</li>
+<li>the mandatory section template for all ONP specifications;</li>
+<li>the rules for normative language, terminology ownership, and
+  document status;</li>
+<li>the dependency and reading order between documents.</li>
+</ul>
+<h2 id="1-6-what-is-out-of-scope-this-document">1.6 What Is Out of Scope (This Document)</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>the News Object model (see ONP-1000);</li>
+<li>identifier formats (see ONP-1001);</li>
+<li>serialization procedures (see ONP-1002);</li>
+<li>signature schemes (see ONP-1003);</li>
+<li>validation rules (see ONP-1004);</li>
+<li>core metadata fields (see ONP-1005);</li>
+<li>Rights or Payments field structures (see ONP-2400, ONP-2500);</li>
+<li>any other Companion or Extension behavior (see the 2000 and 3000
+  series).</li>
+</ul>
+<p>A statement made in this document about protocol behavior is
+illustrative only and MUST NOT be treated as normative. Where this
+document appears to conflict with a Core, Companion, or Extension
+specification, the more specific document governs.</p>
+<hr />
+<h1 id="2-terminology">2. Terminology</h1>
+<h2 id="2-1-requirements-language">2.1 Requirements Language</h2>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all
+capitals, as shown here.</p>
+<p>This requirements language governs the entire ONP series. No later
+document needs to restate it; every ONP specification MUST include a
+Terminology section that references this document rather than
+redefining RFC 2119/8174 language independently.</p>
+<h2 id="2-2-foundational-terms">2.2 Foundational Terms</h2>
+<p><strong>ONP (Open News Protocol)</strong>
+: The overall architecture, together with all specifications
+  published under the ONP-nnnn identifier scheme.</p>
+<p><strong>News Object</strong>
+: The unit of published journalistic content and its associated
+  trust, rights, and payment metadata. Where the architecture
+  reference uses the general term "Object," the ONP series uses
+  "News Object" for the specific instantiation defined in ONP-1000;
+  the two terms refer to the same underlying model.</p>
+<p><strong>Specification</strong>
+: A single ONP-nnnn document. A Specification is the atomic unit of
+  the series; it MUST be independently readable given only its
+  stated dependencies.</p>
+<p><strong>Series</strong>
+: A specification is a member of exactly one Series, determined by
+  its identifier range (see Section 4).</p>
+<p><strong>Working Group (ONP-WG)</strong>
+: The editorial body responsible for authoring, reviewing, and
+  publishing ONP specifications.</p>
+<p><strong>Node</strong>
+: Any software system that creates, signs, stores, verifies, or
+  relays News Objects.</p>
+<p><strong>Pillar</strong>
+: One of the four foundational commitments of ONP (Trusted News,
+  Open Distribution, Rights, Payments) defined in Section 1.3. A
+  Pillar is descriptive framing, not a normative term; it is realized
+  through one or more Core, Companion, or Extension specifications.</p>
+<p>Other terms (OID, VID, Companion, Extension, Core) are owned by
+ONP-0001 (Architecture) and indexed, together with every other term
+in the series, in ONP-0002 (Terminology); this document uses them
+consistently with those definitions but does not itself own them.</p>
+<hr />
+<h1 id="3-requirements">3. Requirements</h1>
+<p>This section states the requirements that this document imposes on
+the ONP series as a whole. These requirements are structural and
+editorial, not protocol-level.</p>
+<h2 id="3-1-document-identity">3.1 Document Identity</h2>
+<ol>
+<li>Every ONP specification MUST be stored in the repository under
+   <code>specs/NNNN-slug.md</code>, where <code>NNNN</code> is the four-digit document
+   number assigned according to Section 4 and <code>slug</code> is a lowercase,
+   hyphenated short title (e.g. <code>specs/1003-signatures.md</code>).</li>
+<li>In running text, cross-references and citations MUST use the
+   form <code>ONP-NNNN</code> (e.g. "see ONP-1003"), regardless of the file's
+   on-disk slug. The <code>ONP-NNNN</code> form is the stable citation
+   identifier; the filename slug MAY be corrected editorially
+   (per Section 3.5, a PATCH-level change) without affecting any
+   <code>ONP-NNNN</code> cross-reference elsewhere in the series.</li>
+<li>A specification's <code>NNNN</code> MUST NOT be reused, even if the document
+   is withdrawn or obsoleted.</li>
+<li>A specification MUST declare, in its front matter or document
+   header, at minimum: <code>Document Number</code>, <code>Status</code>, <code>Version</code>,
+   <code>Author</code>, and <code>Last Modified</code>.</li>
+</ol>
+<p>Rationale: versions 0.1.0 and 0.2.0 of this document required a
+<code>ONP-NNNN-Title.md</code> filename and an explicit <code>Category</code> field. Both
+requirements are superseded as of version 0.3.0, in favor of the
+repository layout defined by the ONP-WG (specs/, schemas/,
+examples/, diagrams/, sdk/, reference/). <code>Category</code> remains
+implied by a document's number range (Section 4.1) rather than
+being restated as a separate field.</p>
+<h2 id="3-2-mandatory-section-template">3.2 Mandatory Section Template</h2>
+<p>Every ONP specification other than this one MUST use the following
+header block and section structure, in this order:</p>
+<pre><code>Title
+Document Number
+Status
+Version
+Author
+Last Modified
+Abstract
+Status of This Document
+Normative Language
+1.  Introduction
+2.  Scope
+3.  Terminology
+4.  Requirements
+5.  Object Model
+6.  Processing Model
+7.  Examples
+8.  Security Considerations
+9.  Privacy Considerations
+10. References
+Appendix A
+Appendix B
+</code></pre>
+<p>A specification MAY add subsections within any of these, and MAY
+add further lettered appendices after Appendix B, but MUST NOT
+omit, reorder, or rename any of the numbered sections above.</p>
+<p>Note on Interoperability: this template does not carry a standalone
+Interoperability section. Cross-channel and cross-implementation
+interoperability concerns MUST instead be addressed as a labeled
+subsection of Section 6 (Processing Model) — for example "6.x
+Interoperability" — so that interoperability is discussed in the
+context of the processing behavior it constrains, rather than
+separately from it. This is an intentional consolidation relative
+to versions 0.1.0-0.2.0 of this document, not an omission: no
+specification MAY drop interoperability discussion where it is
+material to that specification's correctness.</p>
+<p>Note on Object Model vs. Processing Model: Section 5 (Object Model)
+is normative structure — the fields, types, and constraints a
+conforming object of that specification's domain MUST have. Section
+6 (Processing Model) is normative behavior — what a conforming Node
+MUST do when creating, receiving, validating, or acting on that
+object. A specification MUST NOT blend structural and behavioral
+requirements into a single section; this separation mirrors, at the
+document level, the Core/Companion/Extension separation ONP-0001
+enforces at the protocol level.</p>
+<h2 id="3-3-normative-and-informative-text">3.3 Normative and Informative Text</h2>
+<ol>
+<li>A specification MUST visually and structurally separate normative
+   text (Requirements, Processing Rules) from informative text
+   (Scope framing, rationale, examples, diagrams).</li>
+<li>Rationale, motivation, and non-binding commentary SHOULD be
+   placed in clearly labeled "Rationale" or "Note" blocks, not
+   interleaved silently with Requirements text.</li>
+<li>Examples are always informative. A Requirements section MUST NOT
+   depend on an Example to be understood; the Example clarifies, it
+   does not define.</li>
+</ol>
+<h2 id="3-4-terminology-ownership">3.4 Terminology Ownership</h2>
+<ol>
+<li>Each term used in the ONP series MUST have exactly one owning
+   document.</li>
+<li>A specification MUST NOT redefine a term owned by another
+   specification. It MAY reference and use the term.</li>
+<li>ONP-0002 (Terminology) is the canonical index of term ownership.
+   Every new specification that introduces a term MUST register it
+   there as part of its publication process.</li>
+</ol>
+<h2 id="3-5-versioning-discipline">3.5 Versioning Discipline</h2>
+<p>Every specification's <code>Version</code> field MUST follow semantic
+versioning (<code>MAJOR.MINOR.PATCH</code>). The precise classification rules
+for MAJOR, MINOR, and PATCH — including pre-1.0 semantics, the
+registry-and-appendix worked rule, and the Status Transition process
+— are owned by ONP-0007 (Versioning Policy) and are not restated
+here. This section previously stated those rules informally in
+versions 0.1.0 and 0.2.0 of this document; ONP-0007 now supersedes
+that informal statement as the single authoritative source,
+consistent with the single-owner content discipline established by
+ONP-0001 and ONP-0002.</p>
+<hr />
+<h1 id="4-processing-rules">4. Processing Rules</h1>
+<p>This section describes how the document series is organized and how
+a reader or implementer should traverse it.</p>
+<h2 id="4-1-numbering-scheme">4.1 Numbering Scheme</h2>
+<pre><code>0000-0999   Foundation
+  0000  Introduction                  (this document)
+  0001  Architecture
+  0002  Terminology
+  0003  Design Principles
+  0004  Trust Model
+  0005  Security Model
+  0006  News Object Lifecycle
+  0007  Versioning
+
+1000-1999   Core
+  1000  News Object
+  1001  Identifiers
+  1002  Serialization
+  1003  Digital Signatures
+  1004  Validation
+  1005  Core Metadata
+  1006  Retrieval                     (added in v0.4.0; see note below)
+
+2000-2999   Companion
+  2000  Companion Framework
+  2100  Article
+  2200  Media
+  2300  Identity
+  2400  Rights
+  2500  Payments
+  2600  Sources
+  2700  Corrections
+  2800  Comments
+
+3000-3999   Extension
+  3000  Extension Framework
+  3100  AI Metadata
+  3200  Search
+  3300  Analytics
+  3400  Geolocation
+  3500  Accessibility
+
+9000-9999   Reference
+  9000  Reference Implementation
+  9001  Best Practices
+  9002  Security Checklist
+  9003  Performance
+  9004  Migration
+</code></pre>
+<p>Note: this numbering scheme supersedes the version published in
+ONP-0000 v0.1.0, which used a broader, domain-agnostic Companion and
+Extension catalog (e.g. Messaging, Social, Commerce, Events,
+Documents, IoT; Moderation, Reputation, Federation, Caching). That
+catalog is withdrawn in favor of the journalism-specific list above,
+which follows directly from the four pillars in Section 1.3. Numbers
+already assigned above MUST NOT be reused for different topics if
+withdrawn topics are reinstated later; a reinstated topic receives a
+new, previously unused number.</p>
+<h3>4.1.1 Roadmap Extension: ONP-1006 (v0.4.0)</h3>
+<p>The Core series as originally laid out (1000-1005) answered every
+question about an Object a Node already holds, but none about how a
+Node holding only an OID obtains the Object, or how a consumer
+learns that new Objects or Versions exist. ONP-1006 (Retrieval)
+closes that gap with conventions over ordinary web technology,
+operationalizing Section 7.2's channel stance rather than adding a
+transport protocol. Extending a range previously described as
+complete is a substantive roadmap change; per ONP-0007 Section 4.2
+it is classified MINOR and, per that section's rule 4, called out
+here explicitly so the version number alone does not understate it.</p>
+<h2 id="4-2-dependency-rule">4.2 Dependency Rule</h2>
+<ol>
+<li>A specification MUST declare, in its Scope section, every other
+   ONP-nnnn document it depends on.</li>
+<li>A specification MUST NOT depend on a document with a higher
+   number in the same Series unless that dependency is explicitly
+   circular-safe and declared in both directions (this SHOULD be
+   avoided entirely).</li>
+<li>A Foundation document (0000-0999) MUST NOT depend on a Core,
+   Companion, Extension, or Reference document.</li>
+<li>A Core document (1000-1999) MUST NOT depend on a Companion,
+   Extension, or Reference document.</li>
+<li>A Companion document (2000-2999) MUST NOT depend on another
+   Companion document's internal object state, per the Horizontal
+   Invariant defined in ONP-0001 (Architecture), Section 5.3.</li>
+<li>An Extension document (3000-3999) MAY depend on Core and MAY
+   depend on one or more named Companions, but MUST NOT depend on
+   another Extension's domain truth.</li>
+</ol>
+<h2 id="4-3-reading-order">4.3 Reading Order</h2>
+<pre><code>                 +-------------------+
+                 |   ONP-0000        |
+                 |   Introduction    |
+                 |   (this document) |
+                 +---------+---------+
+                           |
+                           v
+                 +-------------------+
+                 |  ONP-0001..0007   |
+                 |  Foundation       |
+                 +---------+---------+
+                           |
+                           v
+                 +-------------------+
+                 |  ONP-1000..1006   |
+                 |  Core             |
+                 +---------+---------+
+                     |            |
+                     v            v
+           +-------------+  +-------------+
+           | ONP-2xxx    |  | ONP-3xxx    |
+           | Companions  |  | Extensions  |
+           | (2100-2800) |  | (3100-3500) |
+           +-------------+  +-------------+
+                     \            /
+                      \          /
+                       v        v
+                 +-------------------+
+                 |  ONP-9000..9004   |
+                 |  Reference        |
+                 +-------------------+
+</code></pre>
+<p>An implementer building a Node MUST read the Foundation series and
+the Core series before implementing any Companion or Extension. An
+implementer building a single Companion or Extension MUST read the
+Foundation series, the Core series, and only the specific Companion
+or Extension document(s) relevant to their use case.</p>
+<h2 id="4-4-status-levels">4.4 Status Levels</h2>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+<th>Implementers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Working Draft</td>
+<td>Under active development; MAY change incompatibly</td>
+<td>MUST NOT treat as stable</td>
+</tr>
+<tr>
+<td>Candidate</td>
+<td>Feature-complete; open for implementation feedback</td>
+<td>MAY implement provisionally</td>
+</tr>
+<tr>
+<td>Standards Track</td>
+<td>Stable; changes follow ONP-0007 versioning rules</td>
+<td>MAY implement as stable</td>
+</tr>
+<tr>
+<td>Informational</td>
+<td>Non-normative; no conformance implications</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>Obsolete</td>
+<td>Superseded; retained for historical reference only</td>
+<td>MUST NOT implement</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-5-category">4.5 Category</h2>
+<p>As of version 0.3.0, Category is no longer a mandatory front-matter
+field (see Section 3.1). A specification's category — <code>foundation</code>,
+<code>core</code>, <code>companion</code>, <code>extension</code>, or <code>reference</code> — MUST instead be
+derived from its Document Number range as defined in Section 4.1.
+Tooling (e.g. a documentation site generator) MAY compute and
+display this category automatically from the number; a specification
+MAY still state it explicitly for human readability, but the number
+range is authoritative if the two ever disagree. This document's own
+category is <code>info</code>, since it defines process and mission rather than
+protocol, and its number (0000) falls in the Foundation range while
+its content is process-only.</p>
+<hr />
+<h1 id="5-security-considerations">5. Security Considerations</h1>
+<p>This document defines no wire format, cryptographic procedure, or
+trust mechanism, and therefore introduces no direct attack surface
+of its own. Its editorial structure has security consequences for
+the series as a whole, recorded here.</p>
+<h2 id="5-1-terminology-drift-as-a-security-risk">5.1 Terminology Drift as a Security Risk</h2>
+<p>If two ONP specifications were permitted to define the same term
+differently, an implementer or auditor could reasonably validate a
+News Object against the wrong definition, producing a false sense of
+verification. The single-owner terminology rule in Section 3.4 is
+therefore a security control, not merely an editorial preference.</p>
+<h2 id="5-2-layer-confusion">5.2 Layer Confusion</h2>
+<p>The Core/Companion/Extension separation exists specifically so that
+a party controlling a Companion or Extension — for example, the
+Payments Companion or the AI Metadata Extension — cannot silently
+acquire authority over Core trust properties (signature validity,
+identifier assignment, version lineage). The dependency rules in
+Section 4.2 enforce that separation across the document series.</p>
+<h2 id="5-3-trust-pillar-is-foundational-not-optional">5.3 Trust Pillar Is Foundational, Not Optional</h2>
+<p>Because Rights (1.3.3) and Payments (1.3.4) are pillars of equal
+prominence to Trusted News (1.3.1) in this document's framing,
+implementers MUST NOT treat rights or payment fields as more
+authoritative than the Core signature that establishes whether a
+News Object is authentic in the first place. A News Object with
+well-formed rights or payment fields but an invalid signature MUST
+be treated as untrusted regardless of how complete its other fields
+are; verification order is defined normatively in ONP-1004
+(Validation), not in this document.</p>
+<h2 id="5-4-document-provenance">5.4 Document Provenance</h2>
+<p>Implementers SHOULD verify that any ONP specification they rely upon
+was obtained from the canonical Working Group publication channel.
+This document does not itself define an integrity or signing scheme
+for specification text; that is a process concern for the ONP-WG
+publication infrastructure, out of scope for the protocol itself.</p>
+<hr />
+<h1 id="6-privacy-considerations">6. Privacy Considerations</h1>
+<p>This document defines no data collection, transmission, or storage
+behavior, and therefore has no direct privacy impact. Two indirect
+considerations are recorded for completeness.</p>
+<h2 id="6-1-scope-boundary">6.1 Scope Boundary</h2>
+<p>This document makes no claims about what personal data News Objects
+may carry. Privacy analysis of actual data fields belongs to
+ONP-1005 (Core Metadata) and to each Companion and Extension that
+introduces its own fields — notably ONP-2300 (Identity) and ONP-2500
+(Payments), which are expected to carry personally identifiable
+information by nature of their function.</p>
+<h2 id="6-2-series-wide-obligation">6.2 Series-Wide Obligation</h2>
+<p>Every later ONP specification that defines a data field capable of
+identifying a natural person MUST include an explicit Privacy
+Considerations discussion of that field, per the mandatory section
+template in Section 3.2. This document establishes that obligation;
+it does not discharge it on behalf of any other document.</p>
+<hr />
+<h1 id="7-interoperability">7. Interoperability</h1>
+<h2 id="7-1-interoperability-goal">7.1 Interoperability Goal</h2>
+<p>The purpose of the numbering, dependency, and template rules in this
+document is to make interoperability testable at the level of the
+specification series, not only at the level of individual wire
+messages. Two independent implementations that each claim
+conformance to "ONP Core" should be comparable precisely because
+every Core document follows the same structure and the same
+terminology registry.</p>
+<h2 id="7-2-non-exclusivity-of-channels">7.2 Non-Exclusivity of Channels</h2>
+<p>Per the Open Distribution pillar (1.3.2), ONP is explicitly designed
+to coexist with, not replace, existing distribution channels. A News
+Object MAY be carried over HTTP, RSS, ActivityPub, e-mail, or any
+other transport; ONP standardizes the object, not the channel.
+Publishers adopting ONP are not required to abandon any existing
+distribution mechanism.</p>
+<h2 id="7-3-backward-compatibility-of-this-document">7.3 Backward Compatibility of This Document</h2>
+<p>This document, being purely editorial and mission-defining, has
+minimal compatibility surface. A future MAJOR revision of ONP-0000
+MUST NOT retroactively change the meaning of a <code>Category</code> or
+<code>Status</code> value already used by a published specification without
+also republishing that specification's front matter under ONP-0007's
+migration rules. The withdrawal of the broader Companion/Extension
+catalog noted in Section 4.1 is treated as a MINOR change because it
+occurred before any specification in the withdrawn ranges reached
+Candidate status or later.</p>
+<h2 id="7-4-relationship-to-external-standards">7.4 Relationship to External Standards</h2>
+<p>ONP does not compete with or replace transport-level or web
+standards; it is designed to be carried over existing infrastructure
+and to interoperate with existing rights and identity standards
+referenced in Section 9 and in ONP-0001 (Architecture).</p>
+<hr />
+<h1 id="8-examples">8. Examples</h1>
+<h2 id="8-1-example-the-four-pillars-applied-to-one-article">8.1 Example: The Four Pillars Applied to One Article</h2>
+<p>A single published article illustrates all four pillars
+simultaneously:</p>
+<pre><code class="language-json">{
+  &quot;onp:news_object&quot;: {
+    &quot;oid&quot;: &quot;onp:oid:...&quot;,
+    &quot;signature&quot;: &quot;...&quot;,
+    &quot;pillars_illustrated&quot;: {
+      &quot;trusted_news&quot;: &quot;signature + publisher identity verify origin&quot;,
+      &quot;open_distribution&quot;: &quot;same object served via website, RSS, API&quot;,
+      &quot;rights&quot;: &quot;onp:extensions -&gt; org.onp.rights (ONP-2400)&quot;,
+      &quot;payments&quot;: &quot;onp:extensions -&gt; org.onp.payments (ONP-2500)&quot;
+    }
+  }
+}
+</code></pre>
+<p>This example is illustrative only; the actual field names and
+structure are normatively defined in ONP-1000 and the referenced
+Companion specifications, not here.</p>
+<h2 id="8-2-example-resolving-a-document-reference">8.2 Example: Resolving a Document Reference</h2>
+<pre><code>Reference string : ONP-2500
+File path         : specs/2500-payments.md
+Series            : 2000-2999 -&gt; Companion
+Expected content  : Payments
+Dependency implied: Depends on ONP-1000-1005 (Core)
+Reading order     : After Foundation and Core series
+</code></pre>
+<h2 id="8-3-example-correct-vs-incorrect-dependency">8.3 Example: Correct vs. Incorrect Dependency</h2>
+<pre><code>CORRECT:
+  specs/3100-ai.md   (ONP-3100, Extension, 3000 series)
+    depends on -&gt; specs/1000-news-object.md   (ONP-1000)
+    depends on -&gt; specs/2100-article.md       (ONP-2100, named Companion)
+
+INCORRECT:
+  specs/1004-validation.md   (ONP-1004, Core, 1000 series)
+    depends on -&gt; specs/2500-payments.md      (ONP-2500, Companion)
+
+  This is invalid per Section 4.2, rule 4: a Core document MUST NOT
+  depend on a Companion document.
+</code></pre>
+<hr />
+<h1 id="9-references">9. References</h1>
+<h2 id="9-1-normative-references">9.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0001, Architecture — defines Core, Companion, and Extension
+  layering, the Vertical and Horizontal Invariants referenced
+  throughout this document.</li>
+<li>ONP-0002, Terminology — the canonical term-ownership registry
+  referenced in Section 3.4 and Section 5.1.</li>
+</ul>
+<h2 id="9-2-historical-reference">9.2 Historical Reference</h2>
+<ul>
+<li><code>draft-onp-architecture-00</code>, "Open News Protocol (ONP)
+  Architecture Framework" — the informal working draft formalized
+  and superseded by ONP-0001 and ONP-0002. Retained for historical
+  context only.</li>
+</ul>
+<h2 id="9-2a-related-non-normative-documents">9.2a Related Non-Normative Documents</h2>
+<ul>
+<li><code>EU-ALIGNMENT.md</code> — a non-normative positioning document mapping
+  the four Pillars (Section 1.3) to the European Union's Open
+  Internet Stack initiative. It is not part of the specification
+  series, carries no RFC 2119 language, and does not bind ONP-0004,
+  ONP-2300, ONP-2400, or ONP-2500; those documents state their own
+  normative position when written.</li>
+</ul>
+<h2 id="9-3-informative-references">9.3 Informative References</h2>
+<ul>
+<li>W3C Decentralized Identifiers (DIDs)</li>
+<li>W3C ODRL Information Model</li>
+<li>IPTC RightsML</li>
+<li>JSON Canonicalization Scheme (JCS)</li>
+<li>RSS 2.0 Specification</li>
+<li>ActivityPub (W3C Recommendation)</li>
+</ul>
+<h2 id="9-4-version-0-3-2-classification">9.4 Version 0.3.2 Classification</h2>
+<p>This document's front matter previously used a kramdown-rfc-style
+YAML block (<code>title</code>/<code>abbrev</code>/<code>docname</code>/<code>ipr</code>/<code>keyword</code> fields),
+inherited unchanged from <code>draft-onp-architecture-00</code> and never
+updated once the flat <code>Title:</code>/<code>Document Number:</code>/<code>Status:</code> header
+became the convention every other specification in this series uses.
+This was inconsistent — this document's exemption from the mandatory
+section template (Section 3.2) governs its body structure, not its
+front-matter style, and nothing required keeping the old YAML form.
+As of this version, the front matter matches the convention every
+other document already follows; the exemption from the <em>section
+template</em> remains unchanged. Classified PATCH under ONP-0007 Section
+4.4, rule 2 — no meaning changed, only presentation.</p>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#abstract">Abstract</a></li><li><a href="#1-scope">1. Scope</a></li><li><a href="#2-terminology">2. Terminology</a></li><li><a href="#3-requirements">3. Requirements</a></li><li><a href="#4-processing-rules">4. Processing Rules</a></li><li><a href="#5-security-considerations">5. Security Considerations</a></li><li><a href="#6-privacy-considerations">6. Privacy Considerations</a></li><li><a href="#7-interoperability">7. Interoperability</a></li><li><a href="#8-examples">8. Examples</a></li><li><a href="#9-references">9. References</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/0000-introduction.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-9005 Open News Protocol (ONP): External Standards Interoperability — Open News Protocol</title>
+<meta name="description" content="ONP-9005: Open News Protocol (ONP): External Standards Interoperability — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-9005</p>
+    <h1 id="top">Open News Protocol (ONP): External Standards Interoperability</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document is non-normative and addresses a gap this series left
+open through ONP-3500: every document reused existing standards where
+one fit (JCS, GeoJSON, SPDX, BCP 47) but none positioned ONP against
+the existing standards a publisher adopting it would already be
+running alongside — schema.org structured data search engines already
+consume, RSS feeds publishers already maintain, and C2PA, the
+dominant existing content-provenance standard. This document defines
+concrete, fully-specified export mappings to schema.org/NewsArticle
+and RSS 2.0 — both implemented as working code in
+<code>sdk/reference-impl/</code>, not merely described — and positions ONP's
+relationship to C2PA honestly: conceptually close, but deep
+integration (binary manifest embedding) is deferred to a reserved,
+not-yet-written Extension (ONP-3600), rather than forced into this
+document's scope prematurely.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Reference series (ONP-9000-9999),
+extending beyond the original roadmap's 9000-9004 range — a
+Specification beyond the original set, following the same
+registration process as any other (ONP-0000 Section 4.1, as already
+anticipated for future work beyond the original roadmap). It is
+Informational for its schema.org and RSS mapping guidance; it creates
+no new wire-level ONP field.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>ONP does not compete with schema.org, RSS, or C2PA — Principle P1
+(Adjacent Publishing) already establishes that ONP is deployed
+alongside a publisher's existing systems, and all three of these are
+exactly the kind of existing system ONP sits next to. What was
+missing was a concrete answer to "given an ONP Article Object, how do
+I actually produce the schema.org markup my CMS already needs, or the
+RSS item my existing feed already serves" — a question every one of
+this series' 34 prior documents left to the reader.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>a fully-specified, deterministic export mapping from an ONP Article
+  Object to schema.org/NewsArticle JSON-LD;</li>
+<li>a fully-specified, deterministic export mapping from an ONP Article
+  Object to an RSS 2.0 <code>&lt;item&gt;</code>;</li>
+<li>the conceptual relationship between ONP's Trust Model (ONP-0004,
+  ONP-1003) and C2PA's Content Credentials, and the scoping decision
+  to defer deep integration to a reserved future Extension.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>any <em>import</em> mapping (schema.org or RSS content becoming an ONP
+  Object) — export only; import raises trust questions (who signs
+  the resulting Object?) this document does not attempt to resolve;</li>
+<li>C2PA manifest embedding, JUMBF binary structure, or C2PA's own
+  signing chain in full — reserved to ONP-3600 (Section 4.4);</li>
+<li>ActivityPub mapping — noted as a related, plausible future document
+  with no number yet reserved, since it was not in scope of the
+  feedback that motivated this document.</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document introduces no new terms requiring registration; the
+mappings in Section 4 operate on already-defined ONP fields and
+already-defined external vocabularies, neither redefined here.</p>
+<hr />
+<h1 id="4-guidance">4. Guidance</h1>
+<h2 id="4-1-schema-org-newsarticle-export-mapping">4.1 schema.org/NewsArticle Export Mapping</h2>
+<p>schema.org structured data is what search engines and aggregators
+already consume for rich results; an ONP-signing publisher gains
+nothing from search visibility if their existing schema.org markup
+and their new ONP Object silently diverge. This mapping is
+deterministic and RECOMMENDED for any publisher exporting an Article
+Object for embedding as JSON-LD:</p>
+<table>
+<thead>
+<tr>
+<th>ONP Field</th>
+<th>schema.org/NewsArticle Property</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>content.headline</code> (ONP-2100)</td>
+<td><code>headline</code></td>
+</tr>
+<tr>
+<td><code>content.dek</code></td>
+<td><code>description</code></td>
+</tr>
+<tr>
+<td><code>oid</code></td>
+<td><code>identifier</code></td>
+</tr>
+<tr>
+<td><code>content.byline</code> / resolved <code>contributor_refs</code> (ONP-2300)</td>
+<td><code>author</code> (as <code>Person</code> or <code>Organization</code>)</td>
+</tr>
+<tr>
+<td><code>signed_at</code></td>
+<td><code>datePublished</code></td>
+</tr>
+<tr>
+<td>latest Version's <code>signed_at</code> (ONP-0006)</td>
+<td><code>dateModified</code></td>
+</tr>
+<tr>
+<td><code>publisher.domain</code></td>
+<td><code>publisher</code> (as <code>Organization</code>, with <code>url</code>)</td>
+</tr>
+<tr>
+<td>resolved <code>media_refs[0]</code> (ONP-2200), if <code>role</code> absent/primary</td>
+<td><code>image</code></td>
+</tr>
+<tr>
+<td><code>content.canonical_url</code></td>
+<td><code>mainEntityOfPage</code></td>
+</tr>
+<tr>
+<td>resolved Rights Object <code>license_identifier</code>/<code>license_url</code> (ONP-2400)</td>
+<td><code>license</code></td>
+</tr>
+<tr>
+<td><code>onp:metadata.language</code> (ONP-1005)</td>
+<td><code>inLanguage</code></td>
+</tr>
+</tbody>
+</table>
+<p>A worked implementation of this mapping is at
+<code>sdk/reference-impl/src/export-schemaorg.ts</code>.</p>
+<h2 id="4-2-rss-2-0-export-mapping">4.2 RSS 2.0 Export Mapping</h2>
+<p>Publishers already maintaining an RSS feed do not need to abandon it
+(Principle P1); this mapping lets that feed be generated from the
+same ONP Article Objects a publisher already signs, rather than
+maintained as a second, independently-drifting source of truth:</p>
+<table>
+<thead>
+<tr>
+<th>ONP Field</th>
+<th>RSS 2.0 <code>&lt;item&gt;</code> Element</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>content.headline</code></td>
+<td><code>&lt;title&gt;</code></td>
+</tr>
+<tr>
+<td><code>content.dek</code> or <code>onp:metadata.summary</code></td>
+<td><code>&lt;description&gt;</code></td>
+</tr>
+<tr>
+<td><code>content.canonical_url</code></td>
+<td><code>&lt;link&gt;</code></td>
+</tr>
+<tr>
+<td><code>oid</code></td>
+<td><code>&lt;guid isPermaLink="false"&gt;</code></td>
+</tr>
+<tr>
+<td><code>signed_at</code></td>
+<td><code>&lt;pubDate&gt;</code> (RFC 822 format conversion required)</td>
+</tr>
+<tr>
+<td><code>content.byline[0]</code> or resolved <code>contributor_refs[0]</code></td>
+<td><code>&lt;author&gt;</code> (if an email is available) or <code>&lt;dc:creator&gt;</code></td>
+</tr>
+<tr>
+<td><code>content.section</code></td>
+<td><code>&lt;category&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p>A worked implementation of this mapping is at
+<code>sdk/reference-impl/src/export-rss.ts</code>.</p>
+<h2 id="4-3-what-export-mappings-do-not-solve">4.3 What Export Mappings Do Not Solve</h2>
+<p>Neither mapping produces a signed artifact — schema.org JSON-LD and
+RSS items carry no ONP signature of their own, and a consumer relying
+solely on the exported form has no ONP-level trust guarantee at all.
+Publishers wanting a consumer to verify authenticity MUST direct them
+to the actual signed ONP Object (e.g. via a <code>&lt;link rel="alternate"
+type="application/onp+json"&gt;</code> convention, illustrative only — this
+document does not standardize that link relation type, which would
+need its own registration process with IANA or an equivalent body,
+out of scope here).</p>
+<h2 id="4-4-c2pa-conceptual-relationship-and-deferred-integration">4.4 C2PA: Conceptual Relationship and Deferred Integration</h2>
+<p>C2PA (Coalition for Content Provenance and Authenticity) is the
+dominant existing standard for cryptographically verifiable content
+provenance, closest in spirit to ONP's Trust Model (ONP-0004) and
+Digital Signatures (ONP-1003) of any standard reviewed. The
+conceptual correspondence is real:</p>
+<table>
+<thead>
+<tr>
+<th>ONP Concept</th>
+<th>C2PA Concept</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>News Object (ONP-1000)</td>
+<td>Asset with an attached Manifest</td>
+</tr>
+<tr>
+<td>Signature (ONP-1003)</td>
+<td>Claim Signature</td>
+</tr>
+<tr>
+<td>Trust Anchor (ONP-0004)</td>
+<td>Certificate-based Signer identity</td>
+</tr>
+<tr>
+<td>Companion/Extension assertion (ONP-0001)</td>
+<td>C2PA Assertion</td>
+</tr>
+<tr>
+<td>Version lineage (ONP-0006)</td>
+<td>Manifest history / ingredient chain</td>
+</tr>
+</tbody>
+</table>
+<p>Despite this correspondence, this document does NOT define a full
+C2PA integration, for a concrete reason: C2PA manifests are typically
+embedded within the media file itself using the JUMBF binary
+container format, which is a materially different technical problem
+from anything this series has solved — ONP's Verified Asset Reference
+pattern (ONP-2200 Section 4.4) hashes an externally-hosted file
+without needing to modify its internal binary structure, while C2PA
+embedding does modify it. Reconciling these approaches properly
+deserves its own dedicated design effort, not a rushed addition here.</p>
+<p><strong><code>org.onp.c2pa-bridge</code> is reserved</strong> as the Extension namespace for
+this future work (ONP-3600, not yet published), following the same
+registration discipline as any reserved term (ONP-0002 Section 4.2).
+Its likely minimal shape — a <code>manifest_ref</code> field on a Media Object
+pointing to or hashing an external C2PA manifest, reusing the
+Verified Asset Reference pattern (ONP-2200 Section 4.4) — is
+sketched here only as a direction, not specified normatively.</p>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<p>Not applicable in the wire-field sense — Section 4.1 and 4.2's
+mapping tables are the closest equivalent, and are already given in
+full there.</p>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-export-workflow">6.1 Export Workflow</h2>
+<pre><code>1. Resolve any Object References needed for the mapping (author,
+   media, rights) per ONP-2000 Section 6.2 — lazily, per ONP-9003
+   Section 4.4's guidance, not eagerly for every export.
+2. Apply the deterministic mapping (Section 4.1 or 4.2).
+3. Publish the exported form alongside, not instead of, the signed
+   ONP Object itself.
+</code></pre>
+<h2 id="6-2-interoperability">6.2 Interoperability</h2>
+<p>This document's entire purpose is interoperability with ecosystems
+outside ONP's own — search engines consuming schema.org, feed readers
+consuming RSS, and (eventually, via ONP-3600) C2PA-aware tooling. None
+of it affects ONP-to-ONP interoperability, which remains governed
+entirely by the Core series as before.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-a-schema-org-export-of-the-running-example">7.1 A schema.org Export of the Running Example</h2>
+<pre><code class="language-json">{
+  &quot;@context&quot;: &quot;https://schema.org&quot;,
+  &quot;@type&quot;: &quot;NewsArticle&quot;,
+  &quot;headline&quot;: &quot;Fusie-onderzoek Purmerend gepubliceerd&quot;,
+  &quot;description&quot;: &quot;Necker van Naem publiceert budgetanalyse voor de voorgestelde fusie.&quot;,
+  &quot;identifier&quot;: &quot;onp:oid:regiopurmerend.nl:fusie-onderzoek-necker-van-naem&quot;,
+  &quot;datePublished&quot;: &quot;2026-07-28T10:00:00Z&quot;,
+  &quot;publisher&quot;: { &quot;@type&quot;: &quot;Organization&quot;, &quot;url&quot;: &quot;https://regiopurmerend.nl&quot; },
+  &quot;mainEntityOfPage&quot;: &quot;https://regiopurmerend.nl/artikel/fusie-onderzoek&quot;,
+  &quot;inLanguage&quot;: &quot;nl-NL&quot;
+}
+</code></pre>
+<p>Generated by <code>sdk/reference-impl/src/export-schemaorg.ts</code> from the
+same signed Article Object used throughout this series' examples.</p>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<p>Exported forms (schema.org, RSS) carry no signature and MUST NOT be
+treated as equivalent trust artifacts to the ONP Object they were
+derived from (Section 4.3). A consumer that trusts an exported form
+as much as the signed original has misunderstood what this document
+provides.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>Export mappings surface the same fields already governed by the
+originating ONP Object's own Companions (ONP-2100, ONP-2300, ONP-2400
+Privacy Considerations); this document introduces no new privacy
+mechanism, only a different serialization of already-considered
+fields.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0003, Design Principles — Principle P1 (Adjacent Publishing),
+  the entire motivation for this document existing.</li>
+<li>ONP-2100, Article; ONP-2200, Media; ONP-2300, Identity; ONP-2400,
+  Rights — the source fields for both mappings in Section 4.</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>schema.org NewsArticle — https://schema.org/NewsArticle</li>
+<li>RSS 2.0 Specification</li>
+<li>C2PA Technical Specification — the standard positioned against in
+  Section 4.4.</li>
+<li>ONP-9003, Performance — Section 4.4, the lazy-resolution guidance
+  applied in Section 6.1.</li>
+</ul>
+<hr />
+<h1 id="appendix-a-reserved-future-work">Appendix A: Reserved Future Work</h1>
+<pre><code>ONP-3600  C2PA Bridge  — org.onp.c2pa-bridge reserved (Section 4.4),
+                          not yet written
+(unreserved)  ActivityPub mapping — plausible, no number reserved,
+                          out of scope of the feedback motivating
+                          this document (Section 2.2)
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-guidance">4. Guidance</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-reserved-future-work">Appendix A: Reserved Future Work</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/9005-external-standards-interoperability.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

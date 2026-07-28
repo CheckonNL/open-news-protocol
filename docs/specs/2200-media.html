@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-2200 Open News Protocol (ONP): Media — Open News Protocol</title>
+<meta name="description" content="ONP-2200: Open News Protocol (ONP): Media — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-2200</p>
+    <h1 id="top">Open News Protocol (ONP): Media</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.4.1</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the Media Companion:
+<code>content_type = "onp:companion:media"</code>, for photos, video, and
+audio. ONP-2100 (Article) already referenced Media Objects via
+<code>media_refs</code> before this Companion existed to define them; this
+document closes that gap. Unlike Article, a Media asset's actual
+bytes are not embedded in the envelope — embedding binary files in a
+signed JSON structure is impractical at typical photo and video
+sizes. Instead, this document introduces the Verified Asset
+Reference pattern: a REQUIRED content hash travels alongside an
+externally-hosted asset's URL, so the actual file remains
+cryptographically tamper-evident even though it is not embedded,
+extending the content-addressing principle ONP-1001 established for
+VID to assets that live outside the envelope entirely.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Companion series (ONP-2000-2999).
+It is directly implementable and follows every mandatory addition
+ONP-2000 Section 4.2 requires. It is a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>Article's <code>media_refs</code> (ONP-2100 Section 4.7) is an array of Object
+References with nothing, until now, on the other end of them. This
+document supplies that: a Media Object a Node can independently
+verify, reuse across multiple Articles, and update or replace on its
+own lifecycle, exactly as ONP-0001 Section 4.2 requires of any
+Companion. The one design problem Article never had to solve is
+central here: a typical photo or video is too large to embed
+sensibly inside a JSON envelope the way Article embeds its full
+text. This document solves that without giving up tamper-evidence,
+by hashing the asset instead of embedding it.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>the <code>onp:companion:media</code> content schema: <code>media_type</code>,
+  <code>asset_url</code>, <code>asset_hash</code>, <code>mime_type</code>, and the OPTIONAL fields
+  <code>alt_text</code>, <code>caption</code>, <code>credit</code>, <code>width</code>, <code>height</code>,
+  <code>duration_seconds</code>;</li>
+<li>the Verified Asset Reference pattern and the distinction between
+  structural Companion validity and actual asset-byte verification;</li>
+<li>the precedence relationship between <code>caption</code> and
+  <code>onp:metadata.title</code>/<code>summary</code>.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>actual file hosting, storage, CDN, or transcoding mechanics —
+  entirely a publisher's own infrastructure concern, consistent with
+  Principle P1 (Adjacent Publishing);</li>
+<li>rich accessibility metadata beyond a baseline <code>alt_text</code> field —
+  owned by ONP-3500 (Accessibility);</li>
+<li>usage rights, crop permissions, or licensing terms for media
+  assets — owned by ONP-2400 (Rights), not this document;</li>
+<li>any mandatory verification workflow — whether and when a Node
+  fetches and checks <code>asset_hash</code> is entirely a Node's own policy
+  (Section 6.1).</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document is the owning specification for the following terms.</p>
+<p><strong>Media Object</strong>
+: An informal name for a News Object whose <code>content_type</code> is
+  <code>onp:companion:media</code>.</p>
+<p><strong>Verified Asset Reference</strong>
+: The pattern of pairing an externally-hosted asset's URL
+  (<code>asset_url</code>) with a content hash of its bytes (<code>asset_hash</code>), so
+  that the asset remains cryptographically checkable despite not
+  being embedded in the envelope. Future Companions with similar
+  externally-hosted binary content needs MAY reuse this pattern,
+  citing this document, rather than redefining it independently.</p>
+<p><strong>Asset Hash</strong>
+: The <code>asset_hash</code> field: a hash of the actual bytes at <code>asset_url</code>,
+  in the form <code>&lt;algorithm-id&gt;:&lt;digest&gt;</code>, using an algorithm from the
+  Algorithm Registry (ONP-0005 Appendix A).</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-content-type-declaration">4.1 content_type Declaration</h2>
+<p>Every Media Object MUST declare <code>content_type</code> as exactly
+<code>onp:companion:media</code>.</p>
+<h2 id="4-2-companion-vs-extension-reapplication">4.2 Companion-vs-Extension Reapplication</h2>
+<p>Per ONP-2000 Section 4.2, rule 2:</p>
+<pre><code>Does &quot;Media&quot; have independent identity and an independent
+lifecycle, separable from any Object that references it?
+
+- A photo or video can be published, reused across multiple
+  unrelated Articles, replaced with a corrected version, or
+  retracted, entirely independently of any Article's own lifecycle.
+- A Media Object commonly outlives, or is reused beyond, any single
+  Article that references it via media_refs.
+- YES -&gt; Companion.
+</code></pre>
+<h2 id="4-3-content-schema">4.3 Content Schema</h2>
+<ol>
+<li><code>media_type</code> is REQUIRED: one of <code>"image"</code>, <code>"video"</code>, <code>"audio"</code>.</li>
+<li><code>asset_url</code> is REQUIRED: a well-formed URI locating the actual
+   media file.</li>
+<li><code>asset_hash</code> is REQUIRED: the Verified Asset Reference hash
+   (Section 4.4).</li>
+<li><code>mime_type</code> is REQUIRED: a string (e.g. <code>"image/jpeg"</code>,
+   <code>"video/mp4"</code>) identifying how to interpret the fetched bytes.</li>
+<li><code>alt_text</code>, <code>caption</code>, <code>credit</code>, <code>creator_ref</code>, <code>width</code>, <code>height</code>,
+   <code>duration_seconds</code>, <code>rights_ref</code>, and <code>payment_ref</code> are OPTIONAL,
+   per Section 4.5.</li>
+</ol>
+<h2 id="4-4-verified-asset-reference">4.4 Verified Asset Reference</h2>
+<ol>
+<li><code>asset_hash</code> MUST take the form <code>&lt;algorithm-id&gt;:&lt;digest&gt;</code>, where
+   <code>&lt;algorithm-id&gt;</code> is the lowercase wire form of an Algorithm
+   Registry entry (ONP-0005 Appendix A) with <code>purpose = hash</code>, and
+   <code>&lt;digest&gt;</code> is the base64url-encoded (unpadded) hash of the raw
+   bytes located at <code>asset_url</code> — not of any canonicalized or
+   re-encoded form, since the asset itself is not JSON.</li>
+<li><code>asset_hash</code> MUST be treated as a checkable, publisher-asserted
+   claim, not a self-proving fact. A Node MUST NOT treat an
+   unverified <code>asset_hash</code> as proof that the bytes at <code>asset_url</code>
+   actually match; verification requires fetching the asset and
+   computing the hash independently (Section 6.1).</li>
+<li>Structural Companion validity (ONP-1004 Section 4.3) for a Media
+   Object requires only that <code>asset_hash</code> is well-formed per rule 1
+   — it does NOT require a Node to have fetched and confirmed the
+   asset. Actual asset verification is a separate, additional check
+   a Node MAY perform (Section 6.1), outside the fixed Validation
+   Result contract ONP-1004 Section 5.1 defines.</li>
+</ol>
+<h2 id="4-5-optional-fields">4.5 Optional Fields</h2>
+<ol>
+<li><code>alt_text</code>, if present, MUST be a string describing the asset for
+   accessibility purposes. It is RECOMMENDED, though not REQUIRED,
+   for <code>media_type: "image"</code>, consistent with Principle P2 (Minimal
+   Required Surface) — a hard REQUIRED alt_text would raise the
+   barrier to quick publishing beyond what this document judges
+   proportionate; richer, structured accessibility metadata belongs
+   to ONP-3500.</li>
+<li><code>caption</code>, if present, MUST be a string: a short, Media-specific
+   description or credit line, taking precedence over
+   <code>onp:metadata.title</code>/<code>summary</code> for a Media-aware Node, per the
+   same pattern ONP-2100 Section 4.5 established for <code>headline</code>
+   (ONP-1005 Section 4.3).</li>
+<li><code>credit</code>, if present, MUST be a string identifying the
+   photographer, videographer, or source of the asset. It is
+   provisional, in exactly the same sense ONP-2100 Section 4.6
+   states for <code>byline</code>: a Node MUST NOT treat it as cryptographically
+   verified attribution.</li>
+<li><code>creator_ref</code>, if present, MUST be a single Object Reference
+   (ONP-2000 Section 4.3): an OID identifying an Identity Object
+   (ONP-2300). Where both <code>creator_ref</code> and <code>credit</code> are present, an
+   Identity-aware Node MUST prefer <code>creator_ref</code>; a Node without
+   Identity Companion support MUST continue to fall back to
+   <code>credit</code>. <strong>Correction note (v0.2.0):</strong> version 0.1.0 of this
+   document defined <code>credit</code> without stating this upgrade path,
+   unlike ONP-2100's equivalent <code>byline</code> field, which did state it
+   from the start. This was an oversight, identified only while
+   drafting ONP-2300, and is corrected here.</li>
+<li><code>width</code> and <code>height</code>, if present, MUST be positive integers
+   (pixels), primarily relevant for <code>media_type: "image"</code> or
+   <code>"video"</code>.</li>
+<li><code>duration_seconds</code>, if present, MUST be a positive number,
+   primarily relevant for <code>media_type: "video"</code> or <code>"audio"</code>.</li>
+<li><code>rights_ref</code>, if present, MUST be a single Object Reference
+   (ONP-2000 Section 4.3): an OID identifying a Rights Object
+   (ONP-2400). A Media Object's usage terms commonly differ from an
+   Article's (photo licensing is frequently more restrictive than
+   article text licensing); <code>rights_ref</code> lets a Media Object declare
+   its own terms independently, rather than inheriting whatever any
+   referencing Article declares.</li>
+<li><code>payment_ref</code>, if present, MUST be a single Object Reference
+   (ONP-2000 Section 4.3): an OID identifying a Payments Object
+   (ONP-2500), for the same reason a Media Object may need its own
+   Rights terms independent of any referencing Article — a stock
+   photo's licensing fee is commonly separate from an article's own
+   price.</li>
+</ol>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:media&quot;,
+  &quot;content&quot;: {
+    &quot;media_type&quot;: &quot;image&quot;,
+    &quot;asset_url&quot;: &quot;https://regiopurmerend.nl/media/fusie-bijeenkomst-01.jpg&quot;,
+    &quot;asset_hash&quot;: &quot;sha-256:base64url-digest-of-the-actual-file-bytes&quot;,
+    &quot;mime_type&quot;: &quot;image/jpeg&quot;,
+    &quot;alt_text&quot;: &quot;string, OPTIONAL, RECOMMENDED for images&quot;,
+    &quot;caption&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;credit&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;creator_ref&quot;: &quot;onp:oid:..., OPTIONAL&quot;,
+    &quot;width&quot;: &quot;integer, OPTIONAL&quot;,
+    &quot;height&quot;: &quot;integer, OPTIONAL&quot;,
+    &quot;duration_seconds&quot;: &quot;number, OPTIONAL&quot;,
+    &quot;rights_ref&quot;: &quot;onp:oid:..., OPTIONAL&quot;,
+    &quot;payment_ref&quot;: &quot;onp:oid:..., OPTIONAL&quot;
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>media_type</code></td>
+<td>REQUIRED</td>
+<td><code>"image"</code> | <code>"video"</code> | <code>"audio"</code></td>
+</tr>
+<tr>
+<td><code>asset_url</code></td>
+<td>REQUIRED</td>
+<td>External location; not embedded</td>
+</tr>
+<tr>
+<td><code>asset_hash</code></td>
+<td>REQUIRED</td>
+<td>Verified Asset Reference (Section 4.4)</td>
+</tr>
+<tr>
+<td><code>mime_type</code></td>
+<td>REQUIRED</td>
+<td></td>
+</tr>
+<tr>
+<td><code>alt_text</code></td>
+<td>OPTIONAL, RECOMMENDED for images</td>
+<td></td>
+</tr>
+<tr>
+<td><code>caption</code></td>
+<td>OPTIONAL</td>
+<td>Precedence over <code>onp:metadata</code> (Section 4.5, rule 2)</td>
+</tr>
+<tr>
+<td><code>credit</code></td>
+<td>OPTIONAL</td>
+<td>Provisional fallback; see Section 4.5, rule 3</td>
+</tr>
+<tr>
+<td><code>creator_ref</code></td>
+<td>OPTIONAL</td>
+<td>Object Reference to an Identity Object (ONP-2300); preferred over <code>credit</code> (Section 4.5, rule 4)</td>
+</tr>
+<tr>
+<td><code>width</code> / <code>height</code></td>
+<td>OPTIONAL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>duration_seconds</code></td>
+<td>OPTIONAL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>rights_ref</code></td>
+<td>OPTIONAL</td>
+<td>Object Reference to a Rights Object (ONP-2400, Section 4.5, rule 7)</td>
+</tr>
+<tr>
+<td><code>payment_ref</code></td>
+<td>OPTIONAL</td>
+<td>Object Reference to a Payments Object (ONP-2500, Section 4.5, rule 8)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-structural-validity-vs-asset-verification">6.1 Structural Validity vs. Asset Verification</h2>
+<pre><code>STRUCTURAL (required for companion_valid = true, ONP-1004 S4.3):
+  - media_type is a recognized enum value
+  - asset_url is a well-formed URI
+  - asset_hash matches the &lt;algorithm-id&gt;:&lt;digest&gt; grammar
+  - mime_type is present
+
+ASSET VERIFICATION (OPTIONAL, a Node's own additional check,
+outside ONP-1004's fixed Validation Result contract):
+  1. Fetch the bytes at asset_url.
+  2. Hash them using the algorithm named in asset_hash.
+  3. Compare to the declared digest.
+  4. MATCH -&gt; asset content-verified.
+     MISMATCH -&gt; asset content NOT verified; a Node SHOULD treat
+     this as a strong signal not to trust the fetched bytes as the
+     one the publisher signed for, without this affecting the Media
+     Object's own core_authenticated or companion_valid status
+     (which concern the envelope, not the externally-hosted bytes).
+</code></pre>
+<h2 id="6-2-interoperability">6.2 Interoperability</h2>
+<p>A Node implementing only Core plus this Companion can structurally
+validate any Media Object without ever fetching the asset itself —
+useful for indexing, cataloguing, or reference-checking use cases
+that do not need the actual bytes. A Node that additionally performs
+asset verification (Section 6.1) gets a stronger guarantee, at the
+cost of a network fetch. Neither is wrong; this document deliberately
+does not mandate which a conforming Node must do, consistent with
+Principle P7 (Time-to-First-Object) — requiring every Node to fetch
+every asset before it can call itself conformant would be a heavy,
+disproportionate bar.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-the-media-object-onp-2100-s-example-article-references">7.1 The Media Object ONP-2100's Example Article References</h2>
+<pre><code class="language-json">{
+  &quot;oid&quot;: &quot;onp:oid:regiopurmerend.nl:foto-fusie-bijeenkomst-01&quot;,
+  &quot;vid&quot;: &quot;onp:vid:sha-256:DeF456-example-digest-bytes&quot;,
+  &quot;publisher&quot;: {
+    &quot;domain&quot;: &quot;regiopurmerend.nl&quot;,
+    &quot;key_id&quot;: &quot;onp:key:2026-07-01&quot;
+  },
+  &quot;signed_at&quot;: &quot;2026-07-28T09:45:00Z&quot;,
+  &quot;signature&quot;: &quot;onp:sig:ed25519:base64url-signature-bytes&quot;,
+  &quot;content_type&quot;: &quot;onp:companion:media&quot;,
+  &quot;content&quot;: {
+    &quot;media_type&quot;: &quot;image&quot;,
+    &quot;asset_url&quot;: &quot;https://regiopurmerend.nl/media/fusie-bijeenkomst-01.jpg&quot;,
+    &quot;asset_hash&quot;: &quot;sha-256:GhI789-example-asset-digest-bytes&quot;,
+    &quot;mime_type&quot;: &quot;image/jpeg&quot;,
+    &quot;alt_text&quot;: &quot;Inwoners van Purmerend tijdens de informatiebijeenkomst over de fusie&quot;,
+    &quot;caption&quot;: &quot;Informatiebijeenkomst over de voorgestelde fusie, juli 2026&quot;,
+    &quot;credit&quot;: &quot;Foto: Redactie RegioPurmerend&quot;,
+    &quot;creator_ref&quot;: &quot;onp:oid:regiopurmerend.nl:redactie&quot;,
+    &quot;width&quot;: 1600,
+    &quot;height&quot;: 900,
+    &quot;rights_ref&quot;: &quot;onp:oid:regiopurmerend.nl:rights-cc-by-standaard&quot;,
+    &quot;payment_ref&quot;: &quot;onp:oid:regiopurmerend.nl:payments-fusie-onderzoek&quot;
+  }
+}
+</code></pre>
+<p>This is the Object <code>onp:oid:regiopurmerend.nl:foto-fusie-bijeenkomst-01</code>
+that ONP-2100 Section 7.1's Article <code>media_refs</code> array pointed to.</p>
+<h2 id="7-2-asset-hash-mismatch-at-verification-time">7.2 Asset Hash Mismatch at Verification Time</h2>
+<pre><code>Node fetches asset_url, computes sha-256 of the bytes received.
+Result does not match the declared asset_hash digest.
+
+Per Section 6.1: core_authenticated and companion_valid for the
+Media Object itself are UNAFFECTED (the envelope is still exactly
+what the publisher signed). What is NOT trusted is that the
+currently-hosted bytes at asset_url are the ones the publisher
+signed for — the asset may have been altered, moved, or served
+incorrectly by the hosting infrastructure after signing. A Node
+SHOULD decline to display the fetched bytes as authoritative in
+this case.
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<h2 id="8-1-asset-hash-detects-post-signing-substitution-if-checked">8.1 Asset Hash Detects Post-Signing Substitution, If Checked</h2>
+<p>The entire value of <code>asset_hash</code> depends on a Node choosing to
+verify it (Section 6.1) — an unchecked <code>asset_hash</code> provides no
+protection at all, only the theoretical possibility of protection.
+This is a materially different trust posture from Article's embedded
+<code>body</code>, where tamper-evidence is automatic by construction (ONP-2100
+Section 8.2). Implementers building anything that treats media
+authenticity as security-relevant (as opposed to purely
+presentational) SHOULD perform asset verification rather than
+relying on <code>asset_hash</code>'s mere presence.</p>
+<h2 id="8-2-hosting-infrastructure-remains-a-trust-dependency-for-the">8.2 Hosting Infrastructure Remains a Trust Dependency for the</h2>
+<pre><code> Bytes Themselves
+</code></pre>
+<p>Even with asset verification, a Node depends on the availability and
+non-interference of whatever infrastructure serves <code>asset_url</code> — a
+compromised or coerced hosting provider could serve different bytes
+to different requesters, which per-requester hash verification would
+still catch (each requester independently detects the mismatch), but
+which this document has no mechanism to prevent in advance. This is
+analogous to the residual compromise-window limitation already
+accepted for domain-anchored trust (ONP-0004 Section 8.1): detection,
+not prevention, is what the Verified Asset Reference pattern
+provides.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>Photos and video frequently depict identifiable people who are not
+the subject of the reporting — bystanders, crowds, minors — which
+raises distinct considerations from text: a person's image is
+personal data in a way that is often unavoidable in event photography
+even when handled responsibly. This document does not mandate any
+specific consent or redaction mechanism; that remains publisher
+editorial and legal responsibility, consistent with Principle P5
+(Jurisdiction Neutrality). Separately, original media files
+frequently carry embedded technical metadata (EXIF: GPS coordinates,
+device identifiers, capture timestamps) that can reveal more than the
+publisher intends — this document RECOMMENDS publishers strip
+sensitive EXIF metadata before setting <code>asset_url</code>, but does not
+mandate or enforce this, as ONP has no mechanism to inspect the
+actual asset bytes at specification-writing time.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0003, Design Principles — Principle P1 (Adjacent Publishing,
+  Section 2.2), Principle P2 (Minimal Required Surface, Section 4.5),
+  Principle P5 (Jurisdiction Neutrality, Section 9), Principle P7
+  (Time-to-First-Object, Section 6.2).</li>
+<li>ONP-1001, Identifiers — the content-addressing principle (VID)
+  this document's Asset Hash extends to externally-hosted content.</li>
+<li>ONP-1004, Validation — Section 4.3, the structural-vs-unknown
+  distinction this document's Section 6.1 extends with a third,
+  explicitly-optional tier (asset verification).</li>
+<li>ONP-1005, Core Metadata — Section 4.3, the precedence rule
+  Section 4.5, rule 2 of this document applies to <code>caption</code>.</li>
+<li>ONP-2000, Companion Framework — Section 4.1 (namespace
+  registration), Section 4.2 (mandatory additions), Section 4.3
+  (Object Reference mechanism connecting Article's <code>media_refs</code> to
+  this Companion).</li>
+<li>ONP-2100, Article — Section 4.7, the <code>media_refs</code> field this
+  Companion is the target of; Section 7.1's example, completed here
+  in Section 7.1.</li>
+<li>ONP-2300, Identity — the publisher-asserted trust model
+  <code>creator_ref</code> (Section 4.5, rule 4) points to.</li>
+<li>ONP-2400, Rights — the Companion <code>rights_ref</code> (Section 4.5, rule
+  7) points to.</li>
+<li>ONP-2500, Payments — the Companion <code>payment_ref</code> (Section 4.5,
+  rule 8) points to.</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>ONP-3500, Accessibility — richer accessibility
+  metadata beyond baseline <code>alt_text</code>.</li>
+</ul>
+<hr />
+<h1 id="appendix-a-full-schema-reference">Appendix A: Full Schema Reference</h1>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:media&quot;,
+  &quot;content&quot;: {
+    &quot;media_type&quot;: &quot;'image' | 'video' | 'audio', REQUIRED&quot;,
+    &quot;asset_url&quot;: &quot;string (URI), REQUIRED&quot;,
+    &quot;asset_hash&quot;: &quot;string '&lt;algorithm-id&gt;:&lt;digest&gt;', REQUIRED&quot;,
+    &quot;mime_type&quot;: &quot;string, REQUIRED&quot;,
+    &quot;alt_text&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;caption&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;credit&quot;: &quot;string, OPTIONAL, provisional&quot;,
+    &quot;creator_ref&quot;: &quot;string (OID), OPTIONAL, preferred over credit&quot;,
+    &quot;width&quot;: &quot;integer, OPTIONAL&quot;,
+    &quot;height&quot;: &quot;integer, OPTIONAL&quot;,
+    &quot;duration_seconds&quot;: &quot;number, OPTIONAL&quot;,
+    &quot;rights_ref&quot;: &quot;string (OID), OPTIONAL&quot;,
+    &quot;payment_ref&quot;: &quot;string (OID), OPTIONAL&quot;
+  }
+}
+</code></pre>
+<h1 id="appendix-b-verified-asset-reference-checklist">Appendix B: Verified Asset Reference Checklist</h1>
+<pre><code>[ ] media_type is one of image/video/audio
+[ ] asset_url is a well-formed URI
+[ ] asset_hash matches &lt;algorithm-id&gt;:&lt;digest&gt;, algorithm from the
+    Algorithm Registry with purpose=hash
+[ ] mime_type present
+[ ] (optional, Node's own policy) asset fetched, hashed, and
+    compared to asset_hash before treating fetched bytes as
+    authoritative
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-full-schema-reference">Appendix A: Full Schema Reference</a></li><li><a href="#appendix-b-verified-asset-reference-checklist">Appendix B: Verified Asset Reference Checklist</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/2200-media.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-0005 Open News Protocol (ONP): Security Model — Open News Protocol</title>
+<meta name="description" content="ONP-0005: Open News Protocol (ONP): Security Model — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-0005</p>
+    <h1 id="top">Open News Protocol (ONP): Security Model</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.1</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the security framework that every other ONP
+specification's design decisions are evaluated against: an
+adversary model naming who ONP defends against and what it
+explicitly does not defend against, a cryptographic agility
+baseline, a set of attack classes specific to ONP's layered
+architecture, and the full comparative analysis — deferred from
+ONP-0003 and ONP-0004 — of why ONP rejects blockchain-based and
+dedicated-PKI-based trust rooting in favor of the domain-anchored
+model ONP-0004 already defines. It also defines the security review
+process a specification MUST pass before reaching Candidate status.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Foundation series (ONP-0000-0999).
+It is normative. It does not depend on ONP-0004 for its own
+correctness — ONP-0004's domain-anchored Trust Model is cited here
+as a worked example of a decision already made under this
+framework (Section 7.1), not as a prerequisite for understanding
+this document. It is a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>"Trust the Object, not the Messenger" (ONP-0001, Section 1) is a
+security claim, and security claims require an explicit adversary
+model to mean anything. A protocol that does not state who it
+defends against, and who it does not, cannot be evaluated — only
+believed. This document states both halves explicitly.</p>
+<p>It also settles, once and for all, a question every reader of
+ONP-0003 (Principle P3, "no blockchain") and ONP-0004 (Section 1,
+"approach 2 rejected") has been told is coming: why not a
+blockchain? Section 4.6 gives the full answer. The short version,
+expanded there: ONP does not have the problem blockchain consensus
+solves.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>the adversary model (who ONP defends against, and the explicit
+  limits of that defense);</li>
+<li>cryptographic agility requirements binding on the Core series;</li>
+<li>attack classes arising specifically from ONP's layered
+  architecture (replay/freshness, downgrade, layer confusion);</li>
+<li>the full rejected-alternatives analysis for blockchain-based and
+  dedicated-PKI-based trust rooting;</li>
+<li>the security review process required before Candidate status.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>specific signature or hash algorithms (see ONP-1003);</li>
+<li>the domain-anchored Trust Anchor mechanism itself (already
+  normatively defined in ONP-0004; this document supplies the
+  comparative rationale ONP-0004 references but does not restate
+  ONP-0004's requirements);</li>
+<li>Object version lineage mechanics (see the forthcoming ONP-0006,
+  Object Lifecycle, and ONP-1000/ONP-1001) — this document states
+  the security <em>property</em> those mechanisms MUST satisfy (Section
+  4.3) without defining the mechanism;</li>
+<li>Companion- or Extension-specific security concerns (e.g. Payments
+  settlement security), which are owned by those specifications.</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document is the owning specification for the following terms.</p>
+<p><strong>Adversary</strong>
+: A party this document models as potentially acting against ONP's
+  security properties. Section 4.1 enumerates the recognized
+  Adversary classes.</p>
+<p><strong>Attack Class</strong>
+: A named category of attack against ONP's layered architecture,
+  distinct from an Adversary (who is attacking) — an Attack Class
+  describes what technique is used (Section 4.3-4.5).</p>
+<p><strong>Cryptographic Agility</strong>
+: The property that ONP does not hardcode a single mandatory
+  cryptographic primitive indefinitely, but instead names algorithms
+  explicitly per Object and supports controlled deprecation
+  (Section 4.2).</p>
+<p><strong>Downgrade Attack</strong>
+: An Attack Class in which an adversary attempts to force a Node to
+  accept a weaker algorithm or Trust Anchor Type than the publisher
+  actually used, typically by stripping or spoofing capability
+  information (Section 4.4).</p>
+<p><strong>Replay Attack (ONP-specific sense)</strong>
+: An Attack Class in which an adversary resubmits a validly signed
+  but superseded version of a News Object, attempting to have a Node
+  treat it as current (Section 4.3). This is distinct from replaying
+  an Object for legitimate historical/archival lookup, which ONP
+  MUST continue to support.</p>
+<p><strong>Algorithm Registry</strong>
+: The WG-maintained list of recognized cryptographic algorithm
+  identifiers and their status (Section 5.1).</p>
+<p><strong>Security Review</strong>
+: The mandatory adversary-model evaluation a specification MUST
+  undergo before advancing to Candidate status (Section 6.3).</p>
+<p><strong>Security Advisory</strong>
+: A WG-published notice deprecating or forbidding an algorithm or
+  flagging a discovered vulnerability (Section 5.2).</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-adversary-model">4.1 Adversary Model</h2>
+<p>ONP's security properties are stated against four Adversary classes.
+For each, this document states both what ONP defends against and
+what it explicitly does not.</p>
+<p><strong>A1 — External Network Attacker.</strong> Can observe and manipulate
+network traffic but holds no valid publisher signing key and does
+not control any publisher's domain.
+<em>Defended against:</em> tampering with an Object in transit (Core
+signature detects modification); impersonating a publisher without
+a valid key (Trust Anchor resolution, ONP-0004, fails).
+<em>Not defended against:</em> traffic analysis revealing which Objects a
+given Node requests (out of scope; see Section 9).</p>
+<p><strong>A2 — Malicious or Compromised Relay/Node.</strong> Forwards, caches, or
+indexes Objects but is not the originating publisher.
+<em>Defended against:</em> forging a new Object under another publisher's
+identity (fails Trust Anchor resolution); silently modifying an
+Object's content while preserving its apparent identity (breaks the
+signature).
+<em>Not defended against:</em> a relay refusing to forward an Object at
+all (availability is out of scope for this document; see Section
+2.2, mitigations belong to the Network Model in ONP-0001 Section
+6.3, which already avoids requiring any single relay).</p>
+<p><strong>A3 — Party with a Compromised or Stolen Publisher Key, or Domain
+Control.</strong> Has obtained a currently-valid signing key or has
+compromised the publisher's HTTPS domain.
+<em>Defended against:</em> Objects signed before compromise remain
+verifiable via the Previous Keys / revocation mechanism (ONP-0004
+Section 4.4) once the compromise is discovered and revoked.
+<em>Not defended against:</em> Objects signed <em>during</em> the compromise
+window, before revocation — this is the fundamental limitation
+already stated plainly in ONP-0004 Section 8.1, and this document
+does not soften that statement. No domain-anchored or PKI-anchored
+system defends against this; only detection speed and revocation
+responsiveness (ONP-0004 Section 6.3) bound the damage.</p>
+<p><strong>A4 — Malicious Companion or Extension Author.</strong> Publishes a
+specification or implementation that attempts to exploit ONP's
+layered architecture rather than the cryptography directly.
+<em>Defended against:</em> by the Vertical and Horizontal Invariants
+(ONP-0001 Sections 4.1-4.3) and the layer-confusion attack class
+(Section 4.5 of this document), which together ensure a Companion
+or Extension cannot acquire Core-level authority.
+<em>Not defended against:</em> a Companion or Extension being adopted
+despite poor design if it passes Security Review (Section 6.3)
+without the reviewer identifying the flaw — this document defines
+the review process, not a guarantee of its infallibility.</p>
+<h2 id="4-2-cryptographic-agility">4.2 Cryptographic Agility</h2>
+<ol>
+<li>Every signed News Object MUST explicitly identify the algorithm
+   used to produce its signature; a Node MUST NOT assume a default
+   algorithm.</li>
+<li>The Core series MUST NOT hardcode a single mandatory algorithm as
+   permanently required; instead, ONP-1003 MUST define an initial
+   REQUIRED baseline algorithm and a process for adding, deprecating,
+   and forbidding algorithms via the Algorithm Registry (Section
+   5.1), without requiring a breaking change to ONP-1003 itself for
+   ordinary deprecation.</li>
+<li>A Node encountering a signature algorithm not present in the
+   Algorithm Registry, or present with <code>forbidden</code> status, MUST
+   reject the Object's signature as invalid. A Node MUST fail
+   closed, not silently ignore the unrecognized algorithm and treat
+   the Object as unsigned or otherwise degrade gracefully into a
+   lower-trust state without explicit local policy authorizing that
+   fallback.</li>
+</ol>
+<h2 id="4-3-freshness-and-version-lineage-security-property">4.3 Freshness and Version Lineage (Security Property)</h2>
+<ol>
+<li>A Node MUST be able to distinguish a News Object's current
+   version from a superseded version within the same lineage.</li>
+<li>A Node MUST NOT present a superseded version as current when a
+   newer, validly signed version is known to it.</li>
+<li>This requirement is a security property that ONP-0006 (Object
+   Lifecycle) and ONP-1000/ONP-1001 (Core State, Identifiers) MUST
+   satisfy in their mechanism design; this document does not itself
+   define version lineage mechanics. The security consequence of
+   failing this property is that an adversary who can serve or cache
+   an old signed version could suppress a correction or retraction
+   the publisher has since issued, exploiting the fact that the old
+   version's signature remains cryptographically valid on its own
+   terms.</li>
+</ol>
+<h2 id="4-4-downgrade-resistance">4.4 Downgrade Resistance</h2>
+<ol>
+<li>A Node MUST NOT select a weaker Trust Anchor Type or algorithm
+   than the strongest one the publisher has actually declared,
+   regardless of what a network intermediary presents.</li>
+<li>Where a publisher's Publisher Key Record (ONP-0004) or Object
+   metadata declares multiple supported mechanisms, a Node MUST use
+   the mechanism the publisher has marked as current/preferred, and
+   MUST treat an attempt to strip that declaration down to a weaker
+   fallback as a validation failure, not as an acceptable
+   negotiation outcome.</li>
+</ol>
+<h2 id="4-5-layer-confusion-restated-as-a-security-requirement">4.5 Layer Confusion (Restated as a Security Requirement)</h2>
+<ol>
+<li>A Node MUST treat a Core-level validation failure as terminal,
+   regardless of how well-formed any Companion or Extension data on
+   the same Object appears. This requirement is architecturally
+   defined in ONP-0001 Sections 4.1 and 6.2; it is restated here as
+   a binding security requirement rather than duplicated in detail.</li>
+<li>A Node MUST treat a conflict between two Extensions' domain
+   claims (Horizontal Invariant violation, ONP-0001 Section 5.3) as
+   a validation error, and MUST NOT resolve such a conflict silently
+   in favor of whichever Extension is processed first.</li>
+</ol>
+<h2 id="4-6-rejected-alternative-blockchain-consensus-based-trust">4.6 Rejected Alternative: Blockchain / Consensus-Based Trust</h2>
+<pre><code> Rooting
+</code></pre>
+<p>This is the full analysis referenced from ONP-0003 (Principle P3)
+and ONP-0004 (Sections 1 and 8.5).</p>
+<p><strong>The core technical argument.</strong> A blockchain's consensus mechanism
+exists to solve one specific problem: establishing a single, globally
+agreed-upon order of events among mutually distrusting parties who
+might otherwise double-spend a scarce, fungible resource. ONP has no
+such resource and no such problem. A News Object's authenticity is
+established by a digital signature, which is independently
+verifiable by any Node without agreement from any other Node.
+Ordering and scarcity are not properties ONP needs to guarantee;
+adopting consensus infrastructure to solve a problem ONP does not
+have would import that infrastructure's costs without its benefit.</p>
+<p><strong>Four supporting arguments:</strong></p>
+<ol>
+<li><strong>Correction hostility.</strong> An append-only ledger with global
+   consensus is deliberately expensive to amend. Journalism requires
+   fast, cheap, frequent correction and retraction (ONP-0006 will
+   define this as a first-class operation). A trust-rooting
+   mechanism that makes correction structurally expensive works
+   against the domain it serves.</li>
+<li><strong>Latency and throughput.</strong> Global consensus adds confirmation
+   latency unsuitable for breaking-news publication cadence, where
+   an Object may need to be verifiable within seconds of signing,
+   not after a confirmation delay measured in minutes or longer.</li>
+<li><strong>Privacy and erasure tension.</strong> Public, immutable ledgers
+   permanently expose whatever metadata is written to them. This sits
+   in direct tension with data protection frameworks discussed in
+   <code>EU-ALIGNMENT.md</code> (GDPR, Data Act) that presume some degree of
+   correctability and erasability is possible; a permanent public
+   record of every publication event is a harder privacy posture to
+   justify than necessary.</li>
+<li><strong>Operational burden.</strong> Requiring publishers or Nodes to run or
+   pay for blockchain infrastructure as a precondition for producing
+   a valid Object directly violates Principle P3 (Ordinary
+   Technology) and Principle P7 (Time-to-First-Object), both
+   ONP-0003. A local government newsroom with one developer and an
+   afternoon should not need to acquire tokens, run a node, or pay
+   gas fees to publish a verifiable article.</li>
+</ol>
+<p><strong>What ONP does adopt instead, and why it is not the same thing.</strong>
+ONP-0004's OPTIONAL Transparency Log (Section 4.5 of that document)
+resembles ledger-based designs superficially but is explicitly
+non-consensus: it is a publicly auditable append-only record with no
+requirement that Nodes agree on its state to validate an Object, and
+no requirement that a publisher use it at all to produce a valid
+Object. It borrows the auditability benefit of a public log (as
+Certificate Transparency does for TLS) without importing consensus,
+ordering, or scarcity machinery ONP does not need.</p>
+<h2 id="4-7-rejected-alternative-dedicated-content-signing-pki">4.7 Rejected Alternative: Dedicated Content-Signing PKI</h2>
+<p>A purpose-built Certificate Authority hierarchy specifically for ONP
+content signing was considered and rejected as the primary
+mechanism, for three reasons:</p>
+<ol>
+<li><strong>New trusted third party.</strong> It introduces a gatekeeper publishers
+   must obtain credentials from, specifically for ONP, in tension
+   with the decentralization goal stated in ONP-0000 Section 1.3.2.</li>
+<li><strong>Adoption friction.</strong> It duplicates work publishers have already
+   done to obtain ordinary TLS certificates for their existing
+   websites, without giving them anything ONP-0004's domain-anchored
+   model does not already provide from that same existing
+   investment — directly contrary to Principle P7.</li>
+<li><strong>No net security gain for this problem.</strong> WebPKI's
+   domain-validated certificates already prove domain control, which
+   is exactly the guarantee ONP-0004 needs. A dedicated CA hierarchy
+   would prove domain control a second time through a different,
+   less-deployed path, without proving anything additional.</li>
+</ol>
+<p>This rejection is not absolute: a Node MAY treat an
+extended-validation-style attestation from an established CA as an
+additional corroborating signal, analogous to the DNS TXT
+corroboration in ONP-0004 Section 4.3, but MUST NOT require it, for
+the same reasons ONP-0004 keeps DNS corroboration optional.</p>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<h2 id="5-1-algorithm-registry-entry-illustrative">5.1 Algorithm Registry Entry (Illustrative)</h2>
+<p>The Algorithm Registry's authoritative, versioned form is maintained
+by the ONP-WG and referenced normatively from ONP-1003. Its entry
+structure:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>algorithm_id</code></td>
+<td>REQUIRED</td>
+<td>Stable identifier, e.g. <code>Ed25519</code>.</td>
+</tr>
+<tr>
+<td><code>purpose</code></td>
+<td>REQUIRED</td>
+<td><code>signature</code> or <code>hash</code>.</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>REQUIRED</td>
+<td>One of <code>required-baseline</code>, <code>recommended</code>, <code>deprecated</code>, <code>forbidden</code>.</td>
+</tr>
+<tr>
+<td><code>status_since</code></td>
+<td>REQUIRED</td>
+<td>Date the current status took effect.</td>
+</tr>
+<tr>
+<td><code>advisory_ref</code></td>
+<td>OPTIONAL</td>
+<td>Pointer to a Security Advisory (Section 5.2) if the status change was advisory-driven.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-2-security-advisory-illustrative">5.2 Security Advisory (Illustrative)</h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>advisory_id</code></td>
+<td>REQUIRED</td>
+<td>Stable identifier.</td>
+</tr>
+<tr>
+<td><code>affected</code></td>
+<td>REQUIRED</td>
+<td>Algorithm(s), mechanism(s), or specification section(s) affected.</td>
+</tr>
+<tr>
+<td><code>severity</code></td>
+<td>REQUIRED</td>
+<td>One of <code>informational</code>, <code>advisory</code>, <code>critical</code>.</td>
+</tr>
+<tr>
+<td><code>recommended_action</code></td>
+<td>REQUIRED</td>
+<td>E.g. "migrate signing keys before DATE," "treat algorithm X as forbidden immediately."</td>
+</tr>
+<tr>
+<td><code>published</code></td>
+<td>REQUIRED</td>
+<td>Publication date.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-algorithm-acceptance-processing">6.1 Algorithm Acceptance Processing</h2>
+<p>A Node validating a signature MUST:</p>
+<pre><code>1. Read the declared algorithm_id from the Object.
+2. Look up algorithm_id in the current Algorithm Registry.
+3. If status is `forbidden` or algorithm_id is unrecognized:
+     -&gt; REJECT (fail closed, per Section 4.2 rule 3).
+4. If status is `deprecated`:
+     -&gt; MAY accept per local policy, SHOULD warn/log.
+5. If status is `required-baseline` or `recommended`:
+     -&gt; proceed with cryptographic verification.
+</code></pre>
+<h2 id="6-2-freshness-check-processing-property-not-mechanism">6.2 Freshness Check Processing (Property, Not Mechanism)</h2>
+<p>Per Section 4.3, this document states only the required outcome:
+given two validly signed versions of the same lineage, a Node MUST
+be able to determine which is current and MUST NOT present the
+superseded one as current. The mechanism (version ordering,
+lineage pointers, explicit "supersedes" declarations) is normatively
+defined in ONP-0006 and ONP-1000/ONP-1001; a Node's processing MUST
+implement whatever mechanism those documents define in a way that
+satisfies this outcome.</p>
+<h2 id="6-3-security-review-process">6.3 Security Review Process</h2>
+<p>Before any ONP specification advances from Working Draft to
+Candidate status, in addition to the Principles review already
+required by ONP-0003 Section 6.1, the ONP-WG MUST conduct a Security
+Review evaluating the specification against each Adversary class in
+Section 4.1: for each class, does the specification introduce a new
+way for that Adversary to defeat a security property ONP otherwise
+guarantees? A specification MUST NOT advance to Candidate status
+with an unresolved Security Review finding, unless a Deviation is
+recorded following the same process ONP-0003 Section 6.3 defines for
+Principles, applied here to Security Review findings.</p>
+<h2 id="6-4-interoperability">6.4 Interoperability</h2>
+<p>Cryptographic Agility (Section 4.2) must not fragment
+interoperability: ONP-1003 MUST define a <code>required-baseline</code>
+algorithm that every conforming Node MUST support, so that two
+Nodes implementing only the mandatory minimum can always verify each
+other's Objects, even as the Algorithm Registry (Section 5.1)
+accumulates <code>recommended</code> alternatives over time. Agility expands
+what a Node MAY additionally support; it MUST NOT be read as
+license to ship a Node that supports only a non-baseline algorithm
+and calls itself conformant.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-onp-0004-as-a-worked-example-of-this-framework">7.1 ONP-0004 as a Worked Example of This Framework</h2>
+<p>ONP-0004's domain-anchored Trust Model, already published, is a
+worked example of a decision made under this document's rejected-
+alternatives framework:</p>
+<pre><code>Candidate mechanisms considered (ONP-0004 Section 1):
+  1. Dedicated PKI      -&gt; rejected per Section 4.7 of this document
+  2. Blockchain/ledger  -&gt; rejected per Section 4.6 of this document
+  3. DNS alone          -&gt; demoted to corroborating signal only
+  4. Domain-anchored HTTPS -&gt; adopted as REQUIRED baseline
+
+This is cited as an example of the framework in use, not as a
+dependency this document requires to be understood.
+</code></pre>
+<h2 id="7-2-blockchain-vs-onp-comparative-table">7.2 Blockchain vs. ONP — Comparative Table</h2>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th>Blockchain-rooted trust</th>
+<th>ONP (domain-anchored + signature)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Problem actually solved</td>
+<td>Double-spend / global ordering of a scarce resource</td>
+<td>Authenticity and integrity of an independently verifiable object</td>
+</tr>
+<tr>
+<td>Correction cost</td>
+<td>High — amending an append-only consensus record is deliberately expensive</td>
+<td>Low — a new signed version supersedes the old; see ONP-0006</td>
+</tr>
+<tr>
+<td>Confirmation latency</td>
+<td>Consensus-dependent, often seconds to minutes</td>
+<td>Immediate — verification is local, no confirmation wait</td>
+</tr>
+<tr>
+<td>Operational cost to publish</td>
+<td>Running/paying for ledger infrastructure</td>
+<td>An HTTPS endpoint the publisher already operates</td>
+</tr>
+<tr>
+<td>Privacy / erasure posture</td>
+<td>Permanent public record by design</td>
+<td>Publisher controls what is exposed; optional Transparency Log only for key changes, not content</td>
+</tr>
+<tr>
+<td>Fit with Principle P7 (Time-to-First-Object)</td>
+<td>Poor — new infrastructure required</td>
+<td>Good — ordinary web tooling suffices</td>
+</tr>
+</tbody>
+</table>
+<h2 id="7-3-downgrade-attack-rejected">7.3 Downgrade Attack, Rejected</h2>
+<pre><code>Publisher declares (Publisher Key Record, ONP-0004):
+  current Trust Anchor Type: domain (with eudi also configured)
+Network attacker strips the eudi declaration in transit,
+  presenting only a weaker, spoofed alternative.
+Node behavior (per Section 4.4):
+  MUST use the publisher's actually-declared preferred mechanism;
+  detecting a stripped/inconsistent declaration MUST be treated as
+  a validation failure, not silently downgraded.
+</code></pre>
+<h2 id="7-4-replay-of-a-superseded-version-rejected">7.4 Replay of a Superseded Version, Rejected</h2>
+<pre><code>Publisher issues Version 1 of an Article, later issues a
+correction as Version 2 (both validly signed).
+Adversary re-serves Version 1 to a Node that has already seen
+Version 2.
+Required Node behavior (Section 4.3):
+  the Node MUST recognize Version 1 as superseded (mechanism per
+  ONP-0006) and MUST NOT present it as current, even though
+  Version 1's own signature remains valid on its own terms.
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<p>This document is, in its entirety, a Security Considerations
+document for the ONP series; this section addresses residual risks
+not otherwise covered above.</p>
+<p><strong>Working Group compromise.</strong> This document's own integrity depends
+on the ONP-WG's publication channel, per ONP-0000 Section 5.3
+(Document Provenance), which is not re-analyzed here. A compromised
+publication channel could distribute a tampered Algorithm Registry
+(Section 5.1) or a false Security Advisory (Section 5.2); this is a
+process and infrastructure risk for the ONP-WG, not a protocol-level
+one, and is out of scope for a wire-level defense within ONP itself.</p>
+<p><strong>Reference implementation supply chain.</strong> Vulnerabilities in a
+reference implementation (ONP-9000) are outside
+this document's scope; ONP-9002 (Security Checklist) addresses
+implementation-level guidance.</p>
+<p><strong>Residual compromise window.</strong> As stated in Section 4.1 (Adversary
+A3) and ONP-0004 Section 8.1, no mechanism in this document or in
+ONP-0004 defends against Objects signed during an undetected key or
+domain compromise. This is stated once more here, explicitly, so
+that no later specification is written under the mistaken assumption
+that ONP eliminates this risk rather than bounding it.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>The Algorithm Registry and Security Advisory structures (Section 5)
+carry no personal data. The freshness/lineage security property
+(Section 4.3) has a minor indirect privacy implication: a mechanism
+that reveals which version of an Object is "current" necessarily
+reveals some publication and correction timing metadata; this is
+inherent to supporting corrections at all (ONP-0000 Section 1.1
+identifies "corrections and retractions linked to the original" as
+a design goal, not an optional feature) and is judged an acceptable
+and necessary tradeoff. Detailed privacy analysis of any specific
+timing metadata field belongs to whichever document defines that
+field (ONP-1000, ONP-0006), not to this document.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0000, Introduction — Section 5 (Security Considerations at the
+  document-series level) and Section 1.1 (correction as a named
+  design goal, referenced in Section 9).</li>
+<li>ONP-0001, Architecture — Vertical and Horizontal Invariants,
+  restated as security requirements in Section 4.5.</li>
+<li>ONP-0003, Design Principles — Principle P3 (Ordinary Technology)
+  and Principle P7 (Time-to-First-Object), both directly motivating
+  Sections 4.6 and 4.7; Section 6.1 (specification review),
+  extended by Section 6.3 of this document.</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>ONP-0004, Trust Model — cited as a worked example (Section 7.1)
+  of a decision made under this framework; not a dependency for
+  understanding this document.</li>
+<li><code>EU-ALIGNMENT.md</code> — cited in Section 4.6 regarding privacy/erasure
+  tension with public ledgers.</li>
+<li>ONP-0006, Object Lifecycle (forward reference — normative
+  mechanism for the freshness property in Section 4.3).</li>
+<li>ONP-1000, News Object; ONP-1001, Identifiers (forward references —
+  version lineage mechanics).</li>
+<li>ONP-1003, Digital Signatures (forward reference — authoritative
+  Algorithm Registry and REQUIRED baseline algorithm).</li>
+<li>ONP-9002, Security Checklist — implementation-
+  level guidance, Reference series.</li>
+<li>Nakamoto, S., "Bitcoin: A Peer-to-Peer Electronic Cash System,"
+  2008 — cited informatively in Section 4.6 as the canonical
+  statement of the double-spend/consensus problem blockchain
+  consensus mechanisms solve, which this document argues ONP does
+  not have.</li>
+<li>Certificate Transparency (RFC 9162) — the non-consensus log design
+  pattern referenced in Section 4.6 as what ONP-0004's Transparency
+  Log follows instead of ledger consensus.</li>
+</ul>
+<hr />
+<h1 id="appendix-a-illustrative-initial-algorithm-registry">Appendix A: Illustrative Initial Algorithm Registry</h1>
+<table>
+<thead>
+<tr>
+<th>algorithm_id</th>
+<th>purpose</th>
+<th>status</th>
+<th>status_since</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ed25519</td>
+<td>signature</td>
+<td>required-baseline</td>
+<td>2026-07-28</td>
+</tr>
+<tr>
+<td>ECDSA-P256</td>
+<td>signature</td>
+<td>recommended</td>
+<td>2026-07-28</td>
+</tr>
+<tr>
+<td>RSA-2048</td>
+<td>signature</td>
+<td>deprecated</td>
+<td>2026-07-28</td>
+</tr>
+<tr>
+<td>SHA-256</td>
+<td>hash</td>
+<td>required-baseline</td>
+<td>2026-07-28</td>
+</tr>
+<tr>
+<td>SHA-1</td>
+<td>hash</td>
+<td>forbidden</td>
+<td>2026-07-28</td>
+</tr>
+<tr>
+<td>MD5</td>
+<td>hash</td>
+<td>forbidden</td>
+<td>2026-07-28</td>
+</tr>
+</tbody>
+</table>
+<p>This table is illustrative of the registry's shape. Its
+authoritative initial content is normatively fixed in ONP-1003, not
+here.</p>
+<h1 id="appendix-b-security-review-checklist">Appendix B: Security Review Checklist</h1>
+<pre><code>For each Adversary class (Section 4.1), evaluate the specification
+under review:
+
+[ ] A1 (External Network Attacker): does the specification introduce
+    any new way to tamper with or impersonate content without a
+    valid key or domain control?
+[ ] A2 (Malicious/Compromised Relay): does the specification give a
+    relay any authority beyond forwarding/caching signed Objects?
+[ ] A3 (Compromised Key/Domain): does the specification introduce a
+    new mechanism whose compromise window is wider or harder to
+    detect than the baseline in ONP-0004 Section 8.1?
+[ ] A4 (Malicious Companion/Extension Author): does the
+    specification, if it is itself a Companion or Extension, respect
+    the Vertical and Horizontal Invariants (ONP-0001)? If it is a
+    Foundation or Core specification, does it give any Companion or
+    Extension a path to violate them?
+
+[ ] Cryptographic Agility: if the specification touches signing or
+    hashing, does it reference the Algorithm Registry (Section 5.1)
+    rather than hardcoding an algorithm inline?
+[ ] Freshness: if the specification touches versioning, does it
+    satisfy the property in Section 4.3?
+[ ] Downgrade: if the specification offers multiple mechanisms or
+    algorithms, does it define which one is authoritative and
+    require fail-closed behavior on ambiguity (Section 4.4)?
+
+Outcome: PASS / FINDING (with Deviation per Section 6.3) / BLOCKED
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-illustrative-initial-algorithm-registry">Appendix A: Illustrative Initial Algorithm Registry</a></li><li><a href="#appendix-b-security-review-checklist">Appendix B: Security Review Checklist</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/0005-security-model.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

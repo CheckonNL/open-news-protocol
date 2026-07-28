@@ -70,6 +70,11 @@ schemas/     JSON Schema (2020-12) definitions: News Object envelope,
              Publisher Key Record (structural layer only)
 tools/       check-specs.py — spec lint run in CI: headers,
              terminology single-source, registry sync
+             build-site.py — generates the website's specification
+             pages from specs/*.md; CI fails if they drift
+docs/        The public website (GitHub Pages), including an
+             in-browser verifier that runs the real ONP-1003
+             pipeline on an editable signed object
 examples/    Standalone example News Objects (not yet populated)
 diagrams/    Source files for diagrams used across specs (not yet populated)
 sdk/         Reference SDK / client libraries

@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-0007 Open News Protocol (ONP): Versioning Policy — Open News Protocol</title>
+<meta name="description" content="ONP-0007: Open News Protocol (ONP): Versioning Policy — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-0007</p>
+    <h1 id="top">Open News Protocol (ONP): Versioning Policy</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.1</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document is the authoritative policy for how an ONP
+Specification's own <code>Version</code> field changes over time, and for the
+process by which a Specification moves between Status levels
+(Working Draft, Candidate, Standards Track, Obsolete). ONP-0000
+Section 3.5 introduced semantic versioning informally; this document
+replaces that informal statement with a precise policy, including
+the pre-1.0 semantics every currently published ONP specification is
+operating under, and a worked classification rule for the specific
+case this series has already encountered four times: is adding a new
+entry to an append-only registry (ONP-0002 Appendix A) a MAJOR,
+MINOR, or PATCH change? This document answers that question
+precisely enough that it never needs to be re-derived per instance.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Foundation series (ONP-0000-0999)
+and is its closing document. It is normative and supersedes ONP-0000
+Section 3.5 as the authoritative source of versioning rules; ONP-0000
+retains only a pointer to this document (see Section 10 of this
+document for the corresponding update made to ONP-0000). It is a
+Working Draft — notably, it is itself subject to the pre-1.0
+semantics it defines in Section 4.2.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<p><strong>Terminology note:</strong> "Version" in this document refers to a
+Specification's own semantic version number. It is unrelated to a
+News Object Version (ONP-0006), which uses the same English word for
+an unrelated concept. Neither document redefines the other's term.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>Six Foundation specifications have already been published and
+revised under an informally stated versioning rule. That informal
+rule was sufficient to get the series started but left real
+questions unanswered in practice: when ONP-0002's registry gained
+new entries four separate times in one working session, each bump
+was judged MINOR by convention rather than by a citable rule. This
+document exists so that judgment call never has to be remade from
+scratch, and so that every future Companion, Extension, and Core
+specification inherits one precise, worked-out policy rather than
+each author reasoning about semantic versioning independently.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>precise MAJOR/MINOR/PATCH classification criteria;</li>
+<li>pre-1.0 (<code>0.y.z</code>) semantics and how they differ from post-1.0
+  semantics;</li>
+<li>the worked classification rule for registry and appendix changes;</li>
+<li>the Status transition process (what must pass before a
+  specification advances from Working Draft to Candidate to
+  Standards Track, and how Obsolete is handled);</li>
+<li>the Version History Entry structure specifications SHOULD
+  maintain going forward.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>the human governance process behind a Status transition decision
+  (voting, WG membership, quorum) — that belongs to a future
+  <code>CHARTER.md</code>, not yet published, and is explicitly out of scope
+  here: this document defines what must be TRUE for a transition
+  (Section 4.5), not WHO decides it is true;</li>
+<li>retroactive changelog backfilling for ONP-0000 through ONP-0006
+  (Section 5.2 addresses this as a SHOULD, not a mandate);</li>
+<li>Migration guidance for a specific breaking change (see ONP-9004,
+  Reference series).</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document is the owning specification for the following terms.</p>
+<p><strong>Pre-1.0 Phase</strong>
+: The period during which a Specification's Version remains below
+  <code>1.0.0</code>. Governed by distinct rules from post-1.0 (Section 4.2).</p>
+<p><strong>Change Classification</strong>
+: The act of determining whether a proposed edit to a Specification
+  is MAJOR, MINOR, or PATCH per Section 4.</p>
+<p><strong>Status Transition</strong>
+: The act of moving a Specification from one Status level (ONP-0000
+  Section 4.4) to the next, subject to the preconditions in Section
+  4.5.</p>
+<p><strong>Version History Entry</strong>
+: A record of a single Version change: its number, date, Change
+  Classification, and a one-line summary (Section 5.1).</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-version-number-semantics">4.1 Version Number Semantics</h2>
+<p>A Specification's <code>Version</code> field MUST follow <code>MAJOR.MINOR.PATCH</code>:</p>
+<ul>
+<li><strong>MAJOR</strong> — a change that breaks a normative Requirement: removes
+  or weakens a MUST, changes the mandatory section template or
+  filename convention, reassigns an existing Terminology Registry
+  entry's owning document or meaning, or otherwise invalidates a
+  previously-conformant implementation or specification.</li>
+<li><strong>MINOR</strong> — a change that is additive and backward-compatible: a
+  new OPTIONAL field, a new SHOULD/MAY guidance, a new Terminology
+  Registry entry, a new worked example, or new content that does not
+  invalidate anything previously conformant.</li>
+<li><strong>PATCH</strong> — a purely editorial change with no normative effect:
+  wording clarification, typo correction, formatting, or a
+  Terminology Registry gloss correction that does not change the
+  entry's owning document or meaning.</li>
+</ul>
+<h2 id="4-2-pre-1-0-semantics">4.2 Pre-1.0 Semantics</h2>
+<ol>
+<li>Every Specification MUST begin at <code>0.1.0</code> and MUST remain in the
+   <code>0.y.z</code> range for as long as its Status is <code>Working Draft</code>.</li>
+<li>While in the <code>0.y.z</code> range, a Specification MUST NOT use a MAJOR
+   bump under any circumstances, including for changes that would
+   otherwise meet the MAJOR criteria in Section 4.1. Instead, such a
+   change MUST bump MINOR (<code>0.y.z</code> -&gt; <code>0.(y+1).0</code>). This reflects
+   ordinary semantic versioning convention for major version zero:
+   the public interface is understood to be still settling, and
+   MINOR is the ceiling for meaningful change during this phase.</li>
+<li>A PATCH bump remains available and MUST be used, even pre-1.0,
+   for purely editorial changes, so that editorial history remains
+   distinguishable from substantive revision history.</li>
+<li>This is not a loophole around Section 4.1's MAJOR criteria — a
+   pre-1.0 MINOR bump for what would, post-1.0, be a MAJOR change
+   MUST still be called out explicitly in that Specification's own
+   prose (as ONP-0000 Section 4.1 and Section 7.3 already do for
+   their own roadmap and template changes), so that readers are not
+   misled by the version number alone into assuming the change was
+   small.</li>
+</ol>
+<h2 id="4-3-post-1-0-semantics">4.3 Post-1.0 Semantics</h2>
+<ol>
+<li>A Specification MUST NOT declare <code>1.0.0</code> while its Status remains
+   <code>Working Draft</code>. Reaching <code>1.0.0</code> requires, at minimum, Candidate
+   Status (Section 4.5).</li>
+<li>Once at or beyond <code>1.0.0</code>, standard semantic versioning applies
+   without the pre-1.0 exception in Section 4.2: a MAJOR bump is
+   REQUIRED for any change meeting the MAJOR criteria in Section 4.1,
+   and MUST be accompanied by Migration guidance (forward reference,
+   ONP-9004) for any dependent specification or implementation.</li>
+</ol>
+<h2 id="4-4-registry-and-appendix-change-classification-worked-rule">4.4 Registry and Appendix Change Classification (Worked Rule)</h2>
+<p>This rule resolves the specific, previously ad hoc question this
+series encountered with ONP-0002's Terminology Registry, and applies
+equally to any other append-only registry or catalog an ONP
+Specification maintains (e.g. ONP-0005's Algorithm Registry,
+Appendix A):</p>
+<ol>
+<li>Adding a new entry to an append-only registry or appendix, where
+   the entry did not previously exist and its addition does not
+   alter any existing entry, MUST be classified MINOR.</li>
+<li>Correcting an existing entry's gloss, wording, or formatting
+   without changing its owning document or its substantive meaning
+   MUST be classified PATCH.</li>
+<li>Changing an existing entry's owning document, reassigning its
+   status (e.g. <code>active</code> to <code>withdrawn</code>) in a way that invalidates
+   prior reliance on it, or otherwise altering its substantive
+   meaning MUST be classified MAJOR post-1.0, or MINOR-with-explicit-
+   callout pre-1.0 per Section 4.2 rule 4.</li>
+<li>Every MINOR bump made under rule 1 of this section MUST still
+   append a Version History Entry (Section 5.1) naming which new
+   entries were added, so that the registry's own change history
+   remains auditable independent of the owning document's broader
+   prose changes.</li>
+</ol>
+<h2 id="4-5-status-transition-preconditions">4.5 Status Transition Preconditions</h2>
+<p>A Specification MUST NOT be marked as having reached a given Status
+level until the following preconditions for that level are met.
+This document defines the preconditions; the human decision process
+that confirms they are met is out of scope (Section 2.2).</p>
+<p><strong>Working Draft -&gt; Candidate</strong> requires ALL of:
+* a Principles Review per ONP-0003 Section 6.1, with no unresolved
+  finding (or a recorded Deviation);
+* a Security Review per ONP-0005 Section 6.3, with no unresolved
+  finding (or a recorded Deviation);
+* full Terminology Registration per ONP-0002 Section 6.2 — every
+  term the Specification introduces is registered, and no term it
+  uses conflicts with an existing entry.</p>
+<p><strong>Candidate -&gt; Standards Track</strong> requires:
+* the Version reaching <code>1.0.0</code> or later (Section 4.3);
+* at least one demonstrated, independent implementation exercising
+  the Specification's Requirements — consistent with Principle P7
+  (Time-to-First-Object, ONP-0003), a Specification that cannot be
+  implemented by an independent party is not ready to be called
+  stable.</p>
+<p><strong>Any Status -&gt; Obsolete</strong> requires:
+* a stated successor Specification or an explicit statement that
+  the Specification's function is retired without replacement;
+* the Specification's number remains permanently assigned to it
+  (ONP-0000 Section 3.1) — Obsolete is not equivalent to
+  "available for reuse."</p>
+<p><strong>Obsolete -&gt; Working Draft (revival)</strong> is permitted for the same
+Specification (not a reuse of its number for a different topic,
+which remains prohibited) but MUST reset its Version to a new <code>0.y.z</code>
+value greater than any it previously held, and MUST NOT resume the
+old Version sequence as though the Obsolete period had not happened.</p>
+<h2 id="4-6-cross-document-version-compatibility-signaling">4.6 Cross-Document Version Compatibility Signaling</h2>
+<ol>
+<li>When one Specification declares a dependency on another (per
+   ONP-0000 Section 4.2), it SHOULD state the minimum Version of the
+   dependency it requires.</li>
+<li>A MAJOR version mismatch (post-1.0) between a declared minimum
+   and an available Specification MUST be treated as incompatible by
+   any tooling checking conformance.</li>
+<li>A MINOR or PATCH difference SHOULD be treated as compatible,
+   consistent with the additive, non-breaking nature MINOR and PATCH
+   changes are required to have under Section 4.1.</li>
+</ol>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<h2 id="5-1-version-history-entry-illustrative">5.1 Version History Entry (Illustrative)</h2>
+<p>Every ONP Specification SHOULD maintain a Version History as a
+final appendix, structured as:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>version</code></td>
+<td>REQUIRED</td>
+<td>The Version number reached.</td>
+</tr>
+<tr>
+<td><code>date</code></td>
+<td>REQUIRED</td>
+<td>Date of the change.</td>
+</tr>
+<tr>
+<td><code>classification</code></td>
+<td>REQUIRED</td>
+<td><code>MAJOR</code>, <code>MINOR</code>, or <code>PATCH</code>.</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td>REQUIRED</td>
+<td>One-line description of what changed.</td>
+</tr>
+</tbody>
+</table>
+<p>This requirement applies to Specifications published from ONP-0007
+onward. ONP-0000 through ONP-0006 SHOULD backfill this appendix at
+their next substantive revision rather than as an immediate,
+change-free patch solely to add history (which would itself need
+its own Version History Entry to describe truthfully, and would add
+no normative value in the meantime).</p>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-change-classification-algorithm">6.1 Change Classification Algorithm</h2>
+<pre><code>Given a proposed change to Specification S (currently at version V):
+
+1. Does the change alter the mandatory section template, filename
+   convention, or any MUST/MUST NOT in S's Requirements section,
+   in a way that a previously-conformant reader/implementation
+   would now be non-conformant?
+     YES -&gt; proceed to step 2.
+     NO  -&gt; proceed to step 4.
+
+2. Is S currently pre-1.0 (V &lt; 1.0.0)?
+     YES -&gt; classify MINOR, with mandatory explicit prose callout
+            (Section 4.2, rule 4).
+     NO  -&gt; classify MAJOR, with mandatory Migration guidance
+            (Section 4.3, rule 2).
+
+3. (unreached; steps 1-2 are exhaustive for the breaking-change path)
+
+4. Is the change additive only (new OPTIONAL field, new registry
+   entry, new SHOULD/MAY guidance, new example) with no existing
+   Requirement altered?
+     YES -&gt; classify MINOR.
+     NO  -&gt; proceed to step 5.
+
+5. Is the change purely editorial (wording, formatting, gloss
+   correction with no meaning change)?
+     YES -&gt; classify PATCH.
+     NO  -&gt; the change does not fit steps 1-5 cleanly; treat as
+            MINOR pending explicit WG classification, and flag for
+            review rather than guessing.
+</code></pre>
+<h2 id="6-2-status-transition-workflow">6.2 Status Transition Workflow</h2>
+<pre><code>Working Draft
+     |
+     |  Principles Review PASS (ONP-0003 S6.1)
+     |  Security Review PASS (ONP-0005 S6.3)
+     |  Terminology Registration complete (ONP-0002 S6.2)
+     v
+  Candidate
+     |
+     |  Version &gt;= 1.0.0
+     |  Independent implementation demonstrated
+     v
+Standards Track  ----------&gt;  Obsolete
+                  (successor    (any Status may transition
+                   published,    here per Section 4.5)
+                   or retired
+                   without
+                   replacement)
+</code></pre>
+<h2 id="6-3-interoperability">6.3 Interoperability</h2>
+<p>Version compatibility signaling (Section 4.6) is what allows
+independent tooling — a Node's dependency checker, a documentation
+site generator, a conformance test harness — to determine
+compatibility mechanically rather than by a human re-reading prose
+diffs. A tool that understands MAJOR/MINOR/PATCH semantics per this
+document can correctly reason about a Specification's dependency
+graph (ONP-0000 Section 4.2) without understanding that
+Specification's substantive content at all — this is a deliberate
+design goal, analogous to how strict layering (ONP-0001) lets a
+minimal Node verify Objects without understanding every Companion's
+domain content.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-retroactive-classification-of-this-session-s-actual-history">7.1 Retroactive Classification of This Session's Actual History</h2>
+<pre><code>ONP-0000  0.1.0 -&gt; 0.2.0
+  Change: mission statement, four pillars, problem statement, and
+          roadmap catalog replacement added.
+  Classification per Section 6.1: touches Section 4.1's numbering
+  scheme content (a catalog replacement), but does not alter the
+  mandatory section template or any MUST governing OTHER documents'
+  structure -&gt; did not meet step 1's bar for THIS document's own
+  Requirements -&gt; correctly classified MINOR under step 4.
+
+ONP-0000  0.2.0 -&gt; 0.3.0
+  Change: mandatory section template (Section 3.2) and filename
+          convention (Section 3.1) replaced.
+  Classification: meets step 1 (alters what every OTHER
+  specification's Requirements section must look like) -&gt; step 2:
+  V was pre-1.0 -&gt; MINOR with explicit callout. This matches what
+  was actually done at the time, retroactively validated by this
+  document's own rule.
+
+ONP-0002  0.1.0 -&gt; 0.2.0 -&gt; 0.3.0 -&gt; 0.4.0
+  Change (each step): new Terminology Registry entries added,
+          no existing entry's owning document or meaning changed.
+  Classification per Section 4.4, rule 1: MINOR, each time.
+  This matches what was actually done, and is now backed by an
+  explicit, citable rule rather than an unstated convention.
+</code></pre>
+<h2 id="7-2-a-hypothetical-major-case-post-1-0">7.2 A Hypothetical MAJOR Case, Post-1.0</h2>
+<pre><code>Suppose ONP-1003 (Digital Signatures) has reached Standards Track
+at version 2.1.0, and the WG later needs to remove Ed25519 from
+required-baseline status, replacing it with a different algorithm
+as the mandatory minimum.
+
+Classification: this invalidates any Node conformant under the old
+required-baseline -&gt; meets step 1 -&gt; V &gt;= 1.0.0 -&gt; MAJOR bump to
+3.0.0, with mandatory Migration guidance (ONP-9004) describing how
+implementations should transition.
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<p>A stale or misattributed Specification version creates a supply-
+chain-adjacent risk: an implementation built against a claimed
+version that does not match the actual, current normative text could
+silently diverge from the real requirements (e.g. an implementation
+built against a Working Draft that has since had a Security Review
+finding resolved with a breaking MINOR change, per Section 4.2 rule
+4, that the implementer never saw). This is the same class of risk
+ONP-0000 Section 5.3 (Document Provenance) already names at the
+document-integrity level; this document's contribution is ensuring
+that when a Specification does change, the Version number and
+Version History Entry (Section 5.1) make that change discoverable
+and classifiable, rather than silent.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>Version History Entries (Section 5.1) record editorial and technical
+change activity, not personal data. No privacy impact is introduced
+by this document.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0000, Introduction — Section 3.5 (superseded by this document;
+  ONP-0000 is updated to point here, see Section 10.3) and Section
+  4.4 (Status level meanings, which this document's Section 4.5
+  supplies the transition process for).</li>
+<li>ONP-0002, Terminology — Section 6.2 (registration review),
+  referenced as a Candidate-transition precondition (Section 4.5).</li>
+<li>ONP-0003, Design Principles — Section 6.1 (Principles Review) and
+  Principle P7 (Time-to-First-Object), both referenced as Status
+  transition preconditions.</li>
+<li>ONP-0005, Security Model — Section 6.3 (Security Review),
+  referenced as a Candidate-transition precondition.</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>ONP-9004, Migration — guidance format for MAJOR post-1.0 changes,
+  Section 4.3.</li>
+<li><code>CHARTER.md</code> — the human governance process
+  behind Status Transition decisions, explicitly out of scope here
+  per Section 2.2.</li>
+<li>Semantic Versioning 2.0.0 (semver.org) — the general specification
+  this document's MAJOR.MINOR.PATCH policy is derived from, including
+  the major-version-zero convention adopted in Section 4.2.</li>
+</ul>
+<h2 id="10-3-corresponding-update-to-onp-0000">10.3 Corresponding Update to ONP-0000</h2>
+<p>As part of this document's publication, ONP-0000 Section 3.5
+("Versioning Discipline") is updated to read as a pointer to this
+document rather than restating versioning rules, consistent with the
+single-owner terminology and content-ownership discipline this
+series has followed since ONP-0001 and ONP-0002 were published.</p>
+<hr />
+<h1 id="appendix-a-change-classification-quick-reference">Appendix A: Change Classification Quick Reference</h1>
+<pre><code>[ ] Breaks a MUST, the mandatory template, or the filename
+    convention, invalidating prior conformance?
+      pre-1.0  -&gt; MINOR (with explicit callout)
+      &gt;=1.0.0  -&gt; MAJOR (with Migration guidance)
+[ ] Purely additive (new OPTIONAL field, new registry entry, new
+    SHOULD/MAY, new example), nothing existing invalidated?
+      -&gt; MINOR
+[ ] Purely editorial (wording, formatting, gloss correction, no
+    meaning change)?
+      -&gt; PATCH
+[ ] Doesn't fit cleanly above?
+      -&gt; default MINOR, flag for explicit WG classification
+</code></pre>
+<h1 id="appendix-b-status-transition-precondition-checklist">Appendix B: Status Transition Precondition Checklist</h1>
+<pre><code>Working Draft -&gt; Candidate:
+  [ ] Principles Review passed (ONP-0003 S6.1) or Deviation recorded
+  [ ] Security Review passed (ONP-0005 S6.3) or Deviation recorded
+  [ ] Terminology Registration complete (ONP-0002 S6.2)
+
+Candidate -&gt; Standards Track:
+  [ ] Version &gt;= 1.0.0
+  [ ] At least one independent implementation demonstrated
+
+Any -&gt; Obsolete:
+  [ ] Successor named, OR explicit retirement-without-replacement
+      statement
+  [ ] Number remains permanently assigned (never reused)
+
+Obsolete -&gt; Working Draft (revival, same document only):
+  [ ] New 0.y.z Version greater than any previously held
+  [ ] Old Version sequence not resumed
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-change-classification-quick-reference">Appendix A: Change Classification Quick Reference</a></li><li><a href="#appendix-b-status-transition-precondition-checklist">Appendix B: Status Transition Precondition Checklist</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/0007-versioning-policy.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

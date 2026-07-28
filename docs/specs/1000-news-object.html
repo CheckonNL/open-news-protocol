@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-1000 Open News Protocol (ONP): News Object — Open News Protocol</title>
+<meta name="description" content="ONP-1000: Open News Protocol (ONP): News Object — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-1000</p>
+    <h1 id="top">Open News Protocol (ONP): News Object</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.3.1</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the News Object envelope: the top-level wire
+structure every ONP Object MUST use, composed of Core State (owned
+by this document, with exact formats delegated to ONP-1001 and
+ONP-1003), an opaque Content region (owned by whichever Companion a
+<code>content_type</code> identifier names), and the OPTIONAL Extensions
+container already structurally defined in ONP-0001. It finalizes,
+as authoritative wire format, the lifecycle fields ONP-0006
+introduced illustratively, and the Minimal Viable Object field list
+Principle P2 (ONP-0003) requires to exist but did not itself specify.
+It also resolves a naming overlap the Terminology Registry carried
+since ONP-0001: "Tombstone state" is not a second field alongside
+<code>lifecycle_state</code> — it is the name for what <code>lifecycle_state:
+retracted</code> is.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Core series (ONP-1000-1999). Unlike
+the Foundation series, it is directly implementable: a conforming
+Node can be built against this document, ONP-1001, and ONP-1003
+alone and correctly parse and Core-validate any News Object,
+independent of which Companions or Extensions that Object also
+carries (ONP-0001 Section 6.5). It is a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>Every prior Foundation document described the News Object's shape
+illustratively and deferred its authoritative form here: ONP-0001
+sketched the three-region envelope (Core State, Content, Extensions);
+ONP-0004 illustrated a <code>publisher</code> reference without fixing its
+field names; ONP-0006 defined <code>lifecycle_state</code>, <code>supersedes</code>,
+<code>revision_reason</code>, and <code>republish_of_retraction</code> as mechanism, noting
+their wire format was "structurally finalized in ONP-1000/1001."
+This document is where those deferrals are collected and fixed.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>the top-level envelope structure and its required/optional keys;</li>
+<li>the Core State field list this document owns directly (<code>publisher</code>
+  reference) and the fields it finalizes on behalf of ONP-0006
+  (lifecycle fields);</li>
+<li>the Minimal Viable Object's exact field list (finalizing the term
+  ONP-0003 owns, per Section 4.2);</li>
+<li>the Content region's opacity requirement relative to Core
+  validation;</li>
+<li>the <code>content_type</code> namespace identifier scheme;</li>
+<li>the reconciliation of "Tombstone state" with <code>lifecycle_state</code>.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>the exact OID/VID generation algorithm or string format (ONP-1001);</li>
+<li>canonical serialization/byte encoding for signing (ONP-1002);</li>
+<li>the signature computation, algorithm registry entries, or
+  signature field's exact encoding (ONP-1003);</li>
+<li>the multi-level validation procedure itself, beyond restating that
+  Content MUST remain opaque to it (ONP-1004);</li>
+<li>any specific Companion's Content schema (e.g. Article, ONP-2100)
+  or any Extension's fields under <code>onp:extensions</code>.</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document is the owning specification for the following terms.</p>
+<p><strong>Envelope</strong>
+: The complete top-level JSON structure of a News Object: Core
+  State fields, the <code>content</code> region, and the OPTIONAL
+  <code>onp:extensions</code> container, all as direct siblings at the top
+  level (Section 5.1).</p>
+<p><strong>Content Region</strong>
+: The <code>content</code> field: opaque to Core, its schema owned entirely by
+  whichever Companion the Object's <code>content_type</code> names.</p>
+<p><strong>Content Type</strong>
+: The namespaced identifier (Section 4.4) declaring which Companion
+  specification defines the schema of <code>content</code>.</p>
+<p><strong>Publisher Reference</strong>
+: The <code>publisher</code> field: the Core-owned pointer (domain and key
+  identifier) a Node uses to perform Trust Anchor resolution per
+  ONP-0004.</p>
+<p><strong>Claimed Signing Time</strong>
+: The <code>signed_at</code> field: the ISO 8601 UTC timestamp a publisher
+  claims as this Version's signing time (Section 5.1, rule on
+  <code>signed_at</code>), consumed by ONP-0004's key-rotation validity-window
+  check and ONP-1003's verification procedure. Added as a field in
+  v0.2.0; this formal term entry completes that change in v0.3.1
+  (PATCH: the ONP-0002 Appendix A row for this term already named
+  this document as owner, but no definition existed here — a
+  registry/definition drift caught by <code>tools/check-specs.py</code>).</p>
+<p>Terms used but owned elsewhere: <strong>News Object</strong> (ONP-0000, this
+document supplies its structural definition), <strong>Minimal Viable
+Object</strong> (ONP-0003, this document supplies its concrete field list
+in Section 4.2), <strong>Lifecycle State</strong>, <strong>Supersession</strong>, <strong>Revision
+Reason</strong> (ONP-0006, this document supplies their wire format in
+Section 5.1), <strong>Tombstone state</strong> (ONP-0001; Section 4.5 of this
+document resolves its relationship to <code>lifecycle_state</code>).</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-envelope-structure">4.1 Envelope Structure</h2>
+<ol>
+<li>A News Object MUST be a single JSON object at its top level.</li>
+<li>The following top-level keys are REQUIRED on every News Object:
+   <code>oid</code>, <code>vid</code>, <code>publisher</code>, <code>signed_at</code>, <code>signature</code>,
+   <code>content_type</code>, <code>content</code>.</li>
+<li>The following top-level keys are OPTIONAL: <code>lifecycle_state</code>,
+   <code>supersedes</code>, <code>revision_reason</code>, <code>republish_of_retraction</code>,
+   <code>onp:extensions</code>, <code>onp:metadata</code> (added in v0.3.0; see ONP-1005).</li>
+<li>A Node MUST NOT require any key beyond those listed in rules 2
+   and 3 to be present for an Object to be considered structurally
+   well-formed at the envelope level; a Companion or Extension MAY
+   require additional keys within <code>content</code> or within its own
+   <code>onp:extensions</code> namespace, but MUST NOT require a new top-level
+   envelope key (this would violate ONP-0001 Section 4.1, rule 3 —
+   no Companion or Extension may introduce a field that shadows or
+   sits alongside Core-owned envelope structure without going
+   through this document's own versioning process, ONP-0007).</li>
+<li><code>signed_at</code> MUST be an ISO 8601 UTC timestamp string, stating the
+   time the publisher claims to have signed this Version. It is the
+   value ONP-0004 Section 4.4 uses as <code>T</code> when checking a signing
+   key's validity window, and the value ONP-1003 (Digital
+   Signatures) consumes as the claimed signing time during
+   verification. It MUST participate in the signing pre-image
+   (ONP-1003 Section 4.1) exactly like any other included field;
+   its authenticity is protected by the same signature that protects
+   the rest of the envelope, not by any separate mechanism.</li>
+</ol>
+<h2 id="4-2-minimal-viable-object">4.2 Minimal Viable Object</h2>
+<p>Per Principle P2 (ONP-0003), this document fixes the Minimal Viable
+Object as exactly the seven REQUIRED keys in Section 4.1, rule 2,
+with no other key present:</p>
+<pre><code>oid, vid, publisher, signed_at, signature, content_type, content
+</code></pre>
+<p>A Node MUST accept an Object containing only these seven keys as
+structurally complete, provided each satisfies its own field-level
+requirements (Section 5.1). An absent <code>lifecycle_state</code> MUST be
+interpreted as <code>published</code>; an absent <code>supersedes</code> MUST be
+interpreted as "first Version in its lineage" (ONP-0006 Section 4.2,
+rule 1). This absence-has-meaning design keeps the truly minimal
+case free of any lifecycle bookkeeping a first-time publisher does
+not yet need.</p>
+<p><strong>Correction note (v0.2.0):</strong> version 0.1.0 of this document omitted
+<code>signed_at</code>, a field ONP-0004's key rotation validity-window check
+(Section 4.4 of that document) requires to determine whether an
+Object's signing key was valid at the time it claims to have signed.
+This gap surfaced while drafting ONP-1003 and is corrected here; see
+Section 10.3.</p>
+<h2 id="4-3-publisher-reference">4.3 Publisher Reference</h2>
+<ol>
+<li><code>publisher</code> MUST be an object with, at minimum, a <code>domain</code> field
+   (the value used for Trust Anchor resolution per ONP-0004 Section
+   4.2) and a <code>key_id</code> field (the key identifier used to look up the
+   signing key within that domain's Publisher Key Record).</li>
+<li>A Node MUST use <code>publisher.domain</code> and <code>publisher.key_id</code> exactly
+   as ONP-0004 Section 6.1 (Resolution Algorithm) consumes <code>D</code> and
+   <code>K</code> respectively; this document does not introduce a second,
+   competing way to express publisher identity.</li>
+</ol>
+<h2 id="4-4-content-region-and-content-type">4.4 Content Region and Content Type</h2>
+<ol>
+<li><code>content</code> MUST be opaque to Core-level validation: a Node MUST be
+   able to complete Core validation (ONP-0001 Section 6.2, level 1)
+   —structural well-formedness, signature validity, Trust Anchor
+   resolution — without parsing or understanding the internal
+   structure of <code>content</code>.</li>
+<li><code>content_type</code> MUST be a namespaced identifier of the form
+   <code>onp:companion:&lt;name&gt;</code> (e.g. <code>onp:companion:article</code>), naming the
+   Companion specification that defines <code>content</code>'s schema. This
+   mirrors the <code>org.onp.&lt;name&gt;</code> namespacing ONP-0001 Section 4.3
+   requires for Extensions, applied here to Companions instead.</li>
+<li>A Node encountering a <code>content_type</code> it does not recognize MUST
+   still complete Core validation successfully (per rule 1) and MUST
+   NOT reject the Object solely for unrecognized content_type; it
+   MAY decline to interpret or display <code>content</code> meaningfully, but
+   the Object remains authentically verified at the Core level. This
+   is the concrete mechanism behind the interoperability guarantee
+   pattern established in ONP-0001 Section 6.5, ONP-0004 Section
+   6.4, and ONP-0006 Section 6.3.</li>
+</ol>
+<h2 id="4-5-lifecycle-fields-and-tombstone-state-reconciliation">4.5 Lifecycle Fields and Tombstone State Reconciliation</h2>
+<ol>
+<li><code>lifecycle_state</code>, <code>supersedes</code>, <code>revision_reason</code>, and
+   <code>republish_of_retraction</code> MUST use exactly the semantics ONP-0006
+   Sections 4.1 through 4.5 define, with the wire-level field names
+   given in Section 5.1 of this document.</li>
+<li>The term "Tombstone state," owned by ONP-0001 and referenced in
+   this document's Terminology Registry entry as "structurally
+   defined in ONP-1000," is hereby resolved as follows: Tombstone
+   state is not a separate field. It is the descriptive Core-
+   ownership name for the condition <code>lifecycle_state == "retracted"</code>.
+   No News Object carries both a <code>lifecycle_state</code> field and a
+   distinct <code>tombstone</code> field; a specification or implementation
+   that introduces a second, redundant field for this purpose is
+   non-conformant.</li>
+<li>ONP-0002's registry gloss for "Tombstone state" is updated
+   alongside this document's publication to reflect this
+   resolution (see Section 10.3).</li>
+</ol>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<h2 id="5-1-full-envelope-schema-authoritative">5.1 Full Envelope Schema (Authoritative)</h2>
+<pre><code class="language-json">{
+  &quot;oid&quot;: &quot;string, REQUIRED — exact format owned by ONP-1001&quot;,
+  &quot;vid&quot;: &quot;string, REQUIRED — exact format owned by ONP-1001&quot;,
+  &quot;publisher&quot;: {
+    &quot;domain&quot;: &quot;string, REQUIRED — e.g. regiopurmerend.nl&quot;,
+    &quot;key_id&quot;: &quot;string, REQUIRED — e.g. onp:key:2026-07-01&quot;
+  },
+  &quot;signed_at&quot;: &quot;string, REQUIRED — ISO 8601 UTC, e.g. 2026-07-28T10:00:00Z&quot;,
+  &quot;signature&quot;: &quot;string, REQUIRED — exact encoding owned by ONP-1003&quot;,
+  &quot;content_type&quot;: &quot;string, REQUIRED — e.g. onp:companion:article&quot;,
+  &quot;content&quot;: {
+    &quot;...&quot;: &quot;opaque to Core; schema owned by the named Companion&quot;
+  },
+  &quot;lifecycle_state&quot;: &quot;string, OPTIONAL, default 'published' — 'published' | 'retracted'&quot;,
+  &quot;supersedes&quot;: &quot;string or absent, OPTIONAL — a prior vid in the same oid lineage&quot;,
+  &quot;revision_reason&quot;: &quot;string, OPTIONAL&quot;,
+  &quot;republish_of_retraction&quot;: &quot;string, OPTIONAL — a prior vid, only on a republish&quot;,
+  &quot;onp:extensions&quot;: {
+    &quot;...&quot;: &quot;OPTIONAL — structure owned by ONP-0001 Section 5.2&quot;
+  },
+  &quot;onp:metadata&quot;: {
+    &quot;...&quot;: &quot;OPTIONAL — structure owned by ONP-1005&quot;
+  }
+}
+</code></pre>
+<h2 id="5-2-field-table">5.2 Field Table</h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Owning Document (exact format)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>oid</code></td>
+<td>REQUIRED</td>
+<td>ONP-1001</td>
+</tr>
+<tr>
+<td><code>vid</code></td>
+<td>REQUIRED</td>
+<td>ONP-1001</td>
+</tr>
+<tr>
+<td><code>publisher.domain</code></td>
+<td>REQUIRED</td>
+<td>This document (Section 4.3); consumed by ONP-0004</td>
+</tr>
+<tr>
+<td><code>publisher.key_id</code></td>
+<td>REQUIRED</td>
+<td>This document (Section 4.3); consumed by ONP-0004</td>
+</tr>
+<tr>
+<td><code>signed_at</code></td>
+<td>REQUIRED</td>
+<td>This document (Section 4.1, rule 5); consumed by ONP-0004 and ONP-1003</td>
+</tr>
+<tr>
+<td><code>signature</code></td>
+<td>REQUIRED</td>
+<td>ONP-1003</td>
+</tr>
+<tr>
+<td><code>content_type</code></td>
+<td>REQUIRED</td>
+<td>This document (Section 4.4)</td>
+</tr>
+<tr>
+<td><code>content</code></td>
+<td>REQUIRED</td>
+<td>Named Companion (e.g. ONP-2100)</td>
+</tr>
+<tr>
+<td><code>lifecycle_state</code></td>
+<td>OPTIONAL, default <code>published</code></td>
+<td>ONP-0006 (semantics); this document (wire form)</td>
+</tr>
+<tr>
+<td><code>supersedes</code></td>
+<td>OPTIONAL, default absent</td>
+<td>ONP-0006 (semantics); this document (wire form)</td>
+</tr>
+<tr>
+<td><code>revision_reason</code></td>
+<td>OPTIONAL</td>
+<td>ONP-0006</td>
+</tr>
+<tr>
+<td><code>republish_of_retraction</code></td>
+<td>OPTIONAL</td>
+<td>ONP-0006</td>
+</tr>
+<tr>
+<td><code>onp:extensions</code></td>
+<td>OPTIONAL</td>
+<td>ONP-0001 Section 5.2</td>
+</tr>
+<tr>
+<td><code>onp:metadata</code></td>
+<td>OPTIONAL</td>
+<td>ONP-1005</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-parsing-order">6.1 Parsing Order</h2>
+<pre><code>1. Parse the top-level JSON object.
+2. Confirm the six REQUIRED keys (Section 4.1, rule 2) are present
+   and structurally valid per Section 5.2.
+   -&gt; FAIL (structural) if any is missing or malformed.
+3. Apply defaults for absent OPTIONAL keys (Section 4.2).
+4. Hand oid/vid to ONP-1001 processing; hand signature + publisher
+   to ONP-1003/ONP-0004 processing for cryptographic and Trust
+   Anchor verification.
+5. Only after step 4 succeeds does a Node proceed to interpret
+   `content` (per content_type, Companion-owned) or
+   `onp:extensions` (per namespace, Extension-owned) — consistent
+   with the three-level validation ordering in ONP-0001 Section 6.2.
+</code></pre>
+<h2 id="6-2-content-opacity-enforcement">6.2 Content Opacity Enforcement</h2>
+<p>A Node's Core-validation code path MUST NOT branch on the contents
+of <code>content</code>. This is an implementation discipline as much as a wire
+rule: an implementation that inspects <code>content</code> to decide whether an
+Object is "trustworthy" has reintroduced exactly the layer confusion
+ONP-0001's Vertical Invariant and ONP-0005 Section 4.5 prohibit.
+Core trust and Content interpretation MUST remain separate code
+paths.</p>
+<h2 id="6-3-interoperability">6.3 Interoperability</h2>
+<p>A Node implementing only ONP-1000, ONP-1001, and ONP-1003 — with no
+support for any specific Companion or Extension — MUST be able to:
+verify any News Object's signature, resolve its Trust Anchor,
+determine its Current Version within a known set (per ONP-0006), and
+correctly report it as untrusted if any of those fail — all without
+understanding a single <code>content_type</code> or <code>onp:extensions</code> namespace.
+This is the concrete, testable form of the interoperability
+guarantee every prior Foundation document promised in the abstract.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-minimal-viable-object">7.1 Minimal Viable Object</h2>
+<pre><code class="language-json">{
+  &quot;oid&quot;: &quot;onp:oid:regiopurmerend.nl:fusie-onderzoek-necker-van-naem&quot;,
+  &quot;vid&quot;: &quot;onp:vid:sha-256:AbC123-example-digest-bytes&quot;,
+  &quot;publisher&quot;: {
+    &quot;domain&quot;: &quot;regiopurmerend.nl&quot;,
+    &quot;key_id&quot;: &quot;onp:key:2026-07-01&quot;
+  },
+  &quot;signed_at&quot;: &quot;2026-07-28T10:00:00Z&quot;,
+  &quot;signature&quot;: &quot;onp:sig:ed25519:base64url-signature-bytes&quot;,
+  &quot;content_type&quot;: &quot;onp:companion:article&quot;,
+  &quot;content&quot;: {
+    &quot;headline&quot;: &quot;Fusie-onderzoek Purmerend gepubliceerd&quot;,
+    &quot;body_ref&quot;: &quot;https://regiopurmerend.nl/artikel/fusie-onderzoek&quot;
+  }
+}
+</code></pre>
+<p>No <code>lifecycle_state</code> present -&gt; a Node MUST interpret this as
+<code>published</code>. No <code>supersedes</code> present -&gt; a Node MUST interpret this
+as the first Version in its lineage.</p>
+<h2 id="7-2-a-correction-second-version-in-a-lineage">7.2 A Correction (Second Version in a Lineage)</h2>
+<pre><code class="language-json">{
+  &quot;oid&quot;: &quot;onp:oid:regiopurmerend.nl:fusie-onderzoek-necker-van-naem&quot;,
+  &quot;vid&quot;: &quot;onp:vid:sha-256:XyZ789-example-digest-bytes&quot;,
+  &quot;supersedes&quot;: &quot;onp:vid:sha-256:AbC123-example-digest-bytes&quot;,
+  &quot;revision_reason&quot;: &quot;Cijfer in tweede alinea gecorrigeerd&quot;,
+  &quot;publisher&quot;: { &quot;domain&quot;: &quot;regiopurmerend.nl&quot;, &quot;key_id&quot;: &quot;onp:key:2026-07-01&quot; },
+  &quot;signed_at&quot;: &quot;2026-07-29T08:00:00Z&quot;,
+  &quot;signature&quot;: &quot;onp:sig:ed25519:base64url-signature-bytes-of-this-version&quot;,
+  &quot;content_type&quot;: &quot;onp:companion:article&quot;,
+  &quot;content&quot;: { &quot;headline&quot;: &quot;Fusie-onderzoek Purmerend gepubliceerd (gecorrigeerd)&quot;, &quot;body_ref&quot;: &quot;...&quot; }
+}
+</code></pre>
+<p>Same <code>oid</code>, new <code>vid</code>, <code>supersedes</code> pointing at the prior <code>vid</code>.
+Applying ONP-0006 Section 6.1's algorithm to both Objects together
+correctly identifies this Version as Current and the first as
+Superseded.</p>
+<h2 id="7-3-unrecognized-content-type-still-core-valid">7.3 Unrecognized content_type, Still Core-Valid</h2>
+<pre><code>A Node with no Media Companion support receives:
+  content_type: &quot;onp:companion:media&quot;
+Per Section 4.4, rule 3: the Node completes Core validation
+normally (signature + Trust Anchor resolution both succeed) and
+reports the Object as authentically verified, while declining to
+render or interpret `content` meaningfully.
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<p>Content opacity (Section 4.4, rule 1; Section 6.2) is a direct
+security control, not merely an architectural nicety: it is what
+makes it structurally impossible for a malicious or buggy Companion
+implementation to affect whether an Object is judged authentic. This
+restates, at the wire-field level, the Vertical Invariant already
+analyzed in ONP-0001 Section 8 and ONP-0005 Section 4.5; it is not a
+new risk, but this document is where the enforcement point actually
+lives in code, so it is restated here for implementers who read Core
+documents without necessarily re-reading Foundation security
+analysis.</p>
+<p>The <code>publisher</code> reference (Section 4.3) is the exact handoff point
+into ONP-0004's Trust Anchor resolution; a Node MUST treat a News
+Object whose <code>publisher.domain</code> cannot be resolved, or whose
+<code>publisher.key_id</code> is not found current or historically valid per
+ONP-0004 Section 6.1, as unverified — this document introduces no
+new trust logic of its own, it only fixes the field names ONP-0004's
+already-normative algorithm consumes.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>The REQUIRED envelope fields (Section 4.1, rule 2) carry minimal
+personal data: <code>publisher.domain</code> identifies an organization, not an
+individual; <code>oid</code>, <code>vid</code>, <code>signature</code>, and <code>content_type</code> carry none.
+This is a direct consequence of Principle P2 (Minimal Required
+Surface) as applied concretely by Section 4.2 of this document — any
+personally identifying content is confined to the opaque <code>content</code>
+region (governed by whichever Companion defines it, e.g. ONP-2300)
+or to <code>onp:extensions</code>, neither of which this document requires to
+be populated.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0000, Introduction — owns the term "News Object"; this
+  document supplies its structural definition.</li>
+<li>ONP-0001, Architecture — Core ownership rules (Section 4.1), the
+  <code>onp:extensions</code> container (Section 5.2), and the interoperability
+  guarantee pattern (Section 6.5) this document instantiates
+  concretely.</li>
+<li>ONP-0003, Design Principles — Principle P2 (Minimal Required
+  Surface), owning "Minimal Viable Object," whose exact field list
+  this document fixes in Section 4.2.</li>
+<li>ONP-0004, Trust Model — the Resolution Algorithm (Section 6.1)
+  this document's <code>publisher</code> field (Section 4.3) feeds directly.</li>
+<li>ONP-0005, Security Model — Section 4.5 (layer confusion),
+  restated at the field level in Section 8 of this document.</li>
+<li>ONP-0006, News Object Lifecycle — owns the semantics of
+  <code>lifecycle_state</code>, <code>supersedes</code>, <code>revision_reason</code>, and
+  <code>republish_of_retraction</code>; this document fixes their wire form.</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>ONP-1001, Identifiers (forward reference — exact <code>oid</code>/<code>vid</code>
+  format).</li>
+<li>ONP-1002, Serialization (forward reference — canonical byte
+  encoding for signing).</li>
+<li>ONP-1003, Digital Signatures (forward reference — exact
+  <code>signature</code> field encoding and Algorithm Registry).</li>
+<li>ONP-1004, Validation — the full multi-level
+  validation procedure this document's Section 6.1 outlines only at
+  the parsing-order level).</li>
+<li>ONP-2100, Article (forward reference — an example Companion
+  defining a <code>content_type</code> schema, used in Section 7).</li>
+</ul>
+<h2 id="10-3-corresponding-update-to-onp-0002">10.3 Corresponding Update to ONP-0002</h2>
+<p>As part of this document's publication, ONP-0002's registry gloss
+for "Tombstone state" is updated to state that it is realized by the
+<code>lifecycle_state</code> field (value <code>retracted</code>) rather than a separate
+field, per Section 4.5 of this document. This is a PATCH-level
+change under ONP-0007 Section 4.4, rule 2 (gloss correction, no
+change of owning document or substantive meaning — the concept
+Tombstone state names was always this condition; only its wire
+realization is now stated precisely).</p>
+<h2 id="10-4-version-0-2-0-classification">10.4 Version 0.2.0 Classification</h2>
+<p>The addition of <code>signed_at</code> as a seventh REQUIRED envelope field
+(Section 4.1, rule 5; Section 4.2) invalidates any prior
+understanding of this document's Minimal Viable Object as a
+six-field structure. Per ONP-0007 Section 4.2 (pre-1.0 semantics),
+this is classified MINOR — not MAJOR, since this document remains
+below Version 1.0.0 — with this explicit callout satisfying ONP-0007
+Section 4.2, rule 4's requirement that a pre-1.0 change meeting the
+MAJOR criteria be called out in prose rather than left to the
+version number alone to convey.</p>
+<h2 id="10-5-version-0-3-0-classification">10.5 Version 0.3.0 Classification</h2>
+<p>The addition of <code>onp:metadata</code> as an OPTIONAL top-level key (per
+ONP-1005) does not invalidate any previously valid News Object — the
+Minimal Viable Object (Section 4.2) remains the same seven REQUIRED
+fields. This is classified MINOR under ONP-0007 Section 4.1
+(additive, backward-compatible) and does not require the explicit-
+breaking-change callout Section 10.4 needed, since no MAJOR-level
+criterion is met.</p>
+<hr />
+<h1 id="appendix-a-minimal-viable-object-checklist">Appendix A: Minimal Viable Object Checklist</h1>
+<pre><code>[ ] oid present and well-formed (ONP-1001)
+[ ] vid present and well-formed (ONP-1001)
+[ ] publisher.domain present
+[ ] publisher.key_id present
+[ ] signed_at present, ISO 8601 UTC
+[ ] signature present and well-formed (ONP-1003)
+[ ] content_type present, namespaced onp:companion:&lt;name&gt;
+[ ] content present (opaque, per content_type's Companion)
+[ ] no envelope key beyond the seven required + the four OPTIONAL
+    lifecycle/extensions keys listed in Section 4.1
+</code></pre>
+<h1 id="appendix-b-absence-has-meaning-defaults">Appendix B: Absence-Has-Meaning Defaults</h1>
+<pre><code>Field                     | Absent means
+--------------------------|--------------------------------------
+lifecycle_state           | published
+supersedes                | first Version in its lineage (no prior)
+revision_reason           | no reason stated (permitted; not an error)
+republish_of_retraction   | this Version is not a republish
+onp:extensions            | no Extensions attached
+onp:metadata              | no generic Companion-agnostic metadata stated
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-minimal-viable-object-checklist">Appendix A: Minimal Viable Object Checklist</a></li><li><a href="#appendix-b-absence-has-meaning-defaults">Appendix B: Absence-Has-Meaning Defaults</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/1000-news-object.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

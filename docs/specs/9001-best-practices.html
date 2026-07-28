@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-9001 Open News Protocol (ONP): Best Practices — Open News Protocol</title>
+<meta name="description" content="ONP-9001: Open News Protocol (ONP): Best Practices — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-9001</p>
+    <h1 id="top">Open News Protocol (ONP): Best Practices</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document is purely informational: it creates no new normative
+requirement anywhere in the ONP series. It synthesizes practical
+guidance that, until now, existed only scattered across thirty
+normative documents — a getting-started path for a publisher's first
+verifiable Object, key management practices, a recommended Companion
+adoption order for a newsroom implementing ONP incrementally, and a
+catalog of common pitfalls this series' own design decisions were
+built to prevent. Where anything here appears to conflict with a
+normative specification, the normative specification always governs;
+this document only restates and connects what those documents already
+require or recommend.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Reference series (ONP-9000-9999). It
+is Informational: it introduces no MUST-level requirement of its own.
+Every SHOULD or RECOMMENDED statement here either restates guidance a
+normative document already gives, or offers a synthesized
+recommendation that remains advisory even where stated firmly. It is
+a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000. This document uses SHOULD/RECOMMENDED throughout and
+deliberately avoids MUST/REQUIRED except when directly quoting a
+normative requirement stated elsewhere — this document has no
+authority to create new obligations.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>Thirty specifications is a lot to hold in mind at once when all a
+publisher actually wants to know is "what do I do first." This
+document exists for that reader: not to add anything to what the
+series already requires, but to walk it in the order someone
+implementing ONP for the first time would actually need, and to
+collect, in one place, the mistakes this series' own normative text
+was specifically designed to prevent.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>a recommended getting-started implementation path;</li>
+<li>key management practices beyond what ONP-0004 requires as a bare
+  minimum;</li>
+<li>a recommended Companion adoption order for incremental adoption;</li>
+<li>a catalog of common pitfalls, each tied to the normative rule it
+  would violate.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT:</p>
+<ul>
+<li>create any new MUST-level requirement;</li>
+<li>recommend specific vendors, cloud providers, or tooling — Principle
+  P1 (Adjacent Publishing) and P3 (Ordinary Technology) already
+  establish that ONP works with whatever infrastructure a publisher
+  already has;</li>
+<li>substitute for the actual Security Review (ONP-0005 Section 6.3) or
+  Principles Review (ONP-0003 Section 6.1) processes required before
+  any new specification advances in Status.</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document introduces no new terms.</p>
+<hr />
+<h1 id="4-guidance">4. Guidance</h1>
+<h2 id="4-1-getting-started-path">4.1 Getting Started Path</h2>
+<p>A publisher implementing ONP for the first time SHOULD follow this
+order, rather than attempting the full series at once:</p>
+<pre><code>1. Generate an Ed25519 keypair (ONP-1003 Section 4.3).
+2. Publish a Publisher Key Record at
+   https://{your-domain}/.well-known/onp/publisher.json
+   (ONP-0004 Section 4.2).
+3. Construct a Minimal Viable Object (ONP-1000 Section 4.2) — just
+   the seven REQUIRED fields, content_type: &quot;onp:companion:article&quot;.
+4. Compute vid (ONP-1001), sign it (ONP-1003), and run it through
+   the full Core validation pipeline (ONP-1003 Section 6.1) yourself
+   before considering it done.
+5. Only after step 4 succeeds reliably, consider adding
+   onp:metadata (ONP-1005) for basic discoverability, then whichever
+   Companions your newsroom's workflow actually needs (Section 4.3).
+</code></pre>
+<p>Attempting Rights, Payments, Identity, and three Extensions before a
+single Minimal Viable Object round-trips correctly is a common way to
+make debugging unnecessarily difficult — isolate Core first.</p>
+<h2 id="4-2-key-management">4.2 Key Management</h2>
+<p>Beyond what ONP-0004 requires as a bare minimum:</p>
+<ol>
+<li>Rotate signing keys on a defined schedule (for example, annually)
+   SHOULD occur even absent any suspected compromise — waiting for a
+   reason to rotate is a worse habit than rotating routinely.</li>
+<li><code>previous_keys</code> (ONP-0004 Section 5.1) SHOULD be kept populated
+   with historical keys rather than pruned once rotated out — pruning
+   breaks verification of historical Objects signed under those keys
+   (ONP-0004 Section 4.4).</li>
+<li>The OPTIONAL rotation-continuity signature (ONP-0004 Section 4.4,
+   rule 5) SHOULD be used even though not REQUIRED — it costs little
+   and provides real continuity evidence beyond domain control alone.</li>
+<li>Private keys SHOULD be backed up offline, separately from the
+   systems that use them for day-to-day signing.</li>
+<li>A signing key SHOULD NOT be reused across unrelated services —
+   the same discipline any organization already applies to TLS
+   certificates and API credentials applies here.</li>
+</ol>
+<h2 id="4-3-recommended-companion-adoption-order">4.3 Recommended Companion Adoption Order</h2>
+<p>For a newsroom adopting Companions incrementally rather than all at
+once, the following order is RECOMMENDED, based on what this series'
+own design assumed would be needed first:</p>
+<pre><code>1. Article (ONP-2100)      — minimum viable, always first
+2. Media (ONP-2200)        — if photo/video is part of your workflow
+3. Rights (ONP-2400)       — adopt EARLY; retrofitting rights
+                              declarations onto years of back-catalog
+                              is harder than declaring them from day one
+4. Identity (ONP-2300)     — once byline/credit provisional fields
+                              start feeling insufficient
+5. Payments (ONP-2500)     — only once an actual monetization model
+                              is chosen; do not adopt speculatively
+6. Sources (ONP-2600)      — as editorial workflow and source-
+                              protection process matures
+7. Corrections (ONP-2700)  — once your correction/retraction
+                              editorial process is formalized enough
+                              to produce structured explanations
+8. Comments (ONP-2800)     — entirely optional (ONP-2800 Section
+                              4.10); adopt only if you want reader
+                              activity in the verifiable record at all
+</code></pre>
+<p>Rights is called out specifically as worth adopting earlier than its
+number might suggest, precisely because declaring rights only becomes
+harder as a back-catalog grows.</p>
+<h2 id="4-4-common-pitfalls">4.4 Common Pitfalls</h2>
+<p>Each entry below names a mistake this series' own normative text
+already prohibits or guards against, collected here because the
+prohibition is easy to miss buried in its own document.</p>
+<ol>
+<li><strong>Treating an absent permission flag as <code>false</code>.</strong> Rights
+   (ONP-2400 Section 4.5) and AI Metadata (ONP-3100 Sections 4.5-4.6)
+   both require absence to mean "unstated," never "denied." This is
+   the single most common misreading risk in the entire series.</li>
+<li><strong>Using a JSON number for money.</strong> ONP-1002 Section 4.4, rule 2
+   and ONP-2500 Section 4.4, rule 3 both require monetary amounts as
+   strings. A JSON-number price is a floating-point bug waiting to
+   happen.</li>
+<li><strong>Embedding raw HTML in an Article body.</strong> ONP-2100 Section 4.4
+   forbids it explicitly, precisely to avoid the injection risk that
+   motivated the Safe Markdown Subset in the first place.</li>
+<li><strong>Treating <code>byline</code>, <code>credit</code>, or <code>commenter_display_name</code> as
+   verified identity.</strong> All three are explicitly provisional
+   (ONP-2100 Section 4.6; ONP-2200 Section 4.5; ONP-2800 Section 4.7)
+   — none of them are backed by anything beyond the publisher's own
+   signature.</li>
+<li><strong>Creating a structured Source Object reflexively, even for a
+   highly sensitive protected source.</strong> ONP-2600 Section 4.6
+   explicitly recommends prose-only attribution instead for the
+   highest-stakes cases, given retraction's limits (ONP-0006 Section
+   8.3). Reflexively structuring everything is not always the safer
+   choice.</li>
+<li><strong>Assuming <code>indexable</code> needs an explicit <code>true</code>.</strong> This is the one
+   field in the entire series with a permissive default (ONP-3200
+   Section 4.4) — the opposite of the no-default pattern everywhere
+   else. Getting this backwards in either direction (assuming it
+   needs explicit <code>true</code>, or assuming other fields share its
+   permissive default) is an easy, understandable mistake.</li>
+<li><strong>Building a custom Extension without registering its namespace
+   and Claim Domain.</strong> ONP-3000 Section 4.1 and Section 4.3 both
+   require registration in ONP-0002 — even for an Extension a
+   publisher intends to use only internally, if it is meant to
+   interoperate with any other Node at all.</li>
+<li><strong>Forcing a genuinely Companion-shaped concept into Extension
+   form.</strong> ONP-3300 Section 4.2 worked through exactly this tension
+   for analytics snapshots and declined to force the fit. Apply the
+   decision test (ONP-0001 Section 4.4) honestly, even when a
+   roadmap slot seems to suggest an answer.</li>
+</ol>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<p>Not applicable — this document defines no wire-level fields.</p>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-recommended-testing-workflow">6.1 Recommended Testing Workflow</h2>
+<p>Before considering an implementation complete, a publisher or
+implementer SHOULD validate their output against the Test Vectors
+ONP-9000 Section 4.3 requires any Reference Implementation to
+publish, rather than relying solely on internal self-consistency —
+an implementation that only checks its own output against itself
+cannot detect a systematic misunderstanding shared between its
+construction and its own validation logic.</p>
+<h2 id="6-2-interoperability">6.2 Interoperability</h2>
+<p>This document's own contribution to interoperability is indirect:
+by collecting common mistakes in one place, it reduces the odds that
+independent implementations diverge for avoidable reasons rather than
+genuine specification ambiguity — the latter being exactly what
+ONP-9000's Test Vectors and Reference Implementation requirement
+exist to surface and fix.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-the-complete-picture-assembled">7.1 The Complete Picture, Assembled</h2>
+<p>This series has carried one running example — RegioPurmerend's
+fusie-onderzoek article — since ONP-0000's problem statement. By
+ONP-3500, that single story had accumulated: a signed Article Object
+(ONP-2100 Section 7.1) with an embedded body, a referenced Media
+Object with Verified Asset Reference integrity (ONP-2200 Section
+7.1), a publisher-attested Identity Object for its byline (ONP-2300
+Section 7.1), a CC-BY-4.0 Rights Object (ONP-2400 Section 7.1), a
+micropayment Payments Object (ONP-2500 Section 7.1), a named Source
+reference (ONP-2600 Section 7.1), a geolocation Extension naming all
+four municipalities (ONP-3400 Section 7.1), and the infrastructure to
+support a later Corrections Object should one ever be needed. No
+single document required all of this; Section 4.3's adoption order
+is what makes reaching this point manageable rather than
+overwhelming.</p>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<p>Following this document's guidance reduces risk but does not itself
+constitute compliance with anything — the actual Security Review
+process (ONP-0005 Section 6.3) remains the authoritative gate for any
+specification, and following key-management best practices (Section
+4.2) does not substitute for an implementer's own security review of
+their actual deployment.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>This document introduces no new privacy mechanism; where it discusses
+privacy-relevant guidance (Section 4.4, item 5), it points to the
+normative document that actually owns the consideration rather than
+restating it independently.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<p>This document synthesizes guidance from across the series; the
+specific citations are given inline throughout Section 4 rather than
+repeated here. See ONP-0000 through ONP-3500 generally.</p>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>ONP-9000, Reference Implementation — the Test Vector requirement
+  referenced in Section 6.1.</li>
+</ul>
+<hr />
+<h1 id="appendix-a-getting-started-checklist">Appendix A: Getting-Started Checklist</h1>
+<pre><code>[ ] Ed25519 keypair generated
+[ ] Publisher Key Record published at .well-known/onp/publisher.json
+[ ] Minimal Viable Object constructed (seven REQUIRED fields only)
+[ ] vid computed, signature applied
+[ ] Full Core validation pipeline run against your own output
+[ ] onp:metadata added for basic discoverability
+[ ] Rights Object added (recommended early, Section 4.3)
+[ ] Remaining Companions added per your newsroom's actual workflow,
+    not all at once
+</code></pre>
+<h1 id="appendix-b-common-pitfalls-quick-reference">Appendix B: Common Pitfalls Quick Reference</h1>
+<pre><code>[ ] No permission flag treated as false-by-default
+[ ] No monetary amount as a JSON number
+[ ] No raw HTML in Article body
+[ ] No provisional field (byline/credit/commenter_display_name)
+    treated as verified identity
+[ ] Protected-source Object creation reconsidered per ONP-2600 4.6
+[ ] indexable's permissive default not assumed elsewhere
+[ ] Custom Extension namespaces and Claim Domains registered
+[ ] Companion-vs-Extension test applied honestly, not assumed from
+    a roadmap slot
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-guidance">4. Guidance</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-getting-started-checklist">Appendix A: Getting-Started Checklist</a></li><li><a href="#appendix-b-common-pitfalls-quick-reference">Appendix B: Common Pitfalls Quick Reference</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/9001-best-practices.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

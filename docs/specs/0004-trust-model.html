@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-0004 Open News Protocol (ONP): Trust Model — Open News Protocol</title>
+<meta name="description" content="ONP-0004: Open News Protocol (ONP): Trust Model — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-0004</p>
+    <h1 id="top">Open News Protocol (ONP): Trust Model</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.2.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>A digital signature proves that a specific key signed a specific
+News Object. It does not, by itself, prove that the key belongs to
+the publisher the Object claims. This document defines the ONP Trust
+Model: the mechanism by which a Node establishes that binding. The
+primary mechanism is domain-anchored — a publisher proves control of
+the same HTTPS domain it already operates, reusing deployed WebPKI
+rather than requiring a purpose-built certificate authority for
+content signing. An optional public transparency log provides
+auditability of key changes without requiring blockchain-style
+consensus, and an optional binding to the EU Digital Identity
+Wallet (EUDI) is defined as an alternative, non-exclusive Trust
+Anchor Type. This document activates the "Trust Anchor" term
+reserved in ONP-0002 and is a direct precondition for Core-level
+signature validation as defined in ONP-1004.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Foundation series (ONP-0000-0999).
+It is normative. Where this document introduces illustrative JSON
+structure, that structure is non-final; the authoritative wire-level
+schema is owned by ONP-1003 (Digital Signatures), consistent with
+how ONP-0001 treated the <code>onp:extensions</code> container. It is a
+Working Draft.</p>
+<p><strong>Change note (v0.2.0):</strong> implementation experience with the first
+Reference Implementation (ONP-9000 series) surfaced that Section 5.2
+illustrated a DNS corroboration fingerprint without this document
+ever fixing how that fingerprint is computed — leaving two
+independent implementations free to compute different fingerprints
+over the same Publisher Key Record, which would make every DNS
+comparison a false mismatch and render Section 4.3 useless in
+practice. This version adds the normative Record Fingerprint
+computation (Section 4.3, rules 4-6) and corrects the illustrative
+hash-algorithm label in Section 5.2 from <code>sha256</code> to <code>sha-256</code>, the
+identifier form the Algorithm Registry (ONP-0005 Appendix A) and
+ONP-1001 already use. Classified MINOR under ONP-0007 Section 4.2:
+it adds normative content to an existing OPTIONAL mechanism and
+invalidates no previously conforming implementation of any REQUIRED
+behavior.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>Core-level signature validation (ONP-1004) answers a narrower
+question than it appears to: "was this Object signed with this key,
+unmodified since?" It cannot, on its own, answer "does this key
+belong to the publisher named in this Object?" Treating a valid
+signature as proof of identity conflates two different guarantees,
+and an attacker who can mint their own keypair can produce Objects
+that pass signature validation while claiming to be any publisher
+they choose. A Trust Model is what closes that gap.</p>
+<p>Four candidate approaches were evaluated by the Working Group:</p>
+<ol>
+<li><strong>WebPKI / dedicated Certificate Authority</strong> — strong existing
+   deployment, but built for TLS server authentication, not content
+   signing, and would require publishers to obtain a new class of
+   certificate specifically for ONP.</li>
+<li><strong>Blockchain or other consensus-based ledger as trust root</strong> —
+   decentralized, but in direct tension with Principle P3 (Ordinary
+   Technology, ONP-0003) and with journalism's need for fast,
+   correctable, privacy-respecting operation; the full rejected-
+   alternatives analysis is in ONP-0005.</li>
+<li><strong>DNS-based verification</strong> — reuses infrastructure the publisher
+   already controls, but DNS alone is vulnerable to hijacking and
+   was judged suitable only as a secondary, corroborating signal.</li>
+<li><strong>Domain-anchored HTTPS resolution</strong> (<code>.well-known</code>-style,
+   comparable in spirit to <code>did:web</code> and Web Key Directory) — reuses
+   both the publisher's existing domain and the WebPKI trust the
+   browser ecosystem already relies on, without requiring a new PKI
+   relationship.</li>
+</ol>
+<p>This document adopts approach 4 as the REQUIRED baseline, with
+approach 3 as an OPTIONAL corroborating signal, an OPTIONAL
+transparency log for auditability (deliberately not
+consensus-based, per Principle P3), and an OPTIONAL alternative
+Trust Anchor Type binding to EUDI, motivated by the EU regulatory
+alignment recorded in <code>EU-ALIGNMENT.md</code>.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>the definition of a Trust Anchor and Publisher Key Record;</li>
+<li>the domain-anchored resolution procedure and its REQUIRED status;</li>
+<li>key rotation and revocation semantics;</li>
+<li>the OPTIONAL DNS corroboration signal;</li>
+<li>the OPTIONAL transparency log and its non-consensus design;</li>
+<li>the OPTIONAL EUDI Trust Anchor Type as a forward-looking hook;</li>
+<li>the relationship between Trust Anchor resolution and Core
+  signature validation.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>the signature algorithm or canonical byte format of a signed
+  Object (see ONP-1003);</li>
+<li>the exact point in the Core validation pipeline where resolution
+  is invoked, beyond noting it occurs at validation level 1 (see
+  ONP-1004 and ONP-0001 Section 6.2);</li>
+<li>the full security analysis of rejected alternatives, including
+  the complete blockchain rejection rationale (see ONP-0005);</li>
+<li>the field-level structure of an EUDI-issued credential or the
+  Identity Companion's data model (see ONP-2300, not yet published);</li>
+<li>legal recognition of a "publisher" as an entity — this document
+  establishes technical key-to-domain binding only, not corporate or
+  legal identity verification.</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document is the owning specification for the following terms,
+activating "Trust Anchor" from its Reserved status in ONP-0002.</p>
+<p><strong>Trust Anchor</strong>
+: The mechanism by which a Node establishes that a signing key
+  belongs to the publisher claimed by a News Object. Formerly
+  Reserved (ONP-0002 Appendix A); owned by this document as of
+  publication.</p>
+<p><strong>Trust Anchor Type</strong>
+: A named resolution mechanism. This document defines <code>domain</code>
+  (REQUIRED baseline, Section 4.2) and reserves <code>eudi</code> (OPTIONAL,
+  Section 4.6) as a Trust Anchor Type identifier for future
+  normative definition in ONP-2300.</p>
+<p><strong>Publisher Key Record</strong>
+: The resolvable document, hosted by a publisher, that lists the
+  keys currently and previously authorized to sign on that
+  publisher's behalf.</p>
+<p><strong>Current Keys</strong>
+: The set of keys a Publisher Key Record declares as presently
+  authorized.</p>
+<p><strong>Previous Keys</strong>
+: The set of keys a Publisher Key Record declares as no longer
+  current but valid for verifying Objects signed within a stated
+  historical window (Section 4.4).</p>
+<p><strong>Resolution</strong>
+: The act of a Node fetching, validating, and interpreting a
+  Publisher Key Record to determine whether a given key was
+  authorized for a given publisher at a given time.</p>
+<p><strong>Transparency Log</strong>
+: An OPTIONAL, publicly readable, append-only record of Publisher
+  Key Record changes, used to detect undisclosed key substitution.
+  Explicitly not a consensus ledger (Section 4.5).</p>
+<p><strong>Record Fingerprint</strong>
+: The deterministic digest of a Publisher Key Record, computed as
+  specified in Section 4.3 rule 4, used solely for the OPTIONAL DNS
+  corroboration comparison. Added in v0.2.0.</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-signature-validation-is-not-identity-proof">4.1 Signature Validation Is Not Identity Proof</h2>
+<ol>
+<li>A Node MUST NOT treat successful cryptographic signature
+   validation, on its own, as sufficient proof that a News Object
+   originates from the publisher it claims.</li>
+<li>A Node MUST additionally perform Trust Anchor resolution
+   (Section 4.2 or Section 4.6) before treating a News Object as
+   authentically attributed to a named publisher.</li>
+</ol>
+<h2 id="4-2-domain-anchored-resolution-required-baseline">4.2 Domain-Anchored Resolution (REQUIRED Baseline)</h2>
+<ol>
+<li>Every conforming Node MUST support the <code>domain</code> Trust Anchor
+   Type. This is the REQUIRED baseline; no other Trust Anchor Type
+   may be treated as a substitute for it in a general-purpose Node
+   (see also Section 4.6, which is additive, not a replacement).</li>
+<li>A publisher's Publisher Key Record MUST be retrievable via HTTPS
+   at <code>https://{publisher-domain}/.well-known/onp/publisher.json</code>,
+   per the <code>.well-known</code> URI convention.</li>
+<li>A Node resolving a <code>domain</code> Trust Anchor MUST validate the TLS
+   certificate presented for <code>{publisher-domain}</code> using standard
+   WebPKI certificate validation. A Node MUST NOT accept a
+   Publisher Key Record served without valid TLS.</li>
+<li>This mechanism deliberately reuses the domain-control guarantee
+   WebPKI already provides for ordinary HTTPS; it does NOT require a
+   publisher to obtain a certificate specifically for ONP or a
+   relationship with a new Certificate Authority.</li>
+</ol>
+<h2 id="4-3-optional-dns-corroboration">4.3 OPTIONAL DNS Corroboration</h2>
+<ol>
+<li>A publisher MAY additionally publish a DNS TXT record at
+   <code>_onp.{publisher-domain}</code> containing a fingerprint of its current
+   Publisher Key Record.</li>
+<li>A Node MAY check this record as a corroborating signal. A
+   mismatch between the DNS TXT fingerprint and the fetched
+   Publisher Key Record SHOULD be treated as a warning condition,
+   not an automatic hard failure, since DNS itself is not the
+   primary trust anchor (Section 1, approach 3) and MAY be stale
+   independent of any compromise.</li>
+<li>A Node MUST NOT require the DNS TXT record to be present in
+   order to complete <code>domain</code> resolution; its absence MUST NOT, by
+   itself, cause resolution to fail.</li>
+<li>When a Record Fingerprint is published or compared, it MUST be
+   computed as follows, so that any two implementations derive the
+   identical fingerprint from the same Publisher Key Record:</li>
+</ol>
+<p><code>1. Parse the Publisher Key Record as JSON.
+   2. Canonicalize the parsed value using JCS (RFC 8785) — the
+      same canonicalization scheme ONP-1002 already mandates for
+      Pre-Image construction; no second canonical form is
+      introduced.
+   3. Hash the UTF-8 bytes of the canonical form with sha-256
+      (the required-baseline hash algorithm, ONP-0005 Appendix A).
+   4. Record Fingerprint =
+        "sha-256" ":" base64url(digest, unpadded)</code></p>
+<p>The pre-image is the <em>parsed</em> value, not the served bytes:
+   insignificant whitespace, key order, and encoding variations in
+   what a server happens to emit MUST NOT change the fingerprint.
+   The hash-algorithm label MUST use the Algorithm Registry
+   identifier form (<code>sha-256</code>, lowercased, per ONP-0005 Appendix A
+   and ONP-1001 Appendix A), not an ad-hoc spelling.
+5. The DNS TXT record value MUST take the form
+   <code>onp-fingerprint=</code> followed by the Record Fingerprint exactly as
+   produced by rule 4. Comparison is exact string equality on the
+   Record Fingerprint; a Node MUST NOT attempt fuzzy or
+   case-normalized matching.
+6. A future hash-algorithm migration for Record Fingerprints
+   follows the Algorithm Registry lifecycle (ONP-0005); a Node
+   encountering a fingerprint whose algorithm label it does not
+   recognize MUST treat the corroboration check as inconclusive
+   (neither confirming nor warning), never as a resolution failure —
+   consistent with rule 2's warning-only ceiling.</p>
+<h2 id="4-4-key-rotation-and-revocation">4.4 Key Rotation and Revocation</h2>
+<ol>
+<li>A Publisher Key Record MUST distinguish Current Keys from
+   Previous Keys.</li>
+<li>Each Previous Key entry MUST carry a <code>valid_from</code> and
+   <code>valid_until</code> timestamp bounding the period during which
+   Objects signed with it are to be treated as authentic.</li>
+<li>A Node verifying a News Object whose signing key is not in
+   Current Keys MUST check whether it appears in Previous Keys with
+   the Object's claimed signing time falling within that key's
+   validity window before rejecting the Object.</li>
+<li>A publisher revoking a compromised key MUST remove it from
+   Current Keys and MAY set an explicit <code>revoked_at</code> timestamp on
+   its Previous Keys entry. A Node MUST treat any Object with a
+   claimed signing time at or after a key's <code>revoked_at</code> timestamp
+   as untrusted, even if the signature is cryptographically valid
+   and the timestamp otherwise falls within the key's stated
+   validity window.</li>
+<li>When rotating keys, a publisher SHOULD sign the updated Publisher
+   Key Record with both the outgoing and incoming key, to provide
+   continuity evidence beyond domain control alone. This is
+   RECOMMENDED, not REQUIRED, consistent with Principle P2 (Minimal
+   Required Surface, ONP-0003) — a Node MUST NOT require this
+   continuity signature to accept an otherwise valid rotation.</li>
+</ol>
+<h2 id="4-5-optional-transparency-log">4.5 OPTIONAL Transparency Log</h2>
+<ol>
+<li>A publisher MAY register Publisher Key Record changes to a
+   public, append-only Transparency Log for auditability.</li>
+<li>A Transparency Log, if used, MUST be independently and publicly
+   readable without requiring participation in a consensus protocol;
+   it exists to make key history auditable, not to establish
+   consensus on validity. This distinction is what keeps this
+   mechanism compliant with Principle P3 (Ordinary Technology,
+   ONP-0003) despite superficial resemblance to blockchain-adjacent
+   designs. A full comparison against blockchain-based alternatives
+   is in ONP-0005.</li>
+<li>A Node MUST NOT require a Transparency Log entry to exist as a
+   precondition for accepting an otherwise valid <code>domain</code> resolution
+   (per Principle P3: it must remain possible to produce and verify
+   a valid Object using ordinary HTTPS alone).</li>
+<li>A Node MAY treat the absence of an expected Transparency Log
+   entry for a recently rotated key as an elevated-risk signal and
+   apply stricter local policy, but this document does not mandate
+   any specific policy response.</li>
+</ol>
+<h2 id="4-6-optional-alternative-trust-anchor-type-eudi">4.6 OPTIONAL Alternative Trust Anchor Type: EUDI</h2>
+<ol>
+<li><code>eudi</code> is reserved as a Trust Anchor Type identifier for a future
+   binding to the EU Digital Identity Wallet framework, to be
+   normatively defined in ONP-2300 (Identity).</li>
+<li>A Node MAY support <code>eudi</code> resolution in addition to the REQUIRED
+   <code>domain</code> baseline. A Node MUST NOT require <code>eudi</code> support to be
+   considered conformant.</li>
+<li>A publisher's use of an <code>eudi</code> Trust Anchor Type, once ONP-2300
+   defines it, MUST be additive to, not a replacement for, the
+   <code>domain</code> Publisher Key Record — a News Object's authenticity
+   MUST remain independently verifiable by a Node that implements
+   only the <code>domain</code> baseline. This preserves the interoperability
+   guarantee stated in Section 6.4.</li>
+</ol>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<p>The following structure is illustrative. Its authoritative,
+canonical wire-level form is owned by ONP-1003.</p>
+<h2 id="5-1-publisher-key-record-illustrative">5.1 Publisher Key Record (Illustrative)</h2>
+<pre><code class="language-json">{
+  &quot;onp_trust_anchor_type&quot;: &quot;domain&quot;,
+  &quot;publisher_domain&quot;: &quot;regiopurmerend.nl&quot;,
+  &quot;current_keys&quot;: [
+    {
+      &quot;key_id&quot;: &quot;onp:key:2026-07-01&quot;,
+      &quot;algorithm&quot;: &quot;Ed25519&quot;,
+      &quot;public_key&quot;: &quot;base64url-encoded-key&quot;,
+      &quot;valid_from&quot;: &quot;2026-07-01T00:00:00Z&quot;
+    }
+  ],
+  &quot;previous_keys&quot;: [
+    {
+      &quot;key_id&quot;: &quot;onp:key:2025-01-15&quot;,
+      &quot;algorithm&quot;: &quot;Ed25519&quot;,
+      &quot;public_key&quot;: &quot;base64url-encoded-key&quot;,
+      &quot;valid_from&quot;: &quot;2025-01-15T00:00:00Z&quot;,
+      &quot;valid_until&quot;: &quot;2026-07-01T00:00:00Z&quot;,
+      &quot;revoked_at&quot;: null
+    }
+  ],
+  &quot;transparency_log&quot;: {
+    &quot;log_url&quot;: &quot;https://transparency.example-onp-log.org&quot;,
+    &quot;entry_id&quot;: &quot;...&quot;
+  },
+  &quot;rotation_continuity_signature&quot;: &quot;optional-signature-by-outgoing-key&quot;
+}
+</code></pre>
+<h2 id="5-2-dns-txt-corroboration-record-illustrative">5.2 DNS TXT Corroboration Record (Illustrative)</h2>
+<pre><code>_onp.regiopurmerend.nl.  TXT  &quot;onp-fingerprint=sha-256:AbC123...&quot;
+</code></pre>
+<p>The fingerprint value is the Record Fingerprint of Section 4.3
+rule 4; the <code>sha-256</code> label follows the Algorithm Registry
+identifier form (corrected from <code>sha256</code> in v0.2.0).</p>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-resolution-algorithm">6.1 Resolution Algorithm</h2>
+<p>Given a News Object claiming <code>publisher_domain = D</code>, signed with
+<code>key_id = K</code> at claimed time <code>T</code>, a Node MUST perform the following
+steps before treating the Object as authentically attributed:</p>
+<pre><code>1. Fetch https://D/.well-known/onp/publisher.json over HTTPS.
+2. Validate the TLS certificate for D (standard WebPKI validation).
+   -&gt; FAIL if invalid: Trust Anchor resolution FAILS.
+3. Parse the Publisher Key Record.
+4. If K is in current_keys:
+     -&gt; Trust Anchor resolution SUCCEEDS.
+5. Else if K is in previous_keys AND
+     valid_from &lt;= T &lt;= valid_until AND
+     (revoked_at is null OR T &lt; revoked_at):
+     -&gt; Trust Anchor resolution SUCCEEDS.
+6. Else:
+     -&gt; Trust Anchor resolution FAILS.
+
+OPTIONAL corroboration (does not change SUCCEED/FAIL outcome,
+only local risk posture):
+7. If a DNS TXT record exists at _onp.D, compare its published
+   Record Fingerprint against the Record Fingerprint of the fetched
+   record, both computed per Section 4.3 rule 4.
+   Mismatch -&gt; flag as warning.
+8. If a transparency_log entry is expected but absent for a
+   recent rotation -&gt; flag as warning.
+</code></pre>
+<h2 id="6-2-relationship-to-core-validation">6.2 Relationship to Core Validation</h2>
+<p>Trust Anchor resolution is invoked during Core validation level 1
+(ONP-0001 Section 6.2; normatively specified in ONP-1004). An Object
+that passes cryptographic signature validation but fails Trust
+Anchor resolution MUST be treated identically to an Object that
+fails signature validation outright — as untrusted, per the Vertical
+Invariant's implication that Core-level trust failures are terminal
+(ONP-0001 Section 8; ONP-0000 Section 5.3).</p>
+<h2 id="6-3-caching">6.3 Caching</h2>
+<ol>
+<li>A Node SHOULD cache a resolved Publisher Key Record for a bounded
+   period to avoid refetching on every Object it processes.</li>
+<li>A Node MUST re-fetch the Publisher Key Record if verification
+   fails against a cached copy before treating the Object as
+   untrusted, to account for a legitimate rotation the cache has not
+   yet observed.</li>
+<li>A Node SHOULD choose a cache TTL that balances load on the
+   publisher's HTTPS endpoint against timely observation of
+   revocations; this document does not mandate a specific value.</li>
+</ol>
+<h2 id="6-4-interoperability">6.4 Interoperability</h2>
+<p>A Node implementing only the REQUIRED <code>domain</code> Trust Anchor Type
+MUST be able to fully verify the authenticity of any News Object
+from any publisher, regardless of whether that publisher has also
+registered a Transparency Log entry or an <code>eudi</code> binding. Optional
+mechanisms (Sections 4.3, 4.5, 4.6) MAY improve a Node's confidence
+or detect anomalies a minimal Node would miss, but MUST NOT be
+required for baseline interoperability. This mirrors the Horizontal
+and Vertical Invariants at the trust-resolution layer: no optional
+enhancement may become a silent precondition for verification that
+a minimal, REQUIRED-only implementation would otherwise satisfy.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-successful-resolution-current-key">7.1 Successful Resolution, Current Key</h2>
+<pre><code>Object: publisher_domain=regiopurmerend.nl, key_id=onp:key:2026-07-01
+Fetch:  https://regiopurmerend.nl/.well-known/onp/publisher.json -&gt; 200 OK, valid TLS
+Match:  key_id found in current_keys
+Result: Trust Anchor resolution SUCCEEDS
+</code></pre>
+<h2 id="7-2-successful-resolution-rotated-key-within-window">7.2 Successful Resolution, Rotated Key Within Window</h2>
+<pre><code>Object: publisher_domain=regiopurmerend.nl, key_id=onp:key:2025-01-15,
+        signed_at=2025-11-01T10:00:00Z
+Fetch:  Publisher Key Record (current key is now onp:key:2026-07-01)
+Match:  onp:key:2025-01-15 found in previous_keys,
+        valid_from=2025-01-15 &lt;= 2025-11-01 &lt;= valid_until=2026-07-01,
+        revoked_at=null
+Result: Trust Anchor resolution SUCCEEDS
+        (the Object remains verifiable after rotation)
+</code></pre>
+<h2 id="7-3-failed-resolution-revoked-key">7.3 Failed Resolution, Revoked Key</h2>
+<pre><code>Object: key_id=onp:key:2025-01-15, signed_at=2026-08-15T00:00:00Z
+Publisher Key Record: onp:key:2025-01-15 has revoked_at=2026-08-01
+Check: signed_at (2026-08-15) is at or after revoked_at (2026-08-01)
+Result: Trust Anchor resolution FAILS, regardless of a
+        cryptographically valid signature
+</code></pre>
+<h2 id="7-4-dns-corroboration-mismatch-warning-not-failure">7.4 DNS Corroboration Mismatch (Warning, Not Failure)</h2>
+<pre><code>Fetched Publisher Key Record fingerprint: sha-256:AbC123...
+DNS TXT _onp.regiopurmerend.nl:          sha-256:XyZ789...
+Result: Trust Anchor resolution per Section 6.1 steps 1-6 is
+        UNAFFECTED (DNS is corroborating only). Node MAY log or
+        surface this mismatch as an elevated-risk signal per
+        local policy (Section 4.3, rule 2).
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<h2 id="8-1-domain-compromise-is-the-fundamental-limitation">8.1 Domain Compromise Is the Fundamental Limitation</h2>
+<p>Because <code>domain</code> resolution roots trust in control of the
+publisher's own HTTPS domain, an attacker who compromises that
+domain (e.g. via DNS hijacking combined with certificate issuance,
+or direct server compromise) can serve a forged Publisher Key
+Record and produce Objects that pass full verification. This is not
+a flaw specific to ONP; it is the same fundamental limitation WebPKI
+itself has, and it is judged an acceptable tradeoff under Principle
+P3 (Ordinary Technology) because the alternative — a dedicated
+content-signing PKI or a consensus-based root of trust — trades this
+well-understood risk for either new institutional dependencies or
+the correction-hostile properties ONP-0005 argues against for
+blockchain-based designs.</p>
+<h2 id="8-2-transparency-log-reduces-does-not-eliminate-this-risk">8.2 Transparency Log Reduces, Does Not Eliminate, This Risk</h2>
+<p>An OPTIONAL Transparency Log (Section 4.5) allows a compromised
+rotation to be detected after the fact by anyone monitoring the log,
+because a forged Publisher Key Record served only to a subset of
+Nodes (a targeted attack) would show a discrepancy against the
+publicly logged version. It does not prevent the initial compromise
+and MUST NOT be relied upon as a real-time defense; it is an
+auditability mechanism, not a validation gate (Section 4.5, rule 3).</p>
+<h2 id="8-3-caching-creates-a-revocation-delay-window">8.3 Caching Creates a Revocation Delay Window</h2>
+<p>Per Section 6.3, a cached Publisher Key Record may not reflect a
+just-issued revocation. A Node with a long cache TTL has a
+correspondingly longer window during which it may accept Objects
+signed with a since-revoked key, if that key's revocation is dated
+after the Object's claimed signing time. Implementers SHOULD weigh
+this explicitly rather than defaulting to a long TTL purely for
+performance.</p>
+<h2 id="8-4-dns-corroboration-s-own-risk-profile">8.4 DNS Corroboration's Own Risk Profile</h2>
+<p>The DNS TXT signal (Section 4.3) is itself subject to DNS hijacking
+and MUST NOT be promoted to primary trust anchor status by any
+implementation; this document deliberately keeps it advisory
+(Section 4.3, rule 2) for exactly this reason.</p>
+<h2 id="8-5-relationship-to-onp-0005">8.5 Relationship to ONP-0005</h2>
+<p>This document's rejection of blockchain-based trust rooting is
+stated at the level of a design decision (Section 1, approach 2);
+the full comparative security analysis — including the specific
+arguments about correction, retraction, and privacy that a
+consensus ledger handles poorly for journalistic content — is
+reserved for ONP-0005 and is not duplicated here.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>A Publisher Key Record (Section 5.1) is, by design, intended to be
+publicly resolvable — it describes an organizational publishing
+identity, not an individual. It carries limited privacy sensitivity
+on its own. Two considerations apply:</p>
+<ol>
+<li>A Transparency Log (Section 4.5), if used, makes a publisher's
+   key rotation history permanently and publicly visible, comparable
+   to Certificate Transparency logs for TLS certificates. Publishers
+   opting into a Transparency Log SHOULD be informed that rotation
+   events become part of a public historical record.</li>
+<li>An <code>eudi</code> Trust Anchor Type (Section 4.6), once normatively
+   defined in ONP-2300, is expected to bind a signing key to a
+   legal-entity identity credential, which may carry more
+   personally identifying information than domain control does
+   (e.g. identifying a specific natural person as an authorized
+   signatory). Full privacy analysis of that binding is deferred to
+   ONP-2300 and MUST be addressed there before <code>eudi</code> support is
+   considered normatively complete.</li>
+</ol>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>[RFC8785] Rundgren, A., Jordan, B., and S. Erdtman, "JSON
+  Canonicalization Scheme (JCS)", RFC 8785 — REQUIRED for Record
+  Fingerprint computation (Section 4.3, rule 4). Normative only for
+  implementations of the OPTIONAL DNS corroboration mechanism.</li>
+<li>ONP-0000, Introduction — the Trusted News pillar (Section 1.3.1)
+  this document realizes.</li>
+<li>ONP-0001, Architecture — Vertical Invariant and Core validation
+  ordering (Section 6.2), which governs where Trust Anchor
+  resolution is invoked.</li>
+<li>ONP-0002, Terminology — activates the "Trust Anchor" term from
+  Reserved status.</li>
+<li>ONP-0003, Design Principles — Principle P3 (Ordinary Technology)
+  and Principle P2 (Minimal Required Surface), both directly
+  constraining this document's requirements.</li>
+<li><code>EU-ALIGNMENT.md</code> — non-normative positioning document motivating
+  the <code>eudi</code> Trust Anchor Type hook in Section 4.6.</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>ONP-1002, Serialization — the existing JCS canonicalization
+  mandate that Section 4.3 rule 4 deliberately reuses rather than
+  introducing a second canonical form.</li>
+<li>ONP-1003, Digital Signatures (forward reference — authoritative
+  wire-level schema for the illustrative structures in Section 5).</li>
+<li>ONP-1004, Validation (forward reference — the Core validation
+  pipeline that invokes Trust Anchor resolution).</li>
+<li>ONP-0005, Security Model (forward reference — full rejected-
+  alternatives analysis, including blockchain, referenced in
+  Sections 1 and 8.5).</li>
+<li>ONP-2300, Identity (forward reference — normative definition of
+  the <code>eudi</code> Trust Anchor Type).</li>
+<li>RFC 8615, "Well-Known Uniform Resource Identifiers (URIs)" —
+  basis for the <code>.well-known/onp/</code> path convention in Section 4.2.</li>
+<li>W3C <code>did:web</code> Method Specification — comparable domain-anchored
+  identifier design, informing but not binding this document's
+  approach.</li>
+<li>Certificate Transparency (RFC 9162) — the non-consensus,
+  publicly-auditable log design pattern this document's Transparency
+  Log (Section 4.5) follows.</li>
+</ul>
+<hr />
+<h1 id="appendix-a-full-illustrative-publisher-key-record-schema">Appendix A: Full Illustrative Publisher Key Record Schema</h1>
+<pre><code class="language-json">{
+  &quot;onp_trust_anchor_type&quot;: &quot;domain&quot;,
+  &quot;publisher_domain&quot;: &quot;string, required&quot;,
+  &quot;current_keys&quot;: [
+    {
+      &quot;key_id&quot;: &quot;string, required, unique&quot;,
+      &quot;algorithm&quot;: &quot;string, required (e.g. Ed25519)&quot;,
+      &quot;public_key&quot;: &quot;string, required, base64url-encoded&quot;,
+      &quot;valid_from&quot;: &quot;string, required, ISO 8601 timestamp&quot;
+    }
+  ],
+  &quot;previous_keys&quot;: [
+    {
+      &quot;key_id&quot;: &quot;string, required, unique&quot;,
+      &quot;algorithm&quot;: &quot;string, required&quot;,
+      &quot;public_key&quot;: &quot;string, required, base64url-encoded&quot;,
+      &quot;valid_from&quot;: &quot;string, required, ISO 8601 timestamp&quot;,
+      &quot;valid_until&quot;: &quot;string, required, ISO 8601 timestamp&quot;,
+      &quot;revoked_at&quot;: &quot;string or null, ISO 8601 timestamp&quot;
+    }
+  ],
+  &quot;transparency_log&quot;: {
+    &quot;log_url&quot;: &quot;string, optional&quot;,
+    &quot;entry_id&quot;: &quot;string, optional&quot;
+  },
+  &quot;eudi_binding&quot;: {
+    &quot;note&quot;: &quot;reserved, normatively undefined until ONP-2300&quot;
+  },
+  &quot;rotation_continuity_signature&quot;: &quot;string, optional&quot;
+}
+</code></pre>
+<h1 id="appendix-b-resolution-decision-flow">Appendix B: Resolution Decision Flow</h1>
+<pre><code>                 +-------------------------+
+                 | Object claims:           |
+                 | publisher_domain, key_id,|
+                 | signed_at                |
+                 +------------+-------------+
+                              |
+                              v
+              +---------------------------------+
+              | Fetch .well-known/onp/           |
+              | publisher.json over HTTPS         |
+              | Validate TLS certificate          |
+              +----------------+------------------+
+                       |  invalid TLS
+                       |  or fetch fails
+                       v
+                 [ FAIL: untrusted ]
+                       |
+                       | valid
+                       v
+              +---------------------------------+
+              | key_id in current_keys?          |
+              +----------------+------------------+
+                yes |                | no
+                    v                v
+          [ SUCCEED ]     +-----------------------------+
+                           | key_id in previous_keys AND |
+                           | signed_at within window AND |
+                           | not revoked before signed_at|
+                           +--------------+---------------+
+                             yes |               | no
+                                 v               v
+                          [ SUCCEED ]      [ FAIL: untrusted ]
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-full-illustrative-publisher-key-record-schema">Appendix A: Full Illustrative Publisher Key Record Schema</a></li><li><a href="#appendix-b-resolution-decision-flow">Appendix B: Resolution Decision Flow</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/0004-trust-model.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

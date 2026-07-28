@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-9003 Open News Protocol (ONP): Performance — Open News Protocol</title>
+<meta name="description" content="ONP-9003: Open News Protocol (ONP): Performance — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-9003</p>
+    <h1 id="top">Open News Protocol (ONP): Performance</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document is non-normative. It consolidates performance-relevant
+guidance already scattered across the series (Trust Anchor caching,
+ONP-0004 Section 6.3; high-volume Comment signing, ONP-2800 Section
+8.2) and adds guidance not previously stated anywhere: computational
+cost characterization of Core cryptographic operations, Algorithm
+Registry caching, Object Reference resolution fan-out, and the
+asymptotic behavior of Extension Claim Domain overlap detection at
+scale. Nothing here is a conformance requirement — ONP defines
+correctness, never speed, as a compliance criterion — but an
+implementation that ignores this document's guidance will likely
+work correctly and still perform poorly under real load.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Reference series (ONP-9000-9999). It
+is Informational and introduces no new normative requirement. It is a
+Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000. As in ONP-9001 and ONP-9002, nothing here creates a new
+MUST-level obligation; SHOULD/RECOMMENDED statements are performance
+guidance, never conformance criteria.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>Principle P7 (Time-to-First-Object, ONP-0003) is about getting
+started quickly. This document is about what happens after that —
+once a Node is consuming thousands of Objects a day from hundreds of
+publishers, or a publisher is signing a high-volume comment section,
+the same design that made a first Object easy to produce can become
+a bottleneck if implemented naively. None of the guidance here changes
+correctness; all of it is about doing the same correct thing
+efficiently.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>computational cost characterization of Core cryptographic
+  operations and canonicalization;</li>
+<li>caching guidance for Trust Anchor resolution and Algorithm Registry
+  lookups;</li>
+<li>Object Reference resolution fan-out and how to manage it;</li>
+<li>the asymptotic complexity of Extension Claim Domain overlap
+  detection;</li>
+<li>high-volume Companion instance guidance (Comments);</li>
+<li>Object size tradeoffs already made elsewhere in the series,
+  collected here for visibility.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT:</p>
+<ul>
+<li>specify any benchmark numbers — hardware and workload dependent,
+  and would go stale quickly if fixed in specification text;</li>
+<li>create any performance-related conformance requirement — an
+  implementation that is correct but slow remains fully conformant;</li>
+<li>recommend specific caching infrastructure, databases, or vendors,
+  consistent with Principle P1 and P3.</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p><strong>Resolution Fan-out</strong>
+: The pattern by which following every Object Reference on a single
+  Object can trigger many independent network resolutions, each with
+  its own cost (Section 4.4).</p>
+<hr />
+<h1 id="4-guidance">4. Guidance</h1>
+<h2 id="4-1-computational-cost-of-core-operations">4.1 Computational Cost of Core Operations</h2>
+<p>Ed25519 signing and verification and SHA-256 hashing (ONP-0005
+Appendix A) are both fast, well-optimized operations on essentially
+any modern hardware; neither is a meaningful bottleneck at typical
+newsroom publishing volumes. JCS canonicalization (ONP-1002) cost
+scales with Object size, dominated in practice by an embedded Article
+<code>body</code> (ONP-2100 Section 8.2). A Node verifying the same Object
+repeatedly SHOULD cache the canonicalized byte form rather than
+recomputing it on every access.</p>
+<h2 id="4-2-trust-anchor-resolution-caching">4.2 Trust Anchor Resolution Caching</h2>
+<p>Extending ONP-0004 Section 6.3's caching guidance: a Node consuming
+many Objects from the same publisher SHOULD share one cached
+Publisher Key Record across all of them, resolved once per cache TTL
+rather than once per Object. A high-traffic aggregator resolving a
+Publisher Key Record independently for every incoming Article from
+the same domain is doing unnecessary, repeated work.</p>
+<h2 id="4-3-algorithm-registry-caching">4.3 Algorithm Registry Caching</h2>
+<p>The Algorithm Registry (ONP-0005 Section 5.1) changes rarely relative
+to Object volume. A Node SHOULD cache it locally with periodic
+refresh (for example, daily) rather than treating every algorithm
+check as requiring a fresh lookup — this was not previously addressed
+when the Registry itself was defined, since ONP-0005's own scope was
+the Registry's content and governance, not consumer-side caching
+strategy.</p>
+<h2 id="4-4-object-reference-resolution-fan-out">4.4 Object Reference Resolution Fan-out</h2>
+<p>A single Article can now carry <code>contributor_refs</code>, <code>rights_ref</code>,
+<code>payment_ref</code>, <code>source_refs</code>, and <code>corrections_ref</code> (ONP-2100
+Sections 4.6-4.12) simultaneously. A Node that eagerly resolves every
+reference on every Object it encounters, regardless of whether the
+resolved content is actually needed, multiplies its network cost
+substantially at scale. Two RECOMMENDED practices:</p>
+<ol>
+<li>Resolve References lazily — only when the specific task at hand
+   actually requires the referenced content (e.g. only resolve
+   <code>rights_ref</code> when a user action requires checking usage terms),
+   not eagerly for every Object ingested.</li>
+<li>Where multiple References must be resolved for the same task,
+   resolve them in parallel rather than serially — ONP-2000 Section
+   4.4 already establishes that reference resolution is optional and
+   non-blocking, so no ordering dependency forces serial resolution.</li>
+</ol>
+<h2 id="4-5-extension-conflict-detection-at-scale">4.5 Extension Conflict Detection at Scale</h2>
+<p>ONP-3000 Section 6.1's pairwise Claim Domain overlap check is, in the
+general case, quadratic in the number of Extension namespaces present
+on a single Object. For the five Extensions published so far, and for
+the small number typically attached to any one Object in practice,
+this is not a meaningful concern. A Node anticipating a much larger
+number of simultaneously-attached Extensions SHOULD pre-index Claim
+Domains by namespace so overlap detection becomes a set-intersection
+operation rather than a full pairwise scan — noted here for
+completeness rather than because current usage patterns make it
+urgent.</p>
+<h2 id="4-6-high-volume-companion-instances-comments">4.6 High-Volume Companion Instances (Comments)</h2>
+<p>Extending ONP-2800 Section 8.2: a popular Article's comment section,
+if fully represented as individually-signed Comment Objects, can
+reach volumes where per-comment, real-time signing becomes a
+meaningful operational cost. Publishers using the Comments Companion
+at scale SHOULD consider a periodic, batched signing workflow
+(collecting comments and signing a batch on a short interval) rather
+than synchronous per-comment signing, without changing the wire
+format at all — each Comment Object remains independently verifiable
+regardless of how its signing was operationally batched.</p>
+<h2 id="4-7-object-size-considerations">4.7 Object Size Considerations</h2>
+<p>Article's decision to embed full text (ONP-2100 Section 8.2) and
+Media's decision to reference external assets instead (ONP-2200
+Section 1) were both made with size in mind. For exceptionally
+long-form content (extended investigative pieces), embedded body
+size remains modest relative to typical network payloads generally,
+but publishers producing unusually long pieces SHOULD be aware this
+tradeoff exists and was made deliberately, not overlooked.</p>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<p>Not applicable — this document defines no wire-level fields.</p>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-a-suggested-node-cache-architecture">6.1 A Suggested Node Cache Architecture</h2>
+<p>Synthesizing Sections 4.2-4.4 into one coherent picture:</p>
+<pre><code>+---------------------------------------------------+
+| Node                                               |
+|                                                     |
+|  +-----------------------+  TTL-bounded, shared     |
+|  | Publisher Key Record   |  per publisher domain,  |
+|  | Cache                  |  not per Object          |
+|  +-----------------------+                          |
+|                                                       |
+|  +-----------------------+  Refreshed periodically,  |
+|  | Algorithm Registry      |  not per Object          |
+|  | Cache                   |                          |
+|  +-----------------------+                          |
+|                                                       |
+|  +-----------------------+  Lazy, on-demand,        |
+|  | Resolved Reference      |  parallelized when       |
+|  | Cache                   |  multiple needed          |
+|  +-----------------------+                          |
++---------------------------------------------------+
+</code></pre>
+<h2 id="6-2-interoperability">6.2 Interoperability</h2>
+<p>None of this document's guidance affects wire-level interoperability
+— every recommendation here is about a Node's own internal
+implementation strategy, invisible to any other Node it interoperates
+with. A Node following none of this guidance and one following all of
+it remain equally conformant and equally able to verify each other's
+Objects; only their own operational cost differs.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-a-high-traffic-aggregator-s-caching-strategy">7.1 A High-Traffic Aggregator's Caching Strategy</h2>
+<pre><code>Scenario: a Node ingests thousands of Articles per day from
+hundreds of publishers.
+
+Naive approach: resolve Publisher Key Record and every Object
+Reference for every ingested Article immediately.
+  -&gt; Thousands of redundant Trust Anchor resolutions per day for
+     the same handful of publisher domains; most resolved
+     references never actually displayed to a user.
+
+Recommended approach (Section 4.2, 4.4):
+  -&gt; Cache Publisher Key Records per domain, refreshed on a bounded
+     TTL, shared across every Article from that domain.
+  -&gt; Resolve rights_ref/payment_ref/etc. only when a user actually
+     views a specific Article, not at ingestion time for the whole
+     firehose.
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<p>Caching aggressiveness is a direct tradeoff against revocation
+responsiveness, already analyzed in ONP-0004 Section 8.3: a longer
+Publisher Key Record cache TTL (Section 4.2 of this document) reduces
+network load but widens the window during which a Node might accept
+an Object signed with a since-revoked key. This document's performance
+guidance and ONP-0004's security guidance pull in opposite directions
+on this one parameter; an implementer SHOULD read both before choosing
+a TTL, not this document's performance framing alone.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>A Node's own resolved-reference cache (Section 6.1) can, if not
+invalidated on retraction, continue serving retracted content
+(Source, Identity, or Comment Objects included) longer than the
+retraction itself would suggest — an extension of the same
+"retraction does not erase history" limitation already established
+at the protocol level (ONP-0006 Section 8.3), now applying to a
+well-behaved Node's own cache specifically, not merely to other
+Nodes that copied an Object before retraction. A Node SHOULD
+periodically re-check retraction status for cached, privacy-sensitive
+References rather than trusting an indefinitely long cache lifetime
+for those specifically.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0003, Design Principles — Principle P7 (Time-to-First-Object),
+  the motivating concern this document extends past initial
+  implementation.</li>
+<li>ONP-0004, Trust Model — Section 6.3 (caching, extended in Section
+  4.2) and Section 8.3 (the revocation-responsiveness tradeoff
+  restated in Section 8).</li>
+<li>ONP-0005, Security Model — Section 5.1, the Algorithm Registry
+  caching guidance in Section 4.3 extends.</li>
+<li>ONP-0006, News Object Lifecycle — Section 8.3, the retraction
+  limitation Section 9 applies to Node-side caching specifically.</li>
+<li>ONP-2000, Companion Framework — Section 4.4, the non-blocking
+  Reference resolution property Section 4.4 of this document relies
+  on for parallelization guidance.</li>
+<li>ONP-2100, Article — Section 8.2, the embedded-body size tradeoff
+  restated in Section 4.7.</li>
+<li>ONP-2800, Comments — Section 8.2, the high-volume signing concern
+  extended in Section 4.6.</li>
+<li>ONP-3000, Extension Framework — Section 6.1, the overlap check
+  whose complexity Section 4.5 characterizes.</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>ONP-9000, Reference Implementation; ONP-9001, Best Practices;
+  ONP-9002, Security Checklist — the structurally parallel documents
+  in this series.</li>
+</ul>
+<hr />
+<h1 id="appendix-a-performance-guidance-quick-reference">Appendix A: Performance Guidance Quick Reference</h1>
+<pre><code>[ ] Canonicalized bytes cached, not recomputed per verification
+[ ] Publisher Key Records cached per domain, not per Object
+[ ] Algorithm Registry cached locally with periodic refresh
+[ ] Object References resolved lazily, only when actually needed
+[ ] Multiple References for one task resolved in parallel
+[ ] Extension Claim Domain overlap check pre-indexed if many
+    Extensions are anticipated per Object
+[ ] High-volume Comment signing considered as a batched workflow
+[ ] Cache TTLs chosen with ONP-0004 Section 8.3's revocation
+    tradeoff explicitly in mind, not performance alone
+[ ] Cached, privacy-sensitive References periodically re-checked
+    for retraction status
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-guidance">4. Guidance</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-performance-guidance-quick-reference">Appendix A: Performance Guidance Quick Reference</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/9003-performance.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

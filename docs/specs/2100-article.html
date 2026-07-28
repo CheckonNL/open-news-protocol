@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-2100 Open News Protocol (ONP): Article — Open News Protocol</title>
+<meta name="description" content="ONP-2100: Open News Protocol (ONP): Article — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-2100</p>
+    <h1 id="top">Open News Protocol (ONP): Article</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.6.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the Article Companion:
+<code>content_type = "onp:companion:article"</code>. It is the first concrete
+content model published in the ONP series — every prior document
+built the infrastructure this one finally uses for its intended
+purpose. An Article Object embeds its full text (as a constrained,
+safe Markdown subset) directly within the signed envelope, so that
+the same signature protecting <code>oid</code>, <code>vid</code>, and <code>publisher</code> also
+protects the actual words a reader, an archive, or an AI system
+receives — not merely a link to them. This document defines the
+Article content schema, its relationship to Core Metadata
+(ONP-1005), and the security requirement that forbids raw HTML in
+article bodies.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Companion series (ONP-2000-2999).
+It is directly implementable and follows every mandatory addition
+ONP-2000 Section 4.2 requires of a Companion specification. It is a
+Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>"An Article is published, corrected, retracted, and archived
+independently of any other Object" — ONP-0001 Section 7.1 already
+used Article as its worked example of a Companion with independent
+identity and lifecycle, before this document existed to back that
+claim up. This document is where that claim becomes real: a
+publisher can now produce a single, signed News Object that a Node
+anywhere can verify as authentically theirs, unmodified since
+signing, carrying the actual article text rather than a pointer to a
+page that could change without anyone noticing.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>the <code>onp:companion:article</code> content schema: <code>headline</code>, <code>body</code>,
+  and the OPTIONAL fields <code>dek</code>, <code>byline</code>, <code>section</code>,
+  <code>canonical_url</code>, <code>media_refs</code>;</li>
+<li>the constrained, safe Markdown subset <code>body</code> MUST use, and the
+  rendering-time sanitization requirement;</li>
+<li>the precedence relationship between <code>headline</code> and
+  <code>onp:metadata.title</code>.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>cryptographically verified authorship — <code>byline</code> (Section 4.6) is
+  a provisional, plain-string mechanism pending ONP-2300 (Identity);</li>
+<li>structured, formal correction records — those belong to ONP-2700
+  (Corrections), which will reference an Article's OID rather than
+  the reverse;</li>
+<li>media file handling, formats, or storage — owned by ONP-2200
+  (Media); this document only defines how an Article <em>references</em> a
+  Media Object (Section 4.7);</li>
+<li>any rendering engine's specific implementation, beyond the
+  sanitization requirement Section 4.4 imposes.</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document is the owning specification for the following terms.</p>
+<p><strong>Article Object</strong>
+: An informal name for a News Object whose <code>content_type</code> is
+  <code>onp:companion:article</code>. Not a distinct wire-level concept from
+  News Object (ONP-1000); every Article Object is a News Object.</p>
+<p><strong>Safe Markdown Subset</strong>
+: The constrained Markdown grammar <code>body</code> MUST use: CommonMark
+  syntax with raw HTML blocks and inline HTML both disallowed
+  (Section 4.4; Appendix B).</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-content-type-declaration">4.1 content_type Declaration</h2>
+<p>Every Article Object MUST declare <code>content_type</code> as exactly
+<code>onp:companion:article</code>.</p>
+<h2 id="4-2-companion-vs-extension-reapplication">4.2 Companion-vs-Extension Reapplication</h2>
+<p>Per ONP-2000 Section 4.2, rule 2, the decision test (ONP-0001
+Section 4.4) is reapplied here explicitly:</p>
+<pre><code>Does &quot;Article&quot; have independent identity and an independent
+lifecycle, separable from any other Object?
+
+- An Article is created, corrected (new Version, ONP-0006),
+  retracted, and archived entirely on its own — it does not require
+  any other Object to exist first, and its lifecycle events do not
+  depend on any other Object's lifecycle.
+- YES -&gt; Companion.
+</code></pre>
+<p>This confirms, with the test actually shown rather than merely
+asserted, the classification ONP-0001 Section 7.1 already used as
+its worked example.</p>
+<h2 id="4-3-content-schema">4.3 Content Schema</h2>
+<ol>
+<li><code>headline</code> is REQUIRED: a string, the Article's editorial
+   headline.</li>
+<li><code>body</code> is REQUIRED: a string in the Safe Markdown Subset
+   (Section 4.4), the Article's full text.</li>
+<li><code>dek</code>, <code>byline</code>, <code>section</code>, <code>canonical_url</code>, and <code>media_refs</code> are
+   OPTIONAL, per Sections 4.6-4.8.</li>
+</ol>
+<h2 id="4-4-body-format-safe-markdown-subset">4.4 Body Format — Safe Markdown Subset</h2>
+<ol>
+<li><code>body</code> MUST be valid CommonMark with raw HTML blocks and inline
+   HTML both disallowed. A publisher MUST NOT include raw HTML
+   anywhere in <code>body</code>.</li>
+<li>A Node rendering <code>body</code> to HTML MUST use a sanitizing renderer
+   that strips any HTML found in <code>body</code> rather than passing it
+   through, even though rule 1 already forbids publishers from
+   including it. This is a deliberate defense-in-depth requirement:
+   a Node MUST NOT trust that every publisher's tooling correctly
+   enforces rule 1, for the same reason Core validation never trusts
+   an unverified claim anywhere else in this series (Section 8.1).</li>
+<li>See Appendix B for the precise grammar boundary.</li>
+</ol>
+<h2 id="4-5-headline-onp-metadata-title-precedence">4.5 Headline / <code>onp:metadata.title</code> Precedence</h2>
+<p>Per ONP-1005 Section 4.3, an Article-aware Node MUST use
+<code>content.headline</code> for display, never <code>onp:metadata.title</code>.
+<code>onp:metadata.title</code>, if present, remains available only for Nodes
+that do not implement this Companion (ONP-1005 Section 6.1).</p>
+<h2 id="4-6-byline-provisional-and-contributor-references">4.6 Byline (Provisional) and Contributor References</h2>
+<ol>
+<li><code>byline</code>, if present, MUST be an array of plain display-name
+   strings.</li>
+<li>A Node MUST NOT treat <code>byline</code> as cryptographically verified
+   authorship; it is a provisional, publisher-asserted convenience
+   field, not an identity claim backed by any signature beyond the
+   Article Object's own.</li>
+<li><code>contributor_refs</code>, if present, MUST be an array of Object
+   References (ONP-2000 Section 4.3), each an OID identifying an
+   Identity Object (ONP-2300). Where both <code>contributor_refs</code> and
+   <code>byline</code> are present, an Identity-aware Node MUST prefer
+   <code>contributor_refs</code>; a Node without Identity Companion support
+   MUST continue to fall back to <code>byline</code>, for backward
+   compatibility. This fulfills the upgrade path promised in
+   version 0.1.0 of this document, now that ONP-2300 defines what
+   <code>contributor_refs</code> points to.</li>
+</ol>
+<h2 id="4-7-media-references">4.7 Media References</h2>
+<ol>
+<li><code>media_refs</code>, if present, MUST be an array of Object References
+   (ONP-2000 Section 4.3), each an OID string identifying a Media
+   Companion Object (ONP-2200, not yet published).</li>
+<li>Order within <code>media_refs</code> MAY be semantically significant (for
+   example, a publisher's own convention that the first entry is a
+   lead image); this document does not mandate any such convention.
+   A publisher using an ordering convention SHOULD document it
+   separately; this document neither requires nor forbids one.</li>
+<li>Per ONP-2000 Section 4.4, an unreachable or invalid entry in
+   <code>media_refs</code> MUST NOT affect this Article Object's own Core
+   validity.</li>
+</ol>
+<h2 id="4-8-canonical-url">4.8 Canonical URL</h2>
+<ol>
+<li><code>canonical_url</code>, if present, MUST be a well-formed URI pointing
+   to the publisher's own rendered, human-readable page for this
+   Article.</li>
+<li>A Node MUST NOT treat <code>canonical_url</code> as the source of truth for
+   Article content. <code>body</code> is authoritative and signed;
+   <code>canonical_url</code> is a convenience pointer only, consistent with
+   Principle P1 (Adjacent Publishing, ONP-0003) — the Article Object
+   exists alongside the publisher's website, not as its replacement.</li>
+</ol>
+<h2 id="4-9-rights-reference">4.9 Rights Reference</h2>
+<p><code>rights_ref</code>, if present, MUST be a single Object Reference
+(ONP-2000 Section 4.3): an OID identifying a Rights Object (ONP-2400).
+Its absence establishes no default assumption about usage terms
+(ONP-2400 Section 6.2); this document does not require every Article
+to carry one.</p>
+<h2 id="4-10-payment-reference">4.10 Payment Reference</h2>
+<p><code>payment_ref</code>, if present, MUST be a single Object Reference
+(ONP-2000 Section 4.3): an OID identifying a Payments Object
+(ONP-2500). Its absence does not imply the Article is free; ONP-2500
+establishes no default payment assumption, consistent with the
+jurisdiction- and settlement-neutral posture that document maintains.</p>
+<h2 id="4-11-source-references">4.11 Source References</h2>
+<p><code>source_refs</code>, if present, MUST be an array of Object References
+(ONP-2000 Section 4.3), each an OID identifying a Source Object
+(ONP-2600). Per that document's own guidance, not every source an
+Article relies on needs a corresponding Source Object — ONP-2600
+Section 4.6 explicitly recommends against creating one at all for
+the most sensitive, protection-critical cases.</p>
+<h2 id="4-12-corrections-reference-discovery-convenience-only">4.12 Corrections Reference (Discovery Convenience Only)</h2>
+<p><code>corrections_ref</code>, if present, MUST be an array of OID strings, each
+identifying a Corrections Object (ONP-2700). Unlike every other
+reference field in this document, <code>corrections_ref</code> is NOT the
+authoritative source of the relationship it describes — per ONP-2700
+Section 4.6, a Corrections Object's own <code>subject_oid</code>,
+<code>corrected_vid</code>, and <code>correcting_vid</code> fields are authoritative
+regardless of whether this field is present. <code>corrections_ref</code> exists
+purely so a publisher MAY make its own corrections easier to discover
+when it happens to be issuing a new Version anyway; its absence MUST
+NOT be read as meaning no corrections exist.</p>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:article&quot;,
+  &quot;content&quot;: {
+    &quot;headline&quot;: &quot;string, REQUIRED&quot;,
+    &quot;dek&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;body&quot;: &quot;string, REQUIRED — Safe Markdown Subset (Section 4.4)&quot;,
+    &quot;byline&quot;: [&quot;string&quot;, &quot;...&quot;],
+    &quot;contributor_refs&quot;: [&quot;onp:oid:...&quot;, &quot;...&quot;],
+    &quot;section&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;canonical_url&quot;: &quot;string, OPTIONAL — well-formed URI&quot;,
+    &quot;media_refs&quot;: [&quot;onp:oid:...&quot;, &quot;...&quot;],
+    &quot;rights_ref&quot;: &quot;onp:oid:...&quot;,
+    &quot;payment_ref&quot;: &quot;onp:oid:...&quot;,
+    &quot;source_refs&quot;: [&quot;onp:oid:...&quot;, &quot;...&quot;],
+    &quot;corrections_ref&quot;: [&quot;onp:oid:...&quot;, &quot;...&quot;]
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>headline</code></td>
+<td>REQUIRED</td>
+<td>string</td>
+<td>Takes precedence over <code>onp:metadata.title</code> (Section 4.5)</td>
+</tr>
+<tr>
+<td><code>body</code></td>
+<td>REQUIRED</td>
+<td>string</td>
+<td>Safe Markdown Subset only (Section 4.4)</td>
+</tr>
+<tr>
+<td><code>dek</code></td>
+<td>OPTIONAL</td>
+<td>string</td>
+<td>Standfirst / subtitle</td>
+</tr>
+<tr>
+<td><code>byline</code></td>
+<td>OPTIONAL</td>
+<td>array of strings</td>
+<td>Provisional fallback; see Section 4.6</td>
+</tr>
+<tr>
+<td><code>contributor_refs</code></td>
+<td>OPTIONAL</td>
+<td>array of OID strings</td>
+<td>Object References to Identity Objects (ONP-2300); preferred over <code>byline</code> (Section 4.6)</td>
+</tr>
+<tr>
+<td><code>section</code></td>
+<td>OPTIONAL</td>
+<td>string</td>
+<td>Publisher-defined editorial section</td>
+</tr>
+<tr>
+<td><code>canonical_url</code></td>
+<td>OPTIONAL</td>
+<td>string (URI)</td>
+<td>Convenience pointer only (Section 4.8)</td>
+</tr>
+<tr>
+<td><code>media_refs</code></td>
+<td>OPTIONAL</td>
+<td>array of OID strings</td>
+<td>Object References to Media Objects (Section 4.7)</td>
+</tr>
+<tr>
+<td><code>rights_ref</code></td>
+<td>OPTIONAL</td>
+<td>OID string</td>
+<td>Object Reference to a Rights Object (ONP-2400, Section 4.9)</td>
+</tr>
+<tr>
+<td><code>payment_ref</code></td>
+<td>OPTIONAL</td>
+<td>OID string</td>
+<td>Object Reference to a Payments Object (ONP-2500, Section 4.10)</td>
+</tr>
+<tr>
+<td><code>source_refs</code></td>
+<td>OPTIONAL</td>
+<td>array of OID strings</td>
+<td>Object References to Source Objects (ONP-2600, Section 4.11)</td>
+</tr>
+<tr>
+<td><code>corrections_ref</code></td>
+<td>OPTIONAL</td>
+<td>array of OID strings</td>
+<td>Discovery convenience only, never authoritative (ONP-2700, Section 4.12)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-rendering-procedure">6.1 Rendering Procedure</h2>
+<pre><code>1. Confirm Core validation passed (ONP-1004) — a Node MUST NOT
+   render body from a non-Core-authenticated Object.
+2. Confirm companion_valid = true for this Object (ONP-1004
+   Section 4.3) against this document's schema.
+3. Render headline for display (never onp:metadata.title, per
+   Section 4.5).
+4. Render body through a sanitizing Markdown renderer (Section 4.4,
+   rule 2), stripping any embedded HTML regardless of whether the
+   publisher complied with rule 1.
+5. Optionally resolve media_refs (ONP-2000 Section 6.2) if the Node
+   also implements the Media Companion.
+</code></pre>
+<h2 id="6-2-interoperability">6.2 Interoperability</h2>
+<p>This is the first document in the series where the full
+interoperability story pays off concretely: a Node with no Article
+support still gets a usable fallback via <code>onp:metadata</code> (ONP-1005
+Section 6.1) if the publisher included it; a Node that implements
+this Companion gets the complete, signed, tamper-evident article
+text. Neither Node's behavior is wrong — each does exactly what its
+level of implementation entitles it to do, exactly as every prior
+Core and Companion Framework document promised in the abstract.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-a-complete-article-object">7.1 A Complete Article Object</h2>
+<pre><code class="language-json">{
+  &quot;oid&quot;: &quot;onp:oid:regiopurmerend.nl:fusie-onderzoek-necker-van-naem&quot;,
+  &quot;vid&quot;: &quot;onp:vid:sha-256:AbC123-example-digest-bytes&quot;,
+  &quot;publisher&quot;: {
+    &quot;domain&quot;: &quot;regiopurmerend.nl&quot;,
+    &quot;key_id&quot;: &quot;onp:key:2026-07-01&quot;
+  },
+  &quot;signed_at&quot;: &quot;2026-07-28T10:00:00Z&quot;,
+  &quot;signature&quot;: &quot;onp:sig:ed25519:base64url-signature-bytes&quot;,
+  &quot;content_type&quot;: &quot;onp:companion:article&quot;,
+  &quot;content&quot;: {
+    &quot;headline&quot;: &quot;Fusie-onderzoek Purmerend gepubliceerd&quot;,
+    &quot;dek&quot;: &quot;Necker van Naem publiceert budgetanalyse voor de voorgestelde fusie.&quot;,
+    &quot;body&quot;: &quot;Purmerend - Het langverwachte onderzoek naar de financiële gevolgen van een fusie tussen Purmerend, Landsmeer, Wormerland en Oostzaan is vandaag gepubliceerd...\n\n## Belangrijkste bevindingen\n\n- Bevinding een\n- Bevinding twee&quot;,
+    &quot;byline&quot;: [&quot;Redactie RegioPurmerend&quot;],
+    &quot;contributor_refs&quot;: [&quot;onp:oid:regiopurmerend.nl:redactie&quot;],
+    &quot;section&quot;: &quot;Politiek&quot;,
+    &quot;canonical_url&quot;: &quot;https://regiopurmerend.nl/artikel/fusie-onderzoek&quot;,
+    &quot;media_refs&quot;: [&quot;onp:oid:regiopurmerend.nl:foto-fusie-bijeenkomst-01&quot;],
+    &quot;rights_ref&quot;: &quot;onp:oid:regiopurmerend.nl:rights-cc-by-standaard&quot;,
+    &quot;payment_ref&quot;: &quot;onp:oid:regiopurmerend.nl:payments-fusie-onderzoek&quot;,
+    &quot;source_refs&quot;: [&quot;onp:oid:regiopurmerend.nl:wethouder-devries&quot;]
+  },
+  &quot;onp:metadata&quot;: {
+    &quot;language&quot;: &quot;nl-NL&quot;,
+    &quot;title&quot;: &quot;Fusie-onderzoek Purmerend gepubliceerd&quot;,
+    &quot;tags&quot;: [&quot;purmerend&quot;, &quot;fusie&quot;, &quot;gemeentefinanciën&quot;]
+  }
+}
+</code></pre>
+<p>Note <code>onp:metadata.title</code> and <code>content.headline</code> are identical here
+by publisher choice, not by requirement — they are permitted to
+differ (Section 4.5), and an Article-aware Node always uses
+<code>content.headline</code> regardless.</p>
+<h2 id="7-2-rejected-raw-html-in-body">7.2 Rejected: Raw HTML in Body</h2>
+<pre><code>body: &quot;Purmerend - Belangrijk nieuws.&lt;script&gt;alert(1)&lt;/script&gt;&quot;
+
+REJECTED per Section 4.4, rule 1 at publication time; if a Node
+nonetheless receives such a body (e.g. from a non-conformant
+publisher), it MUST strip the HTML at render time per rule 2,
+rather than passing it through.
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<h2 id="8-1-the-sanitization-requirement-is-defense-in-depth-not">8.1 The Sanitization Requirement Is Defense in Depth, Not</h2>
+<pre><code> Redundant
+</code></pre>
+<p>Section 4.4's two rules exist at different trust boundaries: rule 1
+constrains what a conformant publisher produces; rule 2 constrains
+what a conformant Node accepts, regardless of publisher compliance.
+This mirrors the pattern used throughout this series — a Node never
+extends trust based solely on a specification's prohibition; it
+independently enforces the property that prohibition exists to
+protect (compare: ONP-1003 Section 4.5's algorithm cross-check,
+which similarly does not merely trust a declared value but verifies
+it against an independent source). Here, the property is "no
+injectable markup," and the independent enforcement is
+render-time sanitization.</p>
+<h2 id="8-2-embedding-full-text-increases-the-signed-surface-by-design">8.2 Embedding Full Text Increases the Signed Surface, by Design</h2>
+<p>Because <code>body</code> is embedded rather than referenced, the entire
+article text participates in the signing pre-image (ONP-1003 Section
+4.1) and is therefore tamper-evident in full. This is a deliberate
+design choice: a <code>canonical_url</code>-only approach would leave the
+actual words unprotected by the signature, defeating much of the
+purpose of a verifiable news object. The tradeoff is Object size,
+which this document accepts as reasonable for typical article
+lengths.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p><code>byline</code> names and any personal information appearing within <code>body</code>
+(subjects of reporting, quoted individuals) are, by the nature of
+journalism, often personal data, and are frequently subject to
+national press and data-protection law that varies by jurisdiction.
+Consistent with Principle P5 (Jurisdiction Neutrality, ONP-0003),
+this document does not attempt to encode any jurisdiction's legal
+requirements for handling such content; that responsibility remains
+entirely with the publisher, exactly as it does for their existing
+website today. ONP's contribution is limited to making whatever
+content a publisher chooses to sign tamper-evident, not to judging
+its legal compliance.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0001, Architecture — Section 7.1, the worked Article example
+  this document fulfills; Section 4.4, the decision test reapplied
+  in Section 4.2.</li>
+<li>ONP-0003, Design Principles — Principle P1 (Adjacent Publishing,
+  Section 4.8), Principle P2 (Minimal Required Surface, Section 4.3),
+  Principle P5 (Jurisdiction Neutrality, Section 9).</li>
+<li>ONP-1000, News Object — the <code>content_type</code>/<code>content</code> mechanism
+  this Companion instantiates.</li>
+<li>ONP-1002, Serialization — <code>body</code>'s full participation in
+  canonicalization and the signing pre-image (Section 8.2).</li>
+<li>ONP-1005, Core Metadata — Section 4.3, the precedence rule
+  Section 4.5 of this document applies concretely.</li>
+<li>ONP-2000, Companion Framework — Section 4.1 (namespace
+  registration), Section 4.2 (mandatory additions, followed
+  throughout this document), Section 4.3 (Object Reference
+  mechanism, used for <code>media_refs</code> and <code>contributor_refs</code>).</li>
+<li>ONP-2300, Identity — Section 4.4, the publisher-asserted trust
+  model <code>contributor_refs</code> (Section 4.6) points to.</li>
+<li>ONP-2400, Rights — the Companion <code>rights_ref</code> (Section 4.9)
+  points to.</li>
+<li>ONP-2500, Payments — the Companion <code>payment_ref</code> (Section 4.10)
+  points to.</li>
+<li>ONP-2600, Sources — the Companion <code>source_refs</code> (Section 4.11)
+  points to.</li>
+<li>ONP-2700, Corrections — the Companion <code>corrections_ref</code> (Section
+  4.12) points to, discovery convenience only (not authoritative).</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>ONP-2200, Media (forward reference — the Companion <code>media_refs</code>
+  entries are expected to identify).</li>
+<li>CommonMark Specification — the base Markdown grammar the Safe
+  Markdown Subset (Appendix B) constrains.</li>
+</ul>
+<hr />
+<h1 id="appendix-a-full-schema-reference">Appendix A: Full Schema Reference</h1>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:article&quot;,
+  &quot;content&quot;: {
+    &quot;headline&quot;: &quot;string, REQUIRED&quot;,
+    &quot;dek&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;body&quot;: &quot;string, REQUIRED, Safe Markdown Subset&quot;,
+    &quot;byline&quot;: &quot;array of strings, OPTIONAL, provisional (Section 4.6)&quot;,
+    &quot;contributor_refs&quot;: &quot;array of OID strings, OPTIONAL, preferred over byline (Section 4.6)&quot;,
+    &quot;section&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;canonical_url&quot;: &quot;string (URI), OPTIONAL&quot;,
+    &quot;media_refs&quot;: &quot;array of OID strings, OPTIONAL&quot;,
+    &quot;rights_ref&quot;: &quot;string (OID), OPTIONAL&quot;,
+    &quot;payment_ref&quot;: &quot;string (OID), OPTIONAL&quot;,
+    &quot;source_refs&quot;: &quot;array of OID strings, OPTIONAL&quot;,
+    &quot;corrections_ref&quot;: &quot;array of OID strings, OPTIONAL, discovery convenience only&quot;
+  }
+}
+</code></pre>
+<h1 id="appendix-b-safe-markdown-subset">Appendix B: Safe Markdown Subset</h1>
+<pre><code>ALLOWED (standard CommonMark):
+  - headings, paragraphs, emphasis/strong
+  - lists (ordered, unordered)
+  - links, images (as Markdown image syntax, not inline HTML)
+  - blockquotes
+  - code spans and fenced code blocks
+  - horizontal rules
+
+DISALLOWED:
+  - raw HTML blocks
+  - inline HTML tags
+  - any CommonMark extension that permits arbitrary HTML passthrough
+
+A Node's Markdown renderer MUST be configured to strip, not pass
+through, any HTML it encounters in body, regardless of whether the
+publisher's own tooling already enforces this at authoring time
+(Section 4.4, rule 2; Section 8.1).
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-full-schema-reference">Appendix A: Full Schema Reference</a></li><li><a href="#appendix-b-safe-markdown-subset">Appendix B: Safe Markdown Subset</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/2100-article.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

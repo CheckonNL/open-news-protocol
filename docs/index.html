@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open News Protocol — an open standard for verifiable news</title>
+<meta name="description" content="ONP makes a news article prove its own origin. Anyone can check who published it and whether a single character has changed since — without asking a platform, a gatekeeper, or the site it came from.">
+<meta property="og:title" content="Open News Protocol">
+<meta property="og:description" content="An open standard for news that proves its own origin. Trust the object, not the messenger.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/onp-logo.png">
+<link rel="icon" href="assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="./">
+      <img src="assets/onp-mark.png" alt="Open News Protocol">
+    </a>
+    <nav>
+      <a href="#verify">Verify</a>
+      <a href="#how">How it works</a>
+      <a href="specs/">Specifications</a>
+      <a href="#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Open standard · Working Draft</p>
+    <h1>News that proves <em>its own</em> origin.</h1>
+    <p class="lede">
+      An article published under ONP carries its own evidence. Anyone can check who
+      published it and whether a single character has changed since — without asking a
+      platform, a gatekeeper, or even the website it came from.
+    </p>
+    <div class="actions">
+      <a class="btn btn-primary" href="specs/">Read the specifications</a>
+      <a class="btn btn-ghost" href="https://github.com/CheckonNL/open-news-protocol">View on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<section class="verifier" id="verify">
+  <div class="wrap">
+    <div class="verifier-head">
+      <div>
+        <p class="eyebrow">Try it — nothing leaves your browser</p>
+        <h2>Break this article and watch it say so.</h2>
+        <p>
+          A real signed news object. Change one letter in the headline, alter the date,
+          swap the publisher — the checks below run again as you type.
+        </p>
+      </div>
+      <button class="reset" id="reset" type="button">Restore original</button>
+    </div>
+
+    <div class="verifier-grid">
+      <div class="panel">
+        <div class="panel-bar">
+          <span>news-object.json</span>
+          <span class="hint">editable</span>
+        </div>
+        <textarea id="doc" spellcheck="false" aria-label="Signed news object, editable"></textarea>
+      </div>
+
+      <div class="panel">
+        <div class="verdict" id="verdict">
+          <span class="dot"></span>
+          <span class="verdict-text">
+            <strong id="verdict-title">CHECKING…</strong>
+            <span id="verdict-note">Loading the example document.</span>
+          </span>
+        </div>
+        <ul class="steps">
+          <li id="step-structure"><span class="mark">·</span><span>Envelope structure</span><span class="who">ONP-1000</span></li>
+          <li id="step-vid"><span class="mark">·</span><span>Content fingerprint</span><span class="who">ONP-1001</span></li>
+          <li id="step-anchor"><span class="mark">·</span><span>Publisher key</span><span class="who">ONP-0004</span></li>
+          <li id="step-signature"><span class="mark">·</span><span>Signature</span><span class="who">ONP-1003</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="verifier-foot">
+      <span>Ed25519 · SHA-256 · <code>RFC 8785</code> canonical JSON, computed locally.</span>
+      <span>Demo keypair, published on purpose.</span>
+    </p>
+  </div>
+</section>
+
+<section class="band on-white" id="why">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">The idea</p>
+      <h2>Trust the object, not the messenger.</h2>
+      <p>
+        Today, an article is trusted because of where you found it. Move it — a screenshot,
+        a forward, a scrape, an AI summary — and the evidence stays behind. ONP moves the
+        evidence into the article itself, so it survives the journey.
+      </p>
+    </div>
+    <div class="cards">
+      <div class="card">
+        <span class="tag">Trusted news</span>
+        <h3>Origin travels with the text</h3>
+        <p>Every version is signed by the publisher's own key. Verification needs the bytes and nothing else — no login, no API, no permission.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Open distribution</span>
+        <h3>Any channel still works</h3>
+        <p>ONP standardises the article, not the pipe. The same signed object rides your site, your feed, email, or a protocol nobody has written yet.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Rights</span>
+        <h3>Terms stated in the work</h3>
+        <p>Reuse and AI-training terms are declared inside the signed object, so they cannot be quietly stripped in transit.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Fair value</span>
+        <h3>Payment terms attach to the article</h3>
+        <p>Compensation signals travel with the piece rather than living in a contract that only two parties can see.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="how">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">From identifier to answer</p>
+      <h2>Four steps, no coordination required.</h2>
+      <p>
+        Two parties who have never met and share no configuration can still exchange an
+        article and agree on whether it is authentic. That is the whole design goal.
+      </p>
+    </div>
+    <div class="chain">
+      <div class="chain-step">
+        <span class="stage">Identify</span>
+        <div>
+          <h3>The identifier contains the publisher</h3>
+          <p>
+            <code>onp:oid:regiopurmerend.nl:wheermolen-bommenonderzoek</code> — the domain is
+            part of the name, so nothing has to be looked up in a registry.
+          </p>
+        </div>
+      </div>
+      <div class="chain-step">
+        <span class="stage">Retrieve</span>
+        <div>
+          <h3>The address follows from the identifier</h3>
+          <p>
+            It becomes <code>https://regiopurmerend.nl/.well-known/onp/objects/wheermolen-bommenonderzoek</code>
+            mechanically. No resolver service, no discovery protocol, no directory to join.
+          </p>
+        </div>
+      </div>
+      <div class="chain-step">
+        <span class="stage">Anchor</span>
+        <div>
+          <h3>The publisher lists its own keys</h3>
+          <p>
+            A small file at <code>/.well-known/onp/publisher.json</code> says which keys are
+            authorised, and when older ones stopped being valid. Domain control is the trust anchor.
+          </p>
+        </div>
+      </div>
+      <div class="chain-step">
+        <span class="stage">Verify</span>
+        <div>
+          <h3>The bytes answer for themselves</h3>
+          <p>
+            Recompute the fingerprint, check the signature against the authorised key. The
+            article is authentic or it is not — and the reader never had to trust whoever handed it over.
+          </p>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="margin-top:2rem">
+      Retrieval grants no trust of its own. An object fetched straight from the publisher's
+      own server is checked exactly as strictly as one found on a stranger's hard drive.
+    </p>
+  </div>
+</section>
+
+<section class="band on-white" id="specs">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">The standard</p>
+      <h2>Thirty-six documents, layered on purpose.</h2>
+      <p>
+        Core answers what an article is and whether it verifies. Everything else — article
+        structure, rights, payments, AI metadata — is layered on top and can never change
+        that answer.
+      </p>
+    </div>
+    <table class="layers">
+      <thead>
+        <tr><th>Series</th><th>Layer</th><th>What it settles</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="range">0000–0007</td><td>Foundation</td><td class="what">Mission, architecture, terminology, trust and security models, lifecycle, versioning policy</td></tr>
+        <tr><td class="range">1000–1006</td><td>Core</td><td class="what">The envelope, identifiers, canonical bytes, signatures, validation, retrieval</td></tr>
+        <tr><td class="range">2000–2800</td><td>Companion</td><td class="what">Article, media, identity, rights, payments, sources, corrections, comments</td></tr>
+        <tr><td class="range">3000–3500</td><td>Extension</td><td class="what">AI metadata, search, analytics, geolocation, accessibility</td></tr>
+        <tr><td class="range">9000–9005</td><td>Reference</td><td class="what">Reference implementation, best practices, security checklist, performance, migration, external standards</td></tr>
+      </tbody>
+    </table>
+    <div class="facts">
+      <div class="fact"><b>36</b><span>specifications</span></div>
+      <div class="fact"><b>2</b><span>independent implementations</span></div>
+      <div class="fact"><b>60</b><span>tests in the reference SDK</span></div>
+      <div class="fact"><b>Apache 2.0</b><span>licence, no royalties</span></div>
+    </div>
+    <p style="margin-top:2.4rem">
+      <a class="btn btn-primary" href="specs/">Browse all specifications</a>
+    </p>
+  </div>
+</section>
+
+<section class="band" id="build">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Implementations</p>
+      <h2>Two codebases that agree byte for byte.</h2>
+      <p>
+        A standard only exists once something else can read what you wrote. ONP ships a
+        TypeScript reference library and an independent PHP implementation, and continuous
+        integration proves they produce identical bytes in both directions.
+      </p>
+    </div>
+    <div class="cards">
+      <div class="card">
+        <span class="tag">TypeScript</span>
+        <h3>Reference SDK</h3>
+        <p>Signing, canonicalisation, trust anchor resolution, retrieval, and the full multi-level validation pipeline. Sixty tests, including every worked example from the specifications.</p>
+      </div>
+      <div class="card">
+        <span class="tag">PHP · WordPress</span>
+        <h3>ONP Connector plugin</h3>
+        <p>Turns a WordPress site into a publisher: signs each post, serves its key record and object URLs, and puts the object address in the RSS feed. Written for the CMS most newsrooms already run.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Verification</span>
+        <h3>Cross-checked in CI</h3>
+        <p>PHP re-verifies the TypeScript test vectors; TypeScript validates PHP-signed objects and a whole publish-edit-retract history. A one-byte divergence fails the build.</p>
+      </div>
+    </div>
+    <p class="note" style="margin-top:2.4rem">
+      Status: every document is a Working Draft and nothing has been through external review
+      yet. The specifications, the reference code and the known gaps are all public — that is
+      the point of publishing this early.
+    </p>
+  </div>
+</section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <img src="assets/onp-logo.png" alt="Open News Protocol" style="width:210px;height:auto;filter:brightness(0) invert(1);opacity:.92">
+        <p style="margin:1rem 0 0;max-width:34ch">
+          An open standard for news that carries its own proof. Started in Purmerend, the
+          Netherlands, and open to anyone.
+        </p>
+      </div>
+      <div>
+        <h4>Standard</h4>
+        <ul>
+          <li><a href="specs/">All specifications</a></li>
+          <li><a href="specs/0000-introduction.html">Introduction</a></li>
+          <li><a href="specs/1000-news-object.html">The News Object</a></li>
+          <li><a href="specs/0004-trust-model.html">Trust model</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Build</h4>
+        <ul>
+          <li><a href="https://github.com/CheckonNL/open-news-protocol">Repository</a></li>
+          <li><a href="https://github.com/CheckonNL/open-news-protocol/tree/main/sdk/reference-impl">TypeScript SDK</a></li>
+          <li><a href="https://github.com/CheckonNL/open-news-protocol/tree/main/implementations/wordpress">WordPress plugin</a></li>
+          <li><a href="https://github.com/CheckonNL/open-news-protocol/tree/main/schemas">JSON Schemas</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Participate</h4>
+        <ul>
+          <li><a href="https://github.com/CheckonNL/open-news-protocol/blob/main/CONTRIBUTING.md">Contributing</a></li>
+          <li><a href="https://github.com/CheckonNL/open-news-protocol/blob/main/CHARTER.md">Charter</a></li>
+          <li><a href="https://github.com/CheckonNL/open-news-protocol/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/CheckonNL/open-news-protocol/issues">Raise an issue</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="colophon">
+      Specifications and code licensed under Apache 2.0. Working Drafts — expect changes.
+    </p>
+  </div>
+</footer>
+
+<script src="assets/verify.js"></script>
+</body>
+</html>

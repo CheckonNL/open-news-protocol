@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-3300 Open News Protocol (ONP): Analytics — Open News Protocol</title>
+<meta name="description" content="ONP-3300: Open News Protocol (ONP): Analytics — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-3300</p>
+    <h1 id="top">Open News Protocol (ONP): Analytics</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the Analytics Extension: <code>org.onp.analytics</code>.
+It is deliberately narrower than its name might suggest: it declares
+<em>how</em> a publisher tracks engagement with a News Object — tracking
+method, third-party involvement, consent requirements, retention —
+never the live metrics themselves (view counts, engagement figures).
+Actual metrics change continuously and would require constant
+re-signing to embed in an immutable Object, which does not fit the
+Extension model at all; Section 2.2 states this explicitly as a
+scoping boundary rather than a silent omission. This document is,
+above all, a transparency mechanism for a privacy-sensitive practice,
+not a tracking implementation.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Extension series (ONP-3000-3999).
+It is directly implementable. It is a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>The original architecture draft this series formalizes listed
+"Analytics Attestation" among its anticipated future modules,
+without specifying what it would actually contain. Working through
+that concretely surfaces a real design tension: an <em>attestation</em> — a
+periodic, signed snapshot of aggregate metrics — has exactly the
+independent identity and lifecycle (published at a point in time,
+superseded by a later snapshot) that would make it a Companion, not
+an Extension, per the same decision test applied throughout this
+series. This document does not force that concept into the Extension
+shape it does not fit. Instead, it defines the part of "analytics"
+that genuinely is a property of an existing Object: transparency
+about how tracking works, not what the numbers currently say.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li><code>tracking_method</code>, <code>third_party_trackers</code>, <code>consent_required</code>, and
+  <code>retention_period</code> — declarative transparency fields about how
+  engagement with this content is tracked;</li>
+<li>the one Claim Domain this Extension declares;</li>
+<li>the explicit architectural note on why live metrics are out of
+  scope (Section 2.2) and what shape a future mechanism for them
+  would need (Section 4.8).</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>view counts, engagement metrics, or any other live, continuously-
+  changing analytics data — embedding these in a signed Object would
+  require re-signing on every change, which is impractical and
+  inconsistent with the immutable-once-signed model every other
+  document in this series relies on (ONP-1002, ONP-1003);</li>
+<li>a periodic "Analytics Attestation" snapshot mechanism — this would
+  need independent identity and lifecycle (a new snapshot supersedes
+  an old one, exactly as ONP-0006 already models for content), making
+  it Companion-shaped, not Extension-shaped. It is out of scope here
+  and would need its own future document, outside the current
+  roadmap, if built (Section 4.8);</li>
+<li>legal interpretation of consent requirements under any
+  jurisdiction's data protection or e-privacy law — consistent with
+  Principle P5, <code>consent_required</code> is a declarative signal, not a
+  compliance determination.</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document introduces no new general terms beyond its namespace
+and Claim Domain registration (Section 4).</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-extension-namespace-declaration">4.1 Extension Namespace Declaration</h2>
+<p>This Extension's fields MUST be carried under
+<code>onp:extensions.org.onp.analytics</code>.</p>
+<h2 id="4-2-companion-vs-extension-classification">4.2 Companion-vs-Extension Classification</h2>
+<pre><code>Does &quot;Analytics&quot; (as scoped by this document: tracking-methodology
+disclosure, not live metrics) have independent identity and an
+independent lifecycle, separable from the Object it describes?
+
+- Tracking methodology (what kind of tracking applies to this
+  content) is inherently a property of the Object it describes; it
+  has no standalone existence a reader would reference on its own.
+- NO -&gt; Extension, for the scope this document actually covers.
+
+(Contrast: a live-metrics snapshot, explicitly out of scope per
+Section 2.2, WOULD satisfy the independent-identity test and would
+need Companion treatment instead — this is precisely why this
+document does not attempt to cover it.)
+</code></pre>
+<h2 id="4-3-content-schema">4.3 Content Schema</h2>
+<p><code>tracking_method</code>, <code>third_party_trackers</code>, <code>consent_required</code>, and
+<code>retention_period</code> are all OPTIONAL, under the single Claim Domain
+<code>analytics-tracking-disclosure</code> (Section 4.7).</p>
+<h2 id="4-4-tracking-method">4.4 Tracking Method</h2>
+<p><code>tracking_method</code>, if present, MUST be one of <code>"none"</code>,
+<code>"aggregate-only"</code>, <code>"cookie-based"</code>, <code>"server-side"</code>, or
+<code>"third-party"</code>.</p>
+<h2 id="4-5-third-party-trackers">4.5 Third-Party Trackers</h2>
+<p><code>third_party_trackers</code>, if present, MUST be an array of strings
+(domain names or vendor identifiers) naming third-party analytics or
+advertising-technology providers involved when
+<code>tracking_method: "third-party"</code> applies.</p>
+<h2 id="4-6-consent-requirement">4.6 Consent Requirement</h2>
+<p><code>consent_required</code>, if present, MUST be a boolean. Its absence
+establishes no default assumption — unlike <code>indexable</code> (ONP-3200),
+where a permissive default matched established web convention,
+tracking consent carries privacy and, commonly, legal stakes closer
+in kind to Rights (ONP-2400) and AI training permission (ONP-3100),
+where this series consistently declines to assume a default.</p>
+<h2 id="4-7-claim-domain">4.7 Claim Domain</h2>
+<p>This Extension declares one Claim Domain:
+<code>analytics-tracking-disclosure</code>, covering all four fields in Section
+4.3. It MUST be registered in ONP-0002 alongside this document's
+publication (Section 10.3).</p>
+<h2 id="4-8-future-work-analytics-attestation">4.8 Future Work: Analytics Attestation</h2>
+<p>A future mechanism for periodic, signed metric snapshots — closer to
+what "Analytics Attestation" originally suggested — remains
+plausible future work. Per Section 4.2's contrast, it would need
+independent identity and lifecycle and would therefore be a
+Companion, not an addition to this Extension. This document does not
+reserve a number or namespace for it; a future proposal would follow
+the ordinary Companion registration process (ONP-2000 Section 4.1) if
+and when it is designed.</p>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.analytics&quot;: {
+      &quot;tracking_method&quot;: &quot;'none' | 'aggregate-only' | 'cookie-based' | 'server-side' | 'third-party', OPTIONAL&quot;,
+      &quot;third_party_trackers&quot;: [&quot;string&quot;, &quot;...&quot;],
+      &quot;consent_required&quot;: &quot;boolean, OPTIONAL, no default&quot;,
+      &quot;retention_period&quot;: &quot;string (ISO 8601 duration), OPTIONAL&quot;
+    }
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Claim Domain</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tracking_method</code></td>
+<td><code>analytics-tracking-disclosure</code></td>
+<td>OPTIONAL</td>
+</tr>
+<tr>
+<td><code>third_party_trackers</code></td>
+<td><code>analytics-tracking-disclosure</code></td>
+<td>OPTIONAL</td>
+</tr>
+<tr>
+<td><code>consent_required</code></td>
+<td><code>analytics-tracking-disclosure</code></td>
+<td>OPTIONAL, no default</td>
+</tr>
+<tr>
+<td><code>retention_period</code></td>
+<td><code>analytics-tracking-disclosure</code></td>
+<td>OPTIONAL</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-consumption">6.1 Consumption</h2>
+<p>A privacy-conscious client, reader tool, or browser extension MAY use
+<code>tracking_method</code> and <code>third_party_trackers</code> to decide whether to
+block trackers or warn a user before loading the publisher's own
+rendering of the content, analogous in purpose (though not in
+mechanism) to app-store-style privacy nutrition labels — an existing,
+recognizable pattern this document aligns with rather than reinvents,
+per Principle P3.</p>
+<h2 id="6-2-interoperability">6.2 Interoperability</h2>
+<p>A Node without this Extension implemented simply does not see
+tracking-methodology disclosure; the Object itself remains fully
+verifiable and usable regardless. This Extension is Companion-
+agnostic, exactly as ONP-3100 and ONP-3200 already are.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-aggregate-only-no-third-parties">7.1 Aggregate-Only, No Third Parties</h2>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.analytics&quot;: {
+      &quot;tracking_method&quot;: &quot;aggregate-only&quot;,
+      &quot;consent_required&quot;: false
+    }
+  }
+}
+</code></pre>
+<h2 id="7-2-third-party-tracking-disclosed">7.2 Third-Party Tracking Disclosed</h2>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.analytics&quot;: {
+      &quot;tracking_method&quot;: &quot;third-party&quot;,
+      &quot;third_party_trackers&quot;: [&quot;example-analytics-vendor.com&quot;],
+      &quot;consent_required&quot;: true,
+      &quot;retention_period&quot;: &quot;P26M&quot;
+    }
+  }
+}
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<p>Like every declarative field in this series, <code>tracking_method</code> and
+its companions are publisher-asserted and not independently verified
+— a publisher could under-disclose third-party tracking with no
+technical mechanism in this document to detect it. This document's
+value is giving publishers who want to disclose accurately a
+standard, signed place to do so; it is not, and cannot be, a
+technical enforcement or verification mechanism for actual tracking
+behavior.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>This entire Extension exists in service of a privacy concern:
+engagement tracking is one of the more consequential forms of data
+collection tied to news consumption, revealing reading habits and
+interests readers may reasonably consider sensitive. This document
+deliberately does not collect or transmit any tracking data itself —
+it only lets a publisher disclose, in a signed and verifiable way,
+what tracking approach applies. Readers, tools, and regulators
+evaluating a publisher's actual practice should treat this disclosure
+as a starting point for scrutiny, not as proof of compliance; per
+Section 8, nothing here is independently verified against actual
+behavior.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0001, Architecture — Section 4.4, the decision test applied
+  (and contrasted against the out-of-scope Companion case) in Section
+  4.2.</li>
+<li>ONP-0003, Design Principles — Principle P3 (Ordinary Technology,
+  Section 6.1) and Principle P5 (Jurisdiction Neutrality, Section
+  2.2).</li>
+<li>ONP-1002, Serialization; ONP-1003, Digital Signatures — the
+  immutable-once-signed model that motivates excluding live metrics
+  (Section 2.2).</li>
+<li>ONP-2400, Rights; ONP-3100, AI Metadata — the no-default-assumption
+  precedent Section 4.6 follows for <code>consent_required</code>.</li>
+<li>ONP-3000, Extension Framework — Section 4.1 (namespace
+  registration), Section 4.3 (Claim Domain declaration).</li>
+<li>ONP-3200, Search — the permissive-default precedent Section 4.6
+  explicitly does NOT follow, with the reasoning for that divergence
+  stated there.</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>App-store-style privacy nutrition labels — the existing
+  transparency-disclosure pattern this Extension's purpose aligns
+  with (Section 6.1).</li>
+</ul>
+<h2 id="10-3-registry-registration">10.3 Registry Registration</h2>
+<p>As part of this document's publication, <code>org.onp.analytics</code> and
+<code>analytics-tracking-disclosure</code> are registered in ONP-0002.</p>
+<hr />
+<h1 id="appendix-a-full-schema-reference">Appendix A: Full Schema Reference</h1>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.analytics&quot;: {
+      &quot;tracking_method&quot;: &quot;enum, OPTIONAL&quot;,
+      &quot;third_party_trackers&quot;: &quot;array of strings, OPTIONAL&quot;,
+      &quot;consent_required&quot;: &quot;boolean, OPTIONAL, no default&quot;,
+      &quot;retention_period&quot;: &quot;string (ISO 8601 duration), OPTIONAL&quot;
+    }
+  }
+}
+</code></pre>
+<h1 id="appendix-b-analytics-extension-checklist">Appendix B: Analytics Extension Checklist</h1>
+<pre><code>[ ] Fields carried under onp:extensions.org.onp.analytics
+[ ] No live metrics (view counts, engagement figures) have been
+    added here — explicitly out of scope (Section 2.2)
+[ ] tracking_method, if present, is one of the five recognized
+    values
+[ ] consent_required, if absent, is understood as undisclosed, NOT
+    false (Section 4.6 — no default, unlike ONP-3200's indexable)
+[ ] third_party_trackers populated whenever tracking_method is
+    &quot;third-party&quot;
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-full-schema-reference">Appendix A: Full Schema Reference</a></li><li><a href="#appendix-b-analytics-extension-checklist">Appendix B: Analytics Extension Checklist</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/3300-analytics.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

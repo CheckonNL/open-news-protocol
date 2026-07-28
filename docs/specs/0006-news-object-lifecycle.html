@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-0006 Open News Protocol (ONP): News Object Lifecycle — Open News Protocol</title>
+<meta name="description" content="ONP-0006: Open News Protocol (ONP): News Object Lifecycle — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-0006</p>
+    <h1 id="top">Open News Protocol (ONP): News Object Lifecycle</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the lifecycle of a News Object: how a
+publisher issues a new Version that supersedes a prior one, how a
+Node determines which Version in a lineage is Current, and how a
+publisher retracts an Object entirely. It supplies the concrete
+mechanism that ONP-0005 Section 4.3 requires but does not itself
+define: a Node's ability to distinguish a Current Version from a
+Superseded one, so that a validly signed but outdated Version cannot
+be replayed as though it were still authoritative. It defines a
+lightweight, Core-level Revision Reason field, explicitly not a
+substitute for the richer, structured explanation-of-change that the
+future Corrections Companion (ONP-2700) will define.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Foundation series (ONP-0000-0999).
+It is normative and is a direct dependency for the correctness of
+ONP-1000 and ONP-1001, which will finalize the wire-level structure
+this document specifies illustratively (Section 5), consistent with
+how ONP-0004 and ONP-0001 treated their own illustrative structures.
+It is a Working Draft.</p>
+<p><strong>Terminology note:</strong> this document's use of "Version" refers
+exclusively to a News Object Version within a lineage. It is
+unrelated to a Specification's own <code>Version</code> field (semantic
+versioning of an ONP-nnnn document itself, governed by ONP-0007).
+The two concepts share an English word by coincidence, not by
+design; neither document redefines the other's term.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>ONP-0000 Section 1.1 names "corrections and retractions linked to
+the original" as a problem existing infrastructure does not solve.
+ONP-0005 Section 4.3 names the security consequence of not solving
+it: an adversary who can serve or cache a superseded Version can
+suppress a correction by having a Node treat old, still-validly-
+signed content as current. This document closes both gaps with one
+mechanism: an explicit, publisher-attested chain of supersession
+that a Node can walk without needing to trust wall-clock timestamps,
+a central registry, or any third party's word for which Version is
+current.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>the lifecycle states a News Object MUST support (Published,
+  Retracted) and the derived state (Superseded);</li>
+<li>the Version lineage / supersession mechanism, and the algorithm a
+  Node MUST use to determine the Current Version;</li>
+<li>retraction semantics and their interaction with archival access;</li>
+<li>the lightweight, OPTIONAL Core-level Revision Reason field;</li>
+<li>lineage fork handling (conflicting supersession claims).</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>the wire-level byte format of a Version, OID, or VID (see
+  ONP-1000, ONP-1001);</li>
+<li>the structured, publisher-facing explanation of what changed and
+  why (see ONP-2700, Corrections — not yet published; this document
+  provides the Core-level plumbing that Companion will build on);</li>
+<li>any pre-publication workflow state (draft, in review, scheduled)
+  internal to a publisher's own CMS — per Principle P1 (Adjacent
+  Publishing, ONP-0003), that remains entirely the CMS's own concern
+  and is never visible to ONP;</li>
+<li>archival storage or retrieval mechanics themselves (a Node or
+  archive MAY retain every Version of a lineage indefinitely; this
+  document only defines how to interpret them once retained).</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document is the owning specification for the following terms.</p>
+<p><strong>Lifecycle State</strong>
+: The status of a News Object Version: <code>published</code>, the derived
+  status <code>superseded</code>, or <code>retracted</code>.</p>
+<p><strong>News Object Version</strong>
+: A single, independently signed instance within a lineage, sharing
+  an OID with every other Version in that lineage and identified by
+  its own VID. Distinct from a Specification's semantic <code>Version</code>
+  field (see Status of This Document, Terminology Note).</p>
+<p><strong>Supersession</strong>
+: The publisher-attested relationship by which one Version declares
+  that it replaces a specific, immediately prior Version in the same
+  lineage.</p>
+<p><strong>Current Version</strong>
+: The Version in a lineage that is not Retracted and that no other
+  known, validly signed Version in the same lineage declares itself
+  to supersede (Section 4.3).</p>
+<p><strong>Superseded Version</strong>
+: A Version that is not Current, because a later Version in the same
+  lineage declares supersession over it. This is a derived status,
+  not a field a publisher sets directly.</p>
+<p><strong>Retraction</strong>
+: The publisher-attested, terminal declaration that an entire
+  lineage is withdrawn and MUST NOT be treated as current or
+  authoritative content going forward, while remaining verifiable
+  for archival purposes. Distinct from Correction (ONP-2700,
+  reserved), which will describe an amendment while the lineage
+  remains published.</p>
+<p><strong>Revision Reason</strong>
+: An OPTIONAL, short, Core-level string a publisher MAY attach to a
+  superseding Version, describing at a high level why the
+  supersession occurred. Not a substitute for the structured
+  Correction record ONP-2700 will define.</p>
+<p><strong>Lineage Fork</strong>
+: The condition in which two or more validly signed Versions in the
+  same lineage each declare supersession over the same prior
+  Version, producing an ambiguous "next" Version (Section 6.2).</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-lifecycle-states">4.1 Lifecycle States</h2>
+<ol>
+<li>Core MUST support exactly two explicit Lifecycle States that a
+   publisher can set on a Version: <code>published</code> and <code>retracted</code>.</li>
+<li><code>superseded</code> MUST be a derived status, computed per Section 4.3,
+   never a field a publisher sets directly. This keeps the Minimal
+   Required Surface (ONP-0003, Principle P2) honored: a publisher
+   only ever declares "this is published" or "this lineage is
+   retracted"; a Node computes the rest.</li>
+</ol>
+<h2 id="4-2-version-lineage">4.2 Version Lineage</h2>
+<ol>
+<li>The first Version in a lineage MUST declare no <code>supersedes</code>
+   value (or an explicit null/absent value).</li>
+<li>Every subsequent Version in the same lineage MUST declare exactly
+   one <code>supersedes</code> value, pointing to the VID of the Version it
+   replaces.</li>
+<li>A Version MUST NOT declare <code>supersedes</code> pointing to a VID outside
+   its own OID's lineage.</li>
+<li>Ordering within a lineage MUST be established by walking
+   <code>supersedes</code> pointers, not by comparing signing timestamps. A
+   timestamp MAY be included for informational purposes but MUST
+   NOT be treated as authoritative for determining order — an
+   adversary or a misconfigured clock can produce a misleading
+   timestamp; a publisher's explicit <code>supersedes</code> declaration is
+   what a Node trusts for ordering.</li>
+</ol>
+<h2 id="4-3-current-version-determination">4.3 Current Version Determination</h2>
+<ol>
+<li>Given a set of known, validly signed Versions sharing an OID, a
+   Node MUST determine the Current Version as follows: a Version V
+   is Current if and only if (a) no known Version in the set
+   declares <code>supersedes = V</code>, and (b) V's Lifecycle State is not
+   <code>retracted</code>.</li>
+<li>A Node MUST NOT present a Version as current if a later Version
+   in its known set satisfies the Current Version test instead. This
+   directly satisfies the security property required by ONP-0005
+   Section 4.3.</li>
+<li>A Node's determination is necessarily bounded by what Versions it
+   knows about; a Node that has not yet observed a later Version
+   MUST still treat the latest Version it knows as Current until and
+   unless a newer one becomes known to it. This document does not
+   require real-time global consistency (per the rejection of
+   consensus-based trust rooting in ONP-0005 Section 4.6) — eventual
+   observation of the correct Current Version is the guarantee, not
+   instantaneous global agreement.</li>
+</ol>
+<h2 id="4-4-retraction">4.4 Retraction</h2>
+<ol>
+<li>A publisher retracts a lineage by issuing a final Version with
+   Lifecycle State <code>retracted</code>. This final Version MUST itself
+   follow the normal supersession rule (Section 4.2) relative to the
+   prior Current Version.</li>
+<li>A Node MUST treat a <code>retracted</code> lineage's content as no longer
+   current or authoritative for any purpose other than archival or
+   historical reference. A Node presenting retracted content to an
+   end user in a context implying it is current MUST NOT do so
+   without clearly indicating its retracted status.</li>
+<li>A Node MUST continue to allow independent verification (Core
+   signature and Trust Anchor resolution) of every historical
+   Version in a retracted lineage; retraction affects presentation
+   and currency, not verifiability.</li>
+<li>A publisher MAY issue a new Version after a retraction only via
+   an explicit <code>republish</code> declaration referencing the retraction it
+   reverses. A Node encountering a post-retraction Version without
+   an explicit <code>republish</code> declaration SHOULD treat it as anomalous
+   and apply elevated scrutiny, consistent with ONP-0005's Adversary
+   A3 (compromised key) — a sudden, undeclared revival of a retracted
+   lineage is exactly the kind of anomaly a compromised key might
+   produce.</li>
+</ol>
+<h2 id="4-5-revision-reason">4.5 Revision Reason</h2>
+<ol>
+<li>A publisher MAY attach a Revision Reason string to any superseding
+   Version. A Node MUST NOT require this field to be present to
+   process a valid supersession.</li>
+<li>A Revision Reason MUST NOT be treated as a substitute for a
+   Corrections Companion record once ONP-2700 is published; it is a
+   minimal, Core-level courtesy field available before that
+   Companion exists, not a permanent alternative to it.</li>
+</ol>
+<h2 id="4-6-lineage-fork-handling">4.6 Lineage Fork Handling</h2>
+<ol>
+<li>If a Node observes two or more validly signed Versions that each
+   declare <code>supersedes</code> pointing to the same prior Version, it MUST
+   NOT silently select one as Current. This is a Lineage Fork
+   (Section 3).</li>
+<li>A Node MUST surface a detected Lineage Fork as an anomalous
+   condition rather than resolving it invisibly. This document does
+   not mandate a single resolution policy (e.g. "prefer the latest
+   timestamp") as authoritative, because timestamp is explicitly
+   non-authoritative for ordering (Section 4.2, rule 4); a Node MAY
+   apply local policy to choose a working assumption while
+   presenting the fork condition, but MUST NOT represent that choice
+   as an ONP-guaranteed Current Version determination.</li>
+</ol>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<p>The following structure is illustrative. Its authoritative wire-
+level form is owned by ONP-1000 and ONP-1001.</p>
+<pre><code class="language-json">{
+  &quot;oid&quot;: &quot;onp:oid:...&quot;,
+  &quot;vid&quot;: &quot;onp:vid:...&quot;,
+  &quot;supersedes&quot;: &quot;onp:vid:... (or null for the first Version)&quot;,
+  &quot;lifecycle_state&quot;: &quot;published&quot;,
+  &quot;revision_reason&quot;: &quot;optional short string&quot;,
+  &quot;republish_of_retraction&quot;: &quot;onp:vid:... (only present on a republish)&quot;
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>oid</code></td>
+<td>REQUIRED</td>
+<td>Constant across every Version in a lineage.</td>
+</tr>
+<tr>
+<td><code>vid</code></td>
+<td>REQUIRED</td>
+<td>Unique to this Version.</td>
+</tr>
+<tr>
+<td><code>supersedes</code></td>
+<td>REQUIRED (absent only on the first Version)</td>
+<td>The VID this Version replaces.</td>
+</tr>
+<tr>
+<td><code>lifecycle_state</code></td>
+<td>REQUIRED</td>
+<td><code>published</code> or <code>retracted</code>. <code>superseded</code> is never stored; it is derived (Section 4.1, rule 2).</td>
+</tr>
+<tr>
+<td><code>revision_reason</code></td>
+<td>OPTIONAL</td>
+<td>Short string (Section 4.5).</td>
+</tr>
+<tr>
+<td><code>republish_of_retraction</code></td>
+<td>OPTIONAL</td>
+<td>Present only when reversing a prior retraction (Section 4.4, rule 4).</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-lineage-construction-and-current-version-resolution">6.1 Lineage Construction and Current Version Resolution</h2>
+<pre><code>Given: a set S of validly signed Versions sharing an OID.
+
+1. Build a map: for each Version V in S, record V.supersedes.
+2. Build the set of &quot;superseded VIDs&quot; = { V.supersedes : V in S,
+   V.supersedes is not null }.
+3. Candidate Current Versions = { V in S : V.vid is NOT in
+   superseded VIDs }.
+4. If |Candidates| == 1 and that Version's lifecycle_state is not
+   &quot;retracted&quot;: that is the Current Version.
+5. If |Candidates| == 1 and its lifecycle_state is &quot;retracted&quot;: the
+   lineage has no Current Version (it is retracted); serve only
+   with explicit retracted-status indication (Section 4.4, rule 2).
+6. If |Candidates| &gt; 1: a Lineage Fork (Section 4.6) exists; do not
+   silently resolve.
+7. If |Candidates| == 0: malformed lineage (a supersession cycle);
+   MUST be treated as a validation failure, not resolved.
+</code></pre>
+<h2 id="6-2-interaction-with-retraction-and-republication">6.2 Interaction with Retraction and Republication</h2>
+<p>A <code>republish</code> Version (Section 4.4, rule 4) participates in the same
+supersession chain as any other Version — it simply also carries a
+<code>republish_of_retraction</code> pointer for auditability. The algorithm in
+Section 6.1 does not need a special case for it; a republish Version
+becomes Current exactly as any other new Version would, once it
+supersedes the prior (retracted) Current Version. The elevated
+scrutiny required by Section 4.4, rule 4 is a Node-side policy
+response, not a change to the resolution algorithm itself.</p>
+<h2 id="6-3-interoperability">6.3 Interoperability</h2>
+<p>A Node implementing only this document's REQUIRED mechanism (plain
+<code>supersedes</code> chains, <code>published</code>/<code>retracted</code> states) MUST be able to
+correctly determine the Current Version of any lineage, regardless
+of whether the publisher has also published Corrections Companion
+(ONP-2700) records explaining the changes in human-readable form.
+The Companion is additive narrative; it MUST NOT be required for a
+minimal Node to get lifecycle determination right. This mirrors the
+same interoperability guarantee ONP-0004 Section 6.4 states for
+Trust Anchor resolution.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-simple-lineage-three-versions-one-retraction">7.1 Simple Lineage: Three Versions, One Retraction</h2>
+<pre><code>V1: vid=v1, supersedes=null, state=published
+V2: vid=v2, supersedes=v1,   state=published, revision_reason=&quot;Corrected quote attribution&quot;
+V3: vid=v3, supersedes=v2,   state=retracted
+
+Resolution (Section 6.1):
+  superseded VIDs = { v1, v2 }
+  candidates = { v3 }
+  v3.lifecycle_state == retracted
+  -&gt; lineage has no Current Version; serve as retracted (rule 5)
+</code></pre>
+<h2 id="7-2-defeating-the-replay-attack-from-onp-0005-section-7-4">7.2 Defeating the Replay Attack from ONP-0005 Section 7.4</h2>
+<pre><code>Publisher issues V1, then V2 (a correction).
+Adversary re-serves V1 to a Node that already knows about V2.
+
+Node's known set S = { V1, V2 }
+superseded VIDs = { v1 } (because V2.supersedes = v1)
+candidates = { v2 }
+-&gt; Current Version = V2, not V1.
+
+The replayed V1 is correctly recognized as Superseded even though
+its own signature remains valid — exactly the outcome ONP-0005
+Section 4.3 requires.
+</code></pre>
+<h2 id="7-3-lineage-fork">7.3 Lineage Fork</h2>
+<pre><code>V1: vid=v1, supersedes=null
+V2a: vid=v2a, supersedes=v1  (signed by the publisher's current key)
+V2b: vid=v2b, supersedes=v1  (also signed by the publisher's current key,
+                               e.g. due to a publishing error or a
+                               compromised key issuing a conflicting Version)
+
+superseded VIDs = { v1 }
+candidates = { v2a, v2b }
+-&gt; Lineage Fork detected (Section 4.6); Node MUST surface this,
+   MUST NOT silently pick one.
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<h2 id="8-1-this-document-satisfies-onp-0005-section-4-3">8.1 This Document Satisfies ONP-0005 Section 4.3</h2>
+<p>The Current Version determination algorithm (Section 6.1) is the
+concrete mechanism ONP-0005 Section 4.3 required without defining.
+Its correctness rests entirely on the <code>supersedes</code> chain, which is
+itself part of the signed content of each Version — an adversary
+without a valid key cannot forge a new supersession, and an
+adversary who replays an old Version cannot make it appear Current
+if a Node has also observed the superseding Version (Section 7.2).</p>
+<h2 id="8-2-lineage-forks-are-a-real-not-merely-theoretical-risk">8.2 Lineage Forks Are a Real, Not Merely Theoretical, Risk</h2>
+<p>A Lineage Fork (Section 4.6) can arise innocently (a publisher's own
+tooling issuing two corrections concurrently before observing each
+other) or maliciously (a compromised key issuing a conflicting
+Version, per ONP-0005 Adversary A3). This document deliberately does
+not mandate an automatic resolution policy, because any automatic
+policy (e.g. "prefer latest timestamp") would reintroduce exactly
+the non-authoritative-timestamp risk Section 4.2 rule 4 excludes
+elsewhere. Surfacing the fork, rather than silently resolving it, is
+itself the security property this document provides for that case.</p>
+<h2 id="8-3-retraction-does-not-erase-history">8.3 Retraction Does Not Erase History</h2>
+<p>Per Section 4.4 rule 3, retraction never removes the ability to
+verify historical Versions. This is a deliberate choice: an
+architecture that let retraction make prior signed content
+unverifiable would let a compromised or coerced publisher erase
+inconvenient history, which is a worse outcome than leaving it
+verifiably archived but clearly marked as retracted.</p>
+<h2 id="8-4-republication-anomaly-detection-is-advisory-not-enforced">8.4 Republication Anomaly Detection Is Advisory, Not Enforced</h2>
+<p>Section 4.4 rule 4's "SHOULD treat as anomalous" is deliberately a
+SHOULD, not a MUST, because legitimate republication does happen
+(e.g. a retraction issued in error, corrected shortly after). A Node
+MAY implement stricter local policy, but this document does not
+mandate blocking all undeclared post-retraction Versions outright,
+since doing so would give an adversary who successfully times a
+malicious retraction a way to permanently suppress a publisher's own
+legitimate recovery.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>A lineage's Version history — how often and when a publisher issues
+corrections or retractions — is, by the nature of this mechanism,
+observable to any Node that retains history. This is inherent to
+supporting corrections and retractions at all (ONP-0000 Section 1.1)
+and is not a defect; publishers should be aware that their editorial
+correction cadence becomes part of a verifiable, retained record,
+similar in spirit to a version-controlled document's commit history.
+No individual person's personal data is inherently exposed by this
+mechanism beyond what a Companion (e.g. ONP-2300, Identity) chooses
+to attach to a given Version.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0000, Introduction — Section 1.1 (corrections/retractions
+  named as a design goal this document fulfills).</li>
+<li>ONP-0001, Architecture — owns "Version lineage" and "Tombstone
+  state" as terms; this document supplies their mechanism.</li>
+<li>ONP-0003, Design Principles — Principle P2 (Minimal Required
+  Surface), directly shaping Section 4.1's two-explicit-states
+  design.</li>
+<li>ONP-0005, Security Model — Section 4.3, the security property this
+  entire document exists to satisfy; Section 4.6, the non-consensus
+  rationale referenced in Section 4.3, rule 3 of this document.</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>ONP-1000, News Object; ONP-1001, Identifiers (forward references —
+  authoritative wire-level OID/VID/Version schema).</li>
+<li>ONP-2700, Corrections (forward reference, not yet published — the
+  structured, human-readable Companion this document's lightweight
+  Revision Reason field defers to).</li>
+<li>ONP-0007, Versioning Policy — governs Specification versioning, a
+  distinct concept from News Object Versioning; see the Terminology
+  Note in this document's Status section.</li>
+</ul>
+<hr />
+<h1 id="appendix-a-full-lifecycle-state-diagram">Appendix A: Full Lifecycle State Diagram</h1>
+<pre><code>                    +-------------+
+   (first Version)  |  published  |
+        -----------&gt;|  (Current)  |
+                    +------+------+
+                           |
+                new Version supersedes it
+                           |
+                           v
+                    +-------------+          +--------------+
+                    | published   |---------&gt;|  retracted   |
+                    | (Current)   | publisher +--------------+
+                    +------+------+ retracts         |
+                           |                  explicit republish
+                new Version supersedes it            |
+                           |                          v
+                           v                   +-------------+
+                    +-------------+             | published   |
+                    | published   |             | (Current)   |
+                    | (Current)   |             +-------------+
+                    +-------------+
+
+  &quot;superseded&quot; is never a stored state — any prior Version in the
+  chain above is automatically Superseded once a later one exists,
+  per the Current Version algorithm (Section 6.1). It is omitted
+  from this diagram because it has no box of its own; it is the
+  absence of Current-ness.
+</code></pre>
+<h1 id="appendix-b-current-version-determination-quick-reference">Appendix B: Current Version Determination — Quick Reference</h1>
+<pre><code>[ ] Collect every known, validly signed Version sharing this OID.
+[ ] Compute the set of VIDs referenced by any Version's `supersedes`.
+[ ] Candidates = Versions whose own VID is NOT in that set.
+[ ] Exactly one candidate, not retracted  -&gt; that is Current.
+[ ] Exactly one candidate, retracted      -&gt; lineage has no Current
+                                              Version; show retracted.
+[ ] Zero candidates                        -&gt; malformed (cycle);
+                                              validation failure.
+[ ] More than one candidate                -&gt; Lineage Fork; surface
+                                              it, do not silently pick.
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-full-lifecycle-state-diagram">Appendix A: Full Lifecycle State Diagram</a></li><li><a href="#appendix-b-current-version-determination-quick-reference">Appendix B: Current Version Determination — Quick Reference</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/0006-news-object-lifecycle.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

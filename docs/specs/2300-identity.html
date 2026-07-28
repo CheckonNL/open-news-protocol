@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-2300 Open News Protocol (ONP): Identity — Open News Protocol</title>
+<meta name="description" content="ONP-2300: Open News Protocol (ONP): Identity — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-2300</p>
+    <h1 id="top">Open News Protocol (ONP): Identity</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.1</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the Identity Companion:
+<code>content_type = "onp:companion:identity"</code>, a reusable, independently
+verifiable record of a contributor — a journalist, photographer, or
+editor. It upgrades the provisional string fields ONP-2100 (<code>byline</code>)
+and ONP-2200 (<code>credit</code>) already promised an upgrade path for,
+replacing repeated free-text names with an Object Reference to a
+single, reusable Identity Object per person. The trust model is
+stated precisely and without overclaiming: an Identity Object is
+<strong>publisher-asserted</strong>, not self-sovereign — it is signed by the
+publisher's own key, exactly like any other News Object, and proves
+"this publisher vouches for this identity record," not that the
+named individual independently controls any cryptographic key of
+their own. Cross-publisher identity linking is explicitly out of
+scope for this version.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Companion series (ONP-2000-2999).
+It is directly implementable and follows every mandatory addition
+ONP-2000 Section 4.2 requires. Concurrently with this document's
+publication, ONP-2100 and ONP-2200 are each updated with a new,
+OPTIONAL Object Reference field pointing to Identity Objects,
+alongside their existing provisional string fields (Section 10.3).
+It is a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>ONP-2100 Section 4.6 promised that <code>byline</code> was provisional pending
+this document. ONP-2200's <code>credit</code> field made the same implicit
+promise without stating it — a gap this document's publication
+corrects concurrently (Section 10.3). Both fields, until now, were
+plain strings: a name with no persistence, no reusability across a
+contributor's body of work, and no cryptographic backing beyond the
+Article or Media Object's own signature. This document does not
+create individual, self-sovereign cryptographic identity for
+journalists — that would require each contributor to control their
+own domain or an equivalent trust anchor, which most do not. Instead
+it creates something more modest but immediately useful: a reusable,
+independently versioned record the publisher itself vouches for,
+referenced by OID instead of repeated by name.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>the <code>onp:companion:identity</code> content schema;</li>
+<li>the publisher-asserted trust model and its explicit limits;</li>
+<li>consent and contact-field guidance;</li>
+<li>the Article and Media upgrade fields (<code>contributor_refs</code>,
+  <code>creator_ref</code>), whose actual normative definition remains owned by
+  ONP-2100 and ONP-2200 respectively (Section 10.3) — this document
+  only defines what they point to.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>self-sovereign, cross-publisher identity — a mechanism letting one
+  individual maintain a single identity independently verifiable
+  across multiple, unrelated publishers is a real and anticipated
+  need (a freelance journalist works with more than one outlet) but
+  is not solved here; it remains open future work with no
+  Specification number yet reserved;</li>
+<li>verified credentials — <code>credentials</code> (Section 4.3) is an
+  unverified, publisher-asserted display field, exactly as
+  provisional in nature as <code>byline</code> was before this document;</li>
+<li>any authentication mechanism letting the named individual control
+  or correct their own Identity Object directly — the publisher
+  remains the sole signer, per Section 4.4;</li>
+<li>the <code>eudi</code> Trust Anchor Type. ONP-0004 Section 4.6 reserved this
+  identifier and stated it would be "normatively defined in
+  ONP-2300." This document does not fulfill that promise: EUDI
+  Wallet binding (attribute schemas, verifiable credential formats,
+  wallet interaction) is a substantial topic in its own right and
+  deserves dedicated treatment rather than a late addition to a
+  document primarily about publisher-asserted contributor records.
+  This gap is acknowledged here explicitly rather than left silently
+  unaddressed; <code>eudi</code> remains <code>reserved</code> in ONP-0002's Terminology
+  Registry (Section 10.3), not <code>active</code>, until a future revision of
+  this document — or a separate document — actually defines it.</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document is the owning specification for the following terms.</p>
+<p><strong>Identity Object</strong>
+: An informal name for a News Object whose <code>content_type</code> is
+  <code>onp:companion:identity</code>.</p>
+<p><strong>Publisher-Asserted Identity</strong>
+: The trust model this document adopts: an Identity Object's
+  authenticity is scoped entirely to the publisher whose key signed
+  it. It is that publisher's claim about the named individual, not
+  an independent, cross-publisher, or self-sovereign identity claim
+  by the individual themselves (Section 4.4).</p>
+<p><strong>Contributor Reference</strong>
+: An Object Reference (ONP-2000 Section 4.3) from an Article or
+  Media Object to an Identity Object, replacing a plain-string name
+  with a pointer to a reusable, independently verifiable record.</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-content-type-declaration">4.1 content_type Declaration</h2>
+<p>Every Identity Object MUST declare <code>content_type</code> as exactly
+<code>onp:companion:identity</code>.</p>
+<h2 id="4-2-companion-vs-extension-reapplication">4.2 Companion-vs-Extension Reapplication</h2>
+<p>Per ONP-2000 Section 4.2, rule 2:</p>
+<pre><code>Does &quot;Identity&quot; have independent identity and an independent
+lifecycle, separable from any Article or Media Object that
+references it?
+
+- A contributor's identity record persists across their entire body
+  of work, is created once and referenced by many Articles or Media
+  Objects over time, and can be updated (a new bio, a new role)
+  entirely independently of any single piece of content referencing
+  it.
+- YES -&gt; Companion.
+</code></pre>
+<h2 id="4-3-content-schema">4.3 Content Schema</h2>
+<ol>
+<li><code>display_name</code> is REQUIRED: a string, the contributor's
+   publicly-displayed name.</li>
+<li><code>role</code>, <code>bio</code>, <code>credentials</code>, <code>profile_url</code>, <code>avatar_ref</code>, and
+   <code>contact</code> are OPTIONAL, per Sections 4.5-4.7.</li>
+</ol>
+<h2 id="4-4-publisher-asserted-trust-model">4.4 Publisher-Asserted Trust Model</h2>
+<ol>
+<li>An Identity Object's authenticity, like any News Object's, is
+   established entirely by its own <code>publisher</code>/<code>signature</code> fields
+   (ONP-1000, ONP-1003) and Trust Anchor resolution (ONP-0004). A
+   Node MUST NOT treat an Identity Object as proof that the named
+   individual independently controls any cryptographic key; it is
+   proof only that the asserting publisher signed this claim.</li>
+<li>A Node MUST NOT treat two Identity Objects from different
+   publishers, even with an identical <code>display_name</code>, as
+   automatically referring to the same real-world individual. This
+   document defines no cross-publisher linking mechanism (Section
+   2.2); the same journalist working at two publishers is
+   represented by two independent Identity Objects, one per
+   publisher, unless and until a future mechanism defines otherwise.</li>
+</ol>
+<h2 id="4-5-avatar-ref">4.5 avatar_ref</h2>
+<p><code>avatar_ref</code>, if present, MUST be an Object Reference (ONP-2000
+Section 4.3) to a Media Object (ONP-2200) depicting the contributor.</p>
+<h2 id="4-6-consent-guidance-non-enforceable">4.6 Consent Guidance (Non-Enforceable)</h2>
+<p>A publisher SHOULD obtain the named individual's knowledge and, where
+applicable, consent before publishing an Identity Object describing
+them, particularly where <code>contact</code> is populated. ONP has no protocol
+mechanism to verify or enforce this — it is stated here as guidance,
+not as a checkable requirement, consistent with how ONP-2200 Section
+9 already treats consent for identifiable people in photographs.</p>
+<h2 id="4-7-contact-field-guidance">4.7 Contact Field Guidance</h2>
+<p><code>contact</code>, if present, SHOULD be a URL to a contact form or a
+publisher-hosted contact page, rather than a raw personal email
+address or phone number, to reduce direct exposure of the
+individual's personal contact information to harvesting or
+harassment. This document does not forbid a raw address, but
+RECOMMENDS against it.</p>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:identity&quot;,
+  &quot;content&quot;: {
+    &quot;display_name&quot;: &quot;string, REQUIRED&quot;,
+    &quot;role&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;bio&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;credentials&quot;: [&quot;string&quot;, &quot;...&quot;],
+    &quot;profile_url&quot;: &quot;string (URI), OPTIONAL&quot;,
+    &quot;avatar_ref&quot;: &quot;onp:oid:..., OPTIONAL — Object Reference to a Media Object&quot;,
+    &quot;contact&quot;: &quot;string, OPTIONAL — URL preferred over raw address (Section 4.7)&quot;
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>display_name</code></td>
+<td>REQUIRED</td>
+<td></td>
+</tr>
+<tr>
+<td><code>role</code></td>
+<td>OPTIONAL</td>
+<td>e.g. "Journalist", "Photographer", "Editor"</td>
+</tr>
+<tr>
+<td><code>bio</code></td>
+<td>OPTIONAL</td>
+<td>Short, plain-text biography</td>
+</tr>
+<tr>
+<td><code>credentials</code></td>
+<td>OPTIONAL</td>
+<td>Array of strings; unverified (Section 2.2)</td>
+</tr>
+<tr>
+<td><code>profile_url</code></td>
+<td>OPTIONAL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>avatar_ref</code></td>
+<td>OPTIONAL</td>
+<td>Object Reference to a Media Object (Section 4.5)</td>
+</tr>
+<tr>
+<td><code>contact</code></td>
+<td>OPTIONAL</td>
+<td>URL RECOMMENDED over raw address (Section 4.7)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-resolution-and-precedence">6.1 Resolution and Precedence</h2>
+<p>A Node resolving an Article's <code>contributor_refs</code> (ONP-2100) or a
+Media Object's <code>creator_ref</code> (ONP-2200) follows the same Object
+Reference resolution procedure already defined generically in
+ONP-2000 Section 6.2: fetch if possible, verify via ordinary Core
+validation if fetched, and treat the reference as non-blocking for
+the referencing Object's own validity if unreachable (ONP-2000
+Section 4.4). Where both a reference field and its corresponding
+provisional string field (<code>byline</code>, <code>credit</code>) are present, an
+Identity-aware Node MUST prefer the reference, per the precedence
+rule each of those fields' owning documents states (ONP-2100 Section
+4.6; ONP-2200 Section 4.5, as corrected in Section 10.3 of this
+document).</p>
+<h2 id="6-2-interoperability">6.2 Interoperability</h2>
+<p>A Node with no Identity Companion support still has <code>byline</code> or
+<code>credit</code> strings to fall back on, exactly as promised when those
+fields were first defined — this document's arrival changes nothing
+about that fallback's continued validity. An Identity-aware Node
+gets a reusable, independently verifiable, and updatable record
+instead of a repeated name.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-an-identity-object">7.1 An Identity Object</h2>
+<pre><code class="language-json">{
+  &quot;oid&quot;: &quot;onp:oid:regiopurmerend.nl:redactie&quot;,
+  &quot;vid&quot;: &quot;onp:vid:sha-256:JkL012-example-digest-bytes&quot;,
+  &quot;publisher&quot;: {
+    &quot;domain&quot;: &quot;regiopurmerend.nl&quot;,
+    &quot;key_id&quot;: &quot;onp:key:2026-07-01&quot;
+  },
+  &quot;signed_at&quot;: &quot;2026-07-01T00:00:00Z&quot;,
+  &quot;signature&quot;: &quot;onp:sig:ed25519:base64url-signature-bytes&quot;,
+  &quot;content_type&quot;: &quot;onp:companion:identity&quot;,
+  &quot;content&quot;: {
+    &quot;display_name&quot;: &quot;Redactie RegioPurmerend&quot;,
+    &quot;role&quot;: &quot;Redactie&quot;,
+    &quot;bio&quot;: &quot;De redactie van RegioPurmerend.nl, lokale nieuwsberichtgeving voor Purmerend en Beemster.&quot;,
+    &quot;profile_url&quot;: &quot;https://regiopurmerend.nl/over-ons&quot;,
+    &quot;contact&quot;: &quot;https://regiopurmerend.nl/contact&quot;
+  }
+}
+</code></pre>
+<h2 id="7-2-article-using-contributor-refs-anticipating-onp-2100-s">7.2 Article Using <code>contributor_refs</code> (Anticipating ONP-2100's</h2>
+<pre><code> Update)
+</code></pre>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:article&quot;,
+  &quot;content&quot;: {
+    &quot;headline&quot;: &quot;Fusie-onderzoek Purmerend gepubliceerd&quot;,
+    &quot;body&quot;: &quot;...&quot;,
+    &quot;byline&quot;: [&quot;Redactie RegioPurmerend&quot;],
+    &quot;contributor_refs&quot;: [&quot;onp:oid:regiopurmerend.nl:redactie&quot;]
+  }
+}
+</code></pre>
+<p>An Identity-aware Node uses <code>contributor_refs</code> and can fetch the
+full Identity Object; a Node without Identity support still has
+<code>byline</code> to display.</p>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<h2 id="8-1-publisher-asserted-means-publisher-compromised-means">8.1 Publisher-Asserted Means Publisher-Compromised Means</h2>
+<pre><code> Identity-Compromised
+</code></pre>
+<p>Because an Identity Object's authenticity depends entirely on the
+same publisher key that signs everything else that publisher
+produces, a compromised publisher key (ONP-0004 Section 8.1; ONP-0005
+Adversary A3) can fabricate false Identity Objects attributing
+content or credentials to real, named individuals who never
+consented to or wrote it. This is not a new class of risk this
+document introduces — it is the same compromise-window limitation
+already accepted throughout this series — but it carries higher
+reputational stakes here specifically because an Identity Object's
+entire subject is a named person, not an abstract piece of content.
+Implementers building anything that surfaces Identity Objects
+prominently (e.g. a byline display) SHOULD be aware that this
+document provides no stronger authenticity guarantee than any other
+Companion, despite its subject matter feeling more personal.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>This is, by a wide margin, the most privacy-sensitive Companion
+published so far: its entire purpose is to make a specific, named,
+real individual identifiable, potentially permanently and publicly.
+Two considerations deserve explicit statement rather than a routine
+note:</p>
+<ol>
+<li><strong>Retraction does not guarantee removal.</strong> ONP-0006 Section 8.3
+   already establishes that retraction never erases historical
+   verifiability of an Object — deliberately, for editorial
+   accountability. Applied to an Identity Object, this means a
+   retracted or corrected Identity Object (for example, one an
+   individual asks to have removed after leaving a publisher) can
+   still be held, cached, or archived by any Node that obtained a
+   copy before retraction. This is a real and material tension with
+   data protection frameworks that presume some degree of
+   erasability, and this document does not resolve it — consistent
+   with Principle P5 (Jurisdiction Neutrality), ONP does not attempt
+   to encode any jurisdiction's right-to-erasure requirements, but
+   publishers SHOULD understand this limitation before treating
+   Identity Object retraction as equivalent to removal.</li>
+<li><strong>Publisher-asserted, not individual-controlled.</strong> Per Section
+   4.4, the named individual has no protocol-level mechanism to
+   correct, retract, or contest an Identity Object describing them —
+   only the publisher can. Publishers SHOULD establish their own
+   editorial process for individuals to request corrections,
+   entirely outside ONP's mechanism, since ONP provides none.</li>
+</ol>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0003, Design Principles — Principle P2 (Minimal Required
+  Surface, Section 4.3), Principle P5 (Jurisdiction Neutrality,
+  Section 9).</li>
+<li>ONP-0004, Trust Model; ONP-0005, Security Model — the compromise-
+  window limitation this document's Section 8.1 restates in the
+  specific context of named-individual attribution.</li>
+<li>ONP-0006, News Object Lifecycle — Section 8.3, the retraction-
+  does-not-erase-history property this document's Section 9 applies
+  to personal data specifically.</li>
+<li>ONP-2000, Companion Framework — Section 4.3 (Object Reference
+  mechanism), Section 4.2 (mandatory additions, followed throughout).</li>
+<li>ONP-2100, Article — Section 4.6, the upgrade path this document
+  fulfills.</li>
+<li>ONP-2200, Media — the <code>credit</code> field this document also upgrades,
+  corrected concurrently (Section 10.3) to state the same promise
+  ONP-2100 already made.</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>Future cross-publisher identity mechanism (Section 2.2) — no
+  Specification number is yet reserved; noted here as an open
+  question for the Working Group rather than a forward reference to
+  a named document.</li>
+</ul>
+<h2 id="10-3-corresponding-updates-to-onp-2100-and-onp-2200">10.3 Corresponding Updates to ONP-2100 and ONP-2200</h2>
+<p>As part of this document's publication:</p>
+<ul>
+<li><strong>ONP-2100 (Article)</strong> is updated to add <code>contributor_refs</code>
+  (OPTIONAL, array of OID strings referencing Identity Objects),
+  alongside the existing <code>byline</code> field, with <code>contributor_refs</code>
+  preferred by an Identity-aware Node per Section 4.6 of that
+  document (unchanged in substance, now fulfilled). Classified MINOR
+  (additive) under ONP-0007 Section 4.1.</li>
+<li><strong>ONP-2200 (Media)</strong> is updated to (a) add <code>creator_ref</code> (OPTIONAL,
+  a single OID string referencing an Identity Object), alongside the
+  existing <code>credit</code> field, and (b) correct Section 4.5, rule 3's
+  prior text, which did not state the upgrade-path promise ONP-2100
+  made for <code>byline</code>. This correction is noted here transparently:
+  the omission was not identified until this document's drafting.
+  Classified MINOR (additive) under ONP-0007 Section 4.1.</li>
+</ul>
+<h2 id="10-4-onp-0002-status-eudi-remains-reserved">10.4 ONP-0002 Status: <code>eudi</code> Remains Reserved</h2>
+<p>Per Section 2.2, this document does not define the <code>eudi</code> Trust
+Anchor Type ONP-0004 Section 4.6 reserved. No change is made to that
+term's <code>reserved</code> status in ONP-0002. This is stated here explicitly
+so that a reader checking the Terminology Registry and a reader
+checking this document's own Scope reach the same, consistent
+conclusion: <code>eudi</code> remains open work.</p>
+<hr />
+<h1 id="appendix-a-full-schema-reference">Appendix A: Full Schema Reference</h1>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:identity&quot;,
+  &quot;content&quot;: {
+    &quot;display_name&quot;: &quot;string, REQUIRED&quot;,
+    &quot;role&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;bio&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;credentials&quot;: &quot;array of strings, OPTIONAL, unverified&quot;,
+    &quot;profile_url&quot;: &quot;string (URI), OPTIONAL&quot;,
+    &quot;avatar_ref&quot;: &quot;string (OID), OPTIONAL&quot;,
+    &quot;contact&quot;: &quot;string, OPTIONAL, URL preferred&quot;
+  }
+}
+</code></pre>
+<h1 id="appendix-b-publisher-asserted-identity-quick-reference">Appendix B: Publisher-Asserted Identity — Quick Reference</h1>
+<pre><code>[ ] Identity Object signed by the SAME publisher who would
+    reference it (no cross-publisher signing)
+[ ] display_name present
+[ ] avatar_ref, if present, is an OID pointing to a Media Object
+[ ] contact, if present, prefers a URL over a raw personal address
+[ ] Node treats this as &quot;publisher vouches for this,&quot; never as
+    &quot;individual cryptographically controls this&quot;
+[ ] Node does NOT assume two same-named Identity Objects from
+    different publishers are the same real person
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-full-schema-reference">Appendix A: Full Schema Reference</a></li><li><a href="#appendix-b-publisher-asserted-identity-quick-reference">Appendix B: Publisher-Asserted Identity — Quick Reference</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/2300-identity.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

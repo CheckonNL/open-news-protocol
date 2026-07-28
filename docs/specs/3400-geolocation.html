@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-3400 Open News Protocol (ONP): Geolocation — Open News Protocol</title>
+<meta name="description" content="ONP-3400: Open News Protocol (ONP): Geolocation — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-3400</p>
+    <h1 id="top">Open News Protocol (ONP): Geolocation</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the Geolocation Extension:
+<code>org.onp.geolocation</code>. It declares where a story's subject matter is
+— the places an Article is <em>about</em> — not where it may be <em>accessed</em>,
+which remains entirely the concern of the Rights Companion's
+<code>territory_restrictions</code> (ONP-2400 Section 4.7). It reuses GeoJSON
+for precise geometry rather than inventing a coordinate format, and
+it supports multiple locations per Object, since a single story
+frequently concerns more than one place — including, fittingly, the
+four-municipality fusie-onderzoek example this series has carried
+since ONP-0000.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Extension series (ONP-3000-3999).
+It is directly implementable. It is a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>Local and regional journalism is fundamentally about place, and
+nothing published so far in this series lets a News Object say,
+structurally, where its story happens. <code>onp:metadata.tags</code> (ONP-1005)
+could carry a place name as a free-text keyword, but cannot carry
+coordinates, cannot distinguish a story's primary location from one
+merely mentioned in passing, and offers no basis for map-based
+discovery or radius search. This document adds that, deliberately
+scoped to subject-matter location only — a different concern from
+access restriction, which ONP-2400 already owns.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li><code>locations</code>: an array of place entries, each with a name and
+  OPTIONAL GeoJSON geometry;</li>
+<li><code>geo_scope</code>: a declared significance scope (local/regional/
+  national/international);</li>
+<li>the one Claim Domain this Extension declares;</li>
+<li>the explicit boundary against Rights' <code>territory_restrictions</code>.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>access or redistribution territory restrictions — that remains
+  entirely ONP-2400 Section 4.7's concern; this Extension never
+  restricts who may view content, only describes what the content is
+  about (Section 4.8);</li>
+<li>any content delivery, CDN routing, or geo-blocking mechanism —
+  ONP declares, it does not enforce, consistent with every other
+  declarative Companion and Extension in this series;</li>
+<li>precise geolocation of individual people (a source's location, a
+  commenter's location) — a materially different and more sensitive
+  concern than a story's subject-matter location, addressed, where it
+  matters, by the same protective posture ONP-2600 (Sources) already
+  establishes, not by this document (Section 4.9).</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document introduces no new general terms beyond its namespace
+and Claim Domain registration (Section 4).</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-extension-namespace-declaration">4.1 Extension Namespace Declaration</h2>
+<p>This Extension's fields MUST be carried under
+<code>onp:extensions.org.onp.geolocation</code>.</p>
+<h2 id="4-2-companion-vs-extension-classification">4.2 Companion-vs-Extension Classification</h2>
+<pre><code>Does &quot;Geolocation&quot; have independent identity and an independent
+lifecycle, separable from the Object it describes?
+
+- A story's subject-matter location is inherently a property of
+  that story; it has no standalone existence a reader would
+  reference independently of the Article it describes.
+- NO -&gt; Extension, consistent with every other document published
+  in this series so far.
+</code></pre>
+<h2 id="4-3-content-schema">4.3 Content Schema</h2>
+<p><code>locations</code> and <code>geo_scope</code> are both OPTIONAL, under the single Claim
+Domain <code>geographic-subject-matter</code> (Section 4.7).</p>
+<h2 id="4-4-location-entries">4.4 Location Entries</h2>
+<ol>
+<li><code>locations</code>, if present, MUST be an array of objects, each with a
+   REQUIRED <code>name</code> (string, human-readable place name) and an
+   OPTIONAL <code>geometry</code>.</li>
+<li>Each entry MAY include a <code>role</code>: <code>"primary"</code> (the story's main
+   subject location) or <code>"mentioned"</code> (referenced but not the central
+   subject). Absence of <code>role</code> MUST be treated as <code>"mentioned"</code> —
+   the lower-emphasis default, so that a Node does not overstate a
+   location's importance to the story based on an unstated field.</li>
+<li>An Object MAY declare more than one <code>"primary"</code> location — a story
+   may genuinely concern several places at once (Section 7.1).</li>
+</ol>
+<h2 id="4-5-geometry-geojson-reuse">4.5 Geometry (GeoJSON Reuse)</h2>
+<p><code>geometry</code>, if present, MUST be a valid GeoJSON geometry object (RFC
+7946) — most commonly a <code>Point</code>, but any GeoJSON geometry type MAY be
+used where appropriate (e.g. a <code>Polygon</code> for a municipal boundary).
+This document does not define its own coordinate format, consistent
+with Principle P3.</p>
+<h2 id="4-6-geographic-scope">4.6 Geographic Scope</h2>
+<p><code>geo_scope</code>, if present, MUST be one of <code>"local"</code>, <code>"regional"</code>,
+<code>"national"</code>, or <code>"international"</code>, describing the story's overall
+geographic significance rather than any single location's own scale.</p>
+<h2 id="4-7-claim-domain">4.7 Claim Domain</h2>
+<p>This Extension declares one Claim Domain:
+<code>geographic-subject-matter</code>. It MUST be registered in ONP-0002
+alongside this document's publication (Section 10.3).</p>
+<h2 id="4-8-boundary-against-rights-territory-restrictions">4.8 Boundary Against Rights' Territory Restrictions</h2>
+<p><code>locations</code> and <code>geo_scope</code> MUST NOT be interpreted as access or
+redistribution restrictions. A story's subject-matter location and
+its access restrictions are independent axes: an Article about
+Purmerend MAY be freely accessible worldwide, and an Article about an
+international topic MAY still carry a Rights Object restricting
+access to one territory. A Node MUST NOT infer one from the other.</p>
+<h2 id="4-9-not-for-individual-location-tracking">4.9 Not for Individual Location Tracking</h2>
+<p>This Extension MUST NOT be used to encode a specific individual's
+personal location (a source's home address, a commenter's IP-derived
+location). Where a story's reporting process itself involves
+location-sensitive information about a protected source, ONP-2600
+Section 4.6's guidance — including the recommendation to avoid
+creating a structured, distributable record at all for the most
+sensitive cases — applies with at least equal force here.</p>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.geolocation&quot;: {
+      &quot;locations&quot;: [
+        {
+          &quot;name&quot;: &quot;string, REQUIRED&quot;,
+          &quot;geometry&quot;: &quot;GeoJSON geometry object, OPTIONAL&quot;,
+          &quot;role&quot;: &quot;'primary' | 'mentioned', OPTIONAL, default 'mentioned'&quot;
+        }
+      ],
+      &quot;geo_scope&quot;: &quot;'local' | 'regional' | 'national' | 'international', OPTIONAL&quot;
+    }
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Claim Domain</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>locations</code></td>
+<td><code>geographic-subject-matter</code></td>
+<td>OPTIONAL</td>
+</tr>
+<tr>
+<td><code>locations[].name</code></td>
+<td>—</td>
+<td>REQUIRED within each entry</td>
+</tr>
+<tr>
+<td><code>locations[].geometry</code></td>
+<td>—</td>
+<td>OPTIONAL, GeoJSON</td>
+</tr>
+<tr>
+<td><code>locations[].role</code></td>
+<td>—</td>
+<td>OPTIONAL, default <code>mentioned</code></td>
+</tr>
+<tr>
+<td><code>geo_scope</code></td>
+<td><code>geographic-subject-matter</code></td>
+<td>OPTIONAL</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-consumption">6.1 Consumption</h2>
+<p>A map-based news display or a hyperlocal aggregator MAY use
+<code>locations</code> to place a story geographically or filter by proximity,
+and MAY use <code>role: "primary"</code> entries preferentially over
+<code>"mentioned"</code> ones when a single representative location is needed
+for display purposes.</p>
+<h2 id="6-2-interoperability">6.2 Interoperability</h2>
+<p>A Node without this Extension implemented simply does not see
+structured location data — <code>onp:metadata.tags</code> (ONP-1005) remains
+available as a free-text fallback if a publisher also populated a
+place name there. This Extension is Companion-agnostic, consistent
+with every other Extension published so far.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-the-running-fusie-onderzoek-example-finally-geolocated">7.1 The Running Fusie-Onderzoek Example, Finally Geolocated</h2>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.geolocation&quot;: {
+      &quot;locations&quot;: [
+        { &quot;name&quot;: &quot;Purmerend&quot;, &quot;role&quot;: &quot;primary&quot;,
+          &quot;geometry&quot;: { &quot;type&quot;: &quot;Point&quot;, &quot;coordinates&quot;: [4.9583, 52.5050] } },
+        { &quot;name&quot;: &quot;Landsmeer&quot;, &quot;role&quot;: &quot;primary&quot;,
+          &quot;geometry&quot;: { &quot;type&quot;: &quot;Point&quot;, &quot;coordinates&quot;: [4.9167, 52.4167] } },
+        { &quot;name&quot;: &quot;Wormerland&quot;, &quot;role&quot;: &quot;primary&quot;,
+          &quot;geometry&quot;: { &quot;type&quot;: &quot;Point&quot;, &quot;coordinates&quot;: [4.9167, 52.5000] } },
+        { &quot;name&quot;: &quot;Oostzaan&quot;, &quot;role&quot;: &quot;primary&quot;,
+          &quot;geometry&quot;: { &quot;type&quot;: &quot;Point&quot;, &quot;coordinates&quot;: [4.8833, 52.4500] } }
+      ],
+      &quot;geo_scope&quot;: &quot;regional&quot;
+    }
+  }
+}
+</code></pre>
+<p>Four <code>"primary"</code> locations, reflecting that the fusieonderzoek
+genuinely concerns all four municipalities equally, not one principal
+subject with three passing mentions.</p>
+<h2 id="7-2-boundary-illustrated">7.2 Boundary Illustrated</h2>
+<pre><code>Article: subject-matter location = Purmerend (locations, this doc)
+Rights Object (referenced via rights_ref): no territory_restrictions
+  declared -&gt; accessible without geographic limitation
+
+These are independent: the story being ABOUT Purmerend says nothing
+about who may READ it, per Section 4.8.
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<p>Like every declarative field in this series, <code>locations</code> and
+<code>geo_scope</code> are publisher-asserted and not independently verified.
+This document introduces no new risk beyond the general limitation
+already accepted throughout: a Node treats these as claims, not
+independently confirmed facts.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>The primary privacy consideration is the boundary Section 4.9
+already states as a requirement: this Extension describes a story's
+subject matter, never an individual's personal location. Publishers
+SHOULD take particular care that a <code>"primary"</code> location entry with
+precise <code>geometry</code> does not inadvertently pinpoint a private
+individual's specific address or location when the story concerns a
+person rather than a place — the same category of concern ONP-2600
+already addresses for source identity, now extended to geographic
+precision specifically.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>[RFC7946] Butler, H., et al., "The GeoJSON Format", RFC 7946 — the
+  geometry format reused in Section 4.5.</li>
+<li>ONP-0001, Architecture — Section 4.4, the decision test applied in
+  Section 4.2.</li>
+<li>ONP-0003, Design Principles — Principle P3 (Ordinary Technology),
+  motivating GeoJSON reuse.</li>
+<li>ONP-1005, Core Metadata — <code>tags</code>, the free-text fallback noted in
+  Section 6.2; this Extension is additive to it, not a replacement.</li>
+<li>ONP-2400, Rights — Section 4.7 (<code>territory_restrictions</code>), the
+  access-restriction concept this document explicitly does not
+  duplicate (Section 4.8).</li>
+<li>ONP-2600, Sources — Section 4.6, the protective guidance Section
+  4.9 and Section 9 extend to geographic precision.</li>
+<li>ONP-3000, Extension Framework — Section 4.1 (namespace
+  registration), Section 4.3 (Claim Domain declaration).</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>None beyond the normative set.</li>
+</ul>
+<h2 id="10-3-registry-registration">10.3 Registry Registration</h2>
+<p>As part of this document's publication, <code>org.onp.geolocation</code> and
+<code>geographic-subject-matter</code> are registered in ONP-0002.</p>
+<hr />
+<h1 id="appendix-a-full-schema-reference">Appendix A: Full Schema Reference</h1>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.geolocation&quot;: {
+      &quot;locations&quot;: [
+        {
+          &quot;name&quot;: &quot;string, REQUIRED&quot;,
+          &quot;geometry&quot;: &quot;GeoJSON geometry object, OPTIONAL&quot;,
+          &quot;role&quot;: &quot;enum, OPTIONAL, default 'mentioned'&quot;
+        }
+      ],
+      &quot;geo_scope&quot;: &quot;enum, OPTIONAL&quot;
+    }
+  }
+}
+</code></pre>
+<h1 id="appendix-b-geolocation-extension-checklist">Appendix B: Geolocation Extension Checklist</h1>
+<pre><code>[ ] Fields carried under onp:extensions.org.onp.geolocation
+[ ] Each locations[] entry has a name
+[ ] geometry, if present, is valid GeoJSON (RFC 7946)
+[ ] role, if absent, is treated as &quot;mentioned,&quot; not &quot;primary&quot;
+[ ] No access/territory restriction has been encoded here — that
+    belongs to ONP-2400's rights_ref/territory_restrictions instead
+[ ] No individual person's personal location has been encoded here
+    (Section 4.9)
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-full-schema-reference">Appendix A: Full Schema Reference</a></li><li><a href="#appendix-b-geolocation-extension-checklist">Appendix B: Geolocation Extension Checklist</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/3400-geolocation.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-3100 Open News Protocol (ONP): AI Metadata — Open News Protocol</title>
+<meta name="description" content="ONP-3100: Open News Protocol (ONP): AI Metadata — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-3100</p>
+    <h1 id="top">Open News Protocol (ONP): AI Metadata</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.1</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the AI Metadata Extension:
+<code>org.onp.ai-metadata</code>, the first Extension published in this series.
+It covers two related but distinct concerns: disclosure of whether
+and how AI was involved in producing a News Object's content, and
+declaration of whether that content may be used to train AI models
+or be quoted/summarized by AI agents serving end users. It declares
+two Claim Domains under the mechanism ONP-3000 just established, and
+it is the first document in this series to be classified an
+Extension rather than a Companion — a genuinely different outcome
+from the decision test applied throughout the Companion series, not
+a formality.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Extension series (ONP-3000-3999).
+It is directly implementable. It is a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>ONP-0000 Section 1.1 named "AI systems cannot reliably establish
+provenance" as one of the original problems ONP exists
+to address. Signature and Trust Anchor resolution (ONP-1003,
+ONP-0004) already solve half of that — an AI system consuming a News
+Object can verify who published it. This document addresses the
+other half: whether AI was involved in producing the content itself,
+and whether the publisher permits that same content to be used for
+training or agent-mediated consumption going forward.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li><code>org.onp.ai-metadata</code>: fields for generation disclosure
+  (<code>generation_method</code>, <code>model_reference</code>, <code>human_review</code>) and
+  training/agent-use permission (<code>training_permitted</code>,
+  <code>agent_use_permitted</code>, <code>attribution_required_for_ai_use</code>);</li>
+<li>the two Claim Domains this Extension declares;</li>
+<li>the explicit, acknowledged interaction question with the Rights
+  Companion (ONP-2400), which ONP-3000's Claim Domain mechanism does
+  not cover (Section 4.7).</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>any technical mechanism to verify that a <code>generation_method</code>
+  disclosure is accurate — like every provisional, publisher-
+  asserted field in this series, it is trusted only as far as the
+  publisher's own key (Section 8);</li>
+<li>legal interpretation of any AI regulation (e.g. the EU AI Act) or
+  copyright text-and-data-mining exception — consistent with
+  Principle P5, this document provides a structural signal, not a
+  compliance determination;</li>
+<li>Extension-to-Companion conflict detection generally — ONP-3000's
+  Claim Domain mechanism covers Extension-to-Extension overlap only;
+  this document's Section 4.7 is a documented gap, not a solved one.</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document introduces no new general terms beyond registering its
+namespace and Claim Domains (Section 4).</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-extension-namespace-declaration">4.1 Extension Namespace Declaration</h2>
+<p>This Extension's fields MUST be carried under
+<code>onp:extensions.org.onp.ai-metadata</code>.</p>
+<h2 id="4-2-companion-vs-extension-classification">4.2 Companion-vs-Extension Classification</h2>
+<pre><code>Does &quot;AI Metadata&quot; have independent identity and an independent
+lifecycle, separable from the Object it describes?
+
+- AI generation disclosure and training-permission signals are
+  inherently assertions ABOUT an existing Object's content. They
+  cannot be meaningfully referenced or exist independently of that
+  Object.
+- Unlike every Companion published so far, there is no standalone
+  &quot;AI Metadata Object&quot; a reader would ever look up on its own — it
+  only makes sense attached to something else.
+- NO -&gt; Extension.
+</code></pre>
+<p>This is the first document in the series where the test's answer is
+genuinely "no," not a formality repeated for consistency.</p>
+<h2 id="4-3-content-schema">4.3 Content Schema</h2>
+<ol>
+<li><code>generation_method</code>, <code>model_reference</code>, and <code>human_review</code> are
+   OPTIONAL, under the <code>ai-generation-disclosure</code> Claim Domain
+   (Section 4.5).</li>
+<li><code>training_permitted</code>, <code>agent_use_permitted</code>, and
+   <code>attribution_required_for_ai_use</code> are OPTIONAL, under the
+   <code>ai-training-permission</code> Claim Domain (Section 4.6).</li>
+</ol>
+<h2 id="4-4-claim-domains">4.4 Claim Domains</h2>
+<p>Per ONP-3000 Section 4.3, this Extension declares two Claim Domains:</p>
+<ol>
+<li><code>ai-generation-disclosure</code> — assertions about how content was
+   produced.</li>
+<li><code>ai-training-permission</code> — assertions about downstream AI use of
+   the content.</li>
+</ol>
+<p>Both MUST be registered in ONP-0002 alongside this document's
+publication (Section 10.3).</p>
+<h2 id="4-5-generation-disclosure">4.5 Generation Disclosure</h2>
+<ol>
+<li><code>generation_method</code>, if present, MUST be one of <code>"human"</code>,
+   <code>"ai-assisted"</code>, <code>"ai-generated"</code>, or
+   <code>"ai-generated-human-edited"</code>.</li>
+<li>Its absence MUST NOT be interpreted as <code>"human"</code> by default. Per
+   the same no-default-assumption discipline ONP-2400 Section 6.2
+   established for Rights, an absent <code>generation_method</code> means
+   undisclosed, not human-authored.</li>
+<li><code>model_reference</code>, if present, MUST be a string naming the AI
+   system involved (e.g. <code>"gpt-5"</code>, <code>"claude-opus-4-8"</code>) — informal
+   and publisher-asserted, not independently verified.</li>
+<li><code>human_review</code>, if present, MUST be a boolean: whether a human
+   editor reviewed AI-assisted or AI-generated content before
+   publication.</li>
+</ol>
+<h2 id="4-6-training-and-agent-use-permission">4.6 Training and Agent-Use Permission</h2>
+<ol>
+<li><code>training_permitted</code>, if present, MUST be a boolean: whether this
+   content may be used to train AI models. Its absence establishes
+   no default assumption, consistent with Principle P5 — silence is
+   not consent, and this document does not assert otherwise.</li>
+<li><code>agent_use_permitted</code>, if present, MUST be a boolean: whether an
+   AI agent MAY quote, summarize, or act on this content when serving
+   an end user's query — a narrower, distinct question from bulk
+   training permission, since a publisher MAY reasonably permit one
+   without the other.</li>
+<li><code>attribution_required_for_ai_use</code>, if present, MUST be a boolean:
+   whether an AI agent using this content under <code>agent_use_permitted</code>
+   MUST attribute the source.</li>
+<li>This document deliberately reuses the conceptual pattern of
+   existing text-and-data-mining reservation conventions (e.g. the
+   TDM Reservation Protocol) rather than inventing incompatible
+   terminology, consistent with Principle P3.</li>
+</ol>
+<h2 id="4-7-interaction-with-the-rights-companion-acknowledged-gap">4.7 Interaction with the Rights Companion (Acknowledged Gap)</h2>
+<ol>
+<li><code>training_permitted</code> and <code>agent_use_permitted</code> MAY appear to
+   overlap with, or even contradict, a Rights Object's
+   <code>commercial_use_permitted</code> or <code>derivative_works_permitted</code> flags
+   (ONP-2400 Section 4.5) if both are present on the same Object's
+   <code>rights_ref</code> and <code>onp:extensions</code>.</li>
+<li>ONP-3000's Claim Domain mechanism (Section 4.5 of that document)
+   detects overlap between two Extensions; it does NOT cover overlap
+   between an Extension and a Companion, since a Companion's
+   assertions live in <code>content</code>, not <code>onp:extensions</code>. This is an
+   acknowledged architectural gap, not a solved one — stated here
+   explicitly rather than left for an implementer to discover
+   independently.</li>
+<li>Pending a future resolution of that gap, an Extension asserting
+   <code>training_permitted</code> or <code>agent_use_permitted</code> SHOULD NOT contradict
+   what the same Object's Rights Companion states, where both are
+   present. Where an apparent contradiction exists, a Node SHOULD
+   apply the more restrictive reading of the two as a conservative
+   default — favoring the rights-holder's protection over permissive
+   interpretation when a mechanical resolution is not yet defined.</li>
+</ol>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.ai-metadata&quot;: {
+      &quot;generation_method&quot;: &quot;'human' | 'ai-assisted' | 'ai-generated' | 'ai-generated-human-edited', OPTIONAL&quot;,
+      &quot;model_reference&quot;: &quot;string, OPTIONAL&quot;,
+      &quot;human_review&quot;: &quot;boolean, OPTIONAL&quot;,
+      &quot;training_permitted&quot;: &quot;boolean, OPTIONAL&quot;,
+      &quot;agent_use_permitted&quot;: &quot;boolean, OPTIONAL&quot;,
+      &quot;attribution_required_for_ai_use&quot;: &quot;boolean, OPTIONAL&quot;
+    }
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Claim Domain</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>generation_method</code></td>
+<td><code>ai-generation-disclosure</code></td>
+<td>OPTIONAL</td>
+</tr>
+<tr>
+<td><code>model_reference</code></td>
+<td><code>ai-generation-disclosure</code></td>
+<td>OPTIONAL</td>
+</tr>
+<tr>
+<td><code>human_review</code></td>
+<td><code>ai-generation-disclosure</code></td>
+<td>OPTIONAL</td>
+</tr>
+<tr>
+<td><code>training_permitted</code></td>
+<td><code>ai-training-permission</code></td>
+<td>OPTIONAL</td>
+</tr>
+<tr>
+<td><code>agent_use_permitted</code></td>
+<td><code>ai-training-permission</code></td>
+<td>OPTIONAL</td>
+</tr>
+<tr>
+<td><code>attribution_required_for_ai_use</code></td>
+<td><code>ai-training-permission</code></td>
+<td>OPTIONAL</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-consumption">6.1 Consumption</h2>
+<p>A Node or AI system consuming a News Object SHOULD check
+<code>onp:extensions.org.onp.ai-metadata.training_permitted</code> before using
+that Object's content for model training, and
+<code>agent_use_permitted</code>/<code>attribution_required_for_ai_use</code> before
+quoting or summarizing it in an agent-mediated response, applying
+Section 4.7's conservative-reading guidance where a Rights Object is
+also present and appears to disagree.</p>
+<h2 id="6-2-interoperability">6.2 Interoperability</h2>
+<p>A Node without this Extension implemented simply does not see AI
+disclosure or permission signals — the Object itself remains fully
+verifiable and usable regardless (ONP-1000 Section 4.4, rule 3). This
+Extension is Companion-agnostic: it MAY attach to an Article, a
+Media Object, or any future Companion's Object, since generation
+method and AI-use permission are meaningful questions for any content
+type, not specific to one.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-ai-assisted-human-reviewed-partial-ai-use-permission">7.1 AI-Assisted, Human-Reviewed, Partial AI-Use Permission</h2>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.ai-metadata&quot;: {
+      &quot;generation_method&quot;: &quot;ai-assisted&quot;,
+      &quot;model_reference&quot;: &quot;claude-opus-4-8&quot;,
+      &quot;human_review&quot;: true,
+      &quot;training_permitted&quot;: false,
+      &quot;agent_use_permitted&quot;: true,
+      &quot;attribution_required_for_ai_use&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>Drafting assistance was used, a human editor reviewed the result
+before publication, bulk AI training is not permitted, but an AI
+assistant MAY summarize the article for a user as long as it cites
+RegioPurmerend as the source.</p>
+<h2 id="7-2-the-rights-interaction-scenario-section-4-7-worked">7.2 The Rights Interaction Scenario (Section 4.7 Worked)</h2>
+<pre><code>Rights Object (referenced via rights_ref):
+  commercial_use_permitted: false
+
+AI Metadata Extension (same Object):
+  agent_use_permitted: true
+  (silent on whether the consuming AI agent's product is commercial)
+
+Apparent tension: does agent_use_permitted=true override the
+Rights Object's commercial_use_permitted=false if the AI agent in
+question is part of a commercial product?
+
+Per Section 4.7, rule 3: no mechanical resolution exists yet. A
+Node SHOULD apply the more restrictive reading — here, treating
+commercial agent use as NOT permitted despite agent_use_permitted's
+bare `true`, since Rights' explicit commercial restriction is the
+more specific and more conservative signal.
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<p>A <code>generation_method</code> disclosure is publisher-asserted and not
+independently verifiable by Core or by this Extension — a publisher
+could omit or misstate AI involvement with no technical mechanism in
+this document to detect it, the same limitation already accepted
+throughout this series for any self-reported field (byline,
+credentials, credit). This document's contribution is giving
+publishers who want to disclose accurately a standard, verifiable-as-
+signed place to do so, not a mechanism to compel accurate disclosure
+from those who do not.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p><code>model_reference</code> and <code>human_review</code> typically carry no personal
+data. This document introduces no new privacy mechanism beyond what
+is already established elsewhere in this series.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0000, Introduction — Section 1.1, the AI-provenance problem
+  this document addresses one half of.</li>
+<li>ONP-0001, Architecture — Section 4.4, the decision test applied in
+  Section 4.2, here reaching Extension rather than Companion for the
+  first time in the series.</li>
+<li>ONP-0003, Design Principles — Principle P3 (Ordinary Technology,
+  Section 4.6, rule 4) and Principle P5 (Jurisdiction Neutrality,
+  Section 2.2, Section 4.6, rule 1).</li>
+<li>ONP-2400, Rights — the Companion this Extension's Section 4.7
+  documents an acknowledged, unresolved interaction gap with.</li>
+<li>ONP-3000, Extension Framework — Section 4.1 (namespace
+  registration), Section 4.3 (Claim Domain declaration), Section 4.5
+  (mechanical overlap detection, which Section 4.7 of this document
+  notes does not extend to Companion interactions).</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>TDM Reservation Protocol (TDMRep) — the existing text-and-data-
+  mining opt-out convention this document's training-permission
+  fields are conceptually aligned with, per Principle P3.</li>
+<li>EU AI Act — cited as regulatory context motivating disclosure
+  fields, not interpreted or relied upon as a compliance
+  determination (Section 2.2).</li>
+</ul>
+<h2 id="10-3-registry-registration">10.3 Registry Registration</h2>
+<p>As part of this document's publication, <code>org.onp.ai-metadata</code>,
+<code>ai-generation-disclosure</code>, and <code>ai-training-permission</code> are
+registered in ONP-0002.</p>
+<hr />
+<h1 id="appendix-a-full-schema-reference">Appendix A: Full Schema Reference</h1>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.ai-metadata&quot;: {
+      &quot;generation_method&quot;: &quot;enum, OPTIONAL, no default&quot;,
+      &quot;model_reference&quot;: &quot;string, OPTIONAL&quot;,
+      &quot;human_review&quot;: &quot;boolean, OPTIONAL&quot;,
+      &quot;training_permitted&quot;: &quot;boolean, OPTIONAL, no default&quot;,
+      &quot;agent_use_permitted&quot;: &quot;boolean, OPTIONAL, no default&quot;,
+      &quot;attribution_required_for_ai_use&quot;: &quot;boolean, OPTIONAL&quot;
+    }
+  }
+}
+</code></pre>
+<h1 id="appendix-b-ai-metadata-checklist">Appendix B: AI Metadata Checklist</h1>
+<pre><code>[ ] Fields carried under onp:extensions.org.onp.ai-metadata
+[ ] generation_method, if present, is one of the four recognized
+    values; if absent, understood as &quot;undisclosed,&quot; not &quot;human&quot;
+[ ] training_permitted / agent_use_permitted, if present, are
+    booleans with no assumed default when absent
+[ ] if a Rights Object is also present and appears to disagree:
+    apply the more restrictive reading (Section 4.7)
+[ ] no claim is made that this Extension mechanically resolves
+    Rights/AI-Metadata conflicts — it does not (Section 4.7)
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-full-schema-reference">Appendix A: Full Schema Reference</a></li><li><a href="#appendix-b-ai-metadata-checklist">Appendix B: AI Metadata Checklist</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/3100-ai-metadata.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

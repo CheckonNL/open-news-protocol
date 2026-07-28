@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-2400 Open News Protocol (ONP): Rights — Open News Protocol</title>
+<meta name="description" content="ONP-2400: Open News Protocol (ONP): Rights — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-2400</p>
+    <h1 id="top">Open News Protocol (ONP): Rights</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the Rights Companion:
+<code>content_type = "onp:companion:rights"</code>, fulfilling the Rights
+pillar named in ONP-0000 Section 1.3.3. Every Article and Media
+Object published in this series so far has carried no explicit
+usage terms at all; this document closes that gap. Consistent with
+Principle P5 (Jurisdiction Neutrality, ONP-0003), a Rights Object
+declares what its issuer asserts — a license reference, optional
+permission flags, an optional embargo date, optional territory
+restrictions — and makes no claim about legal enforceability in any
+jurisdiction. Consistent with Principle P3 (Ordinary Technology), it
+reuses existing license identifier systems (SPDX, Creative Commons)
+rather than inventing a new one. This document also confirms, and
+does not re-derive, the Companion classification ONP-0001 Section
+7.2 already worked through for Rights before this Companion existed
+to back it up.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Companion series (ONP-2000-2999).
+It is directly implementable. Concurrently with its publication,
+ONP-2100 (Article) and ONP-2200 (Media) are each updated with a new
+OPTIONAL <code>rights_ref</code> field (Section 10.3). It is a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>ONP-0000 Section 1.3.3 named Rights as one of ONP's four founding
+pillars: "the object contains itself: copyright; license;
+attribution; conditions; no more separate databases." Every
+Companion published since then — Article, Media, Identity — has had
+no way to actually make that claim. This document is where the
+pillar becomes an implementable Companion, not just a promise in the
+mission statement.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>the <code>onp:companion:rights</code> content schema: <code>license_identifier</code> /
+  <code>license_url</code> (at least one REQUIRED), and OPTIONAL permission
+  flags, embargo, and territory restriction fields;</li>
+<li>the precedence rule between the authoritative license reference
+  and the convenience permission flags;</li>
+<li>the explicit statement that a Rights Object is a declaration, not
+  an enforcement mechanism.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>any legal interpretation of copyright, licensing, or enforceability
+  in any jurisdiction — per Principle P5, a Rights Object states what
+  its issuer asserts, never what the law actually permits or
+  requires;</li>
+<li>any access control, DRM, or technical enforcement mechanism — ONP
+  has none; a Rights Object is checkable and verifiable, never
+  self-enforcing (Section 4.8);</li>
+<li>payment terms — owned by the forthcoming ONP-2500 (Payments), kept
+  cleanly separate: a Rights Object can exist for freely licensed
+  content with no payment terms at all;</li>
+<li>a controlled vocabulary of license types — this document reuses
+  existing external systems (SPDX, Creative Commons) rather than
+  maintaining one (Section 4.4).</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document is the owning specification for the following terms.</p>
+<p><strong>Rights Object</strong>
+: An informal name for a News Object whose <code>content_type</code> is
+  <code>onp:companion:rights</code>.</p>
+<p><strong>License Reference</strong>
+: The authoritative statement of a Rights Object's license, expressed
+  as <code>license_identifier</code>, <code>license_url</code>, or both (Section 4.4).</p>
+<p><strong>Permission Flag</strong>
+: One of the OPTIONAL boolean convenience fields
+  (<code>redistribution_permitted</code>, <code>attribution_required</code>,
+  <code>derivative_works_permitted</code>, <code>commercial_use_permitted</code>), never
+  authoritative over the License Reference (Section 4.5).</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-content-type-declaration">4.1 content_type Declaration</h2>
+<p>Every Rights Object MUST declare <code>content_type</code> as exactly
+<code>onp:companion:rights</code>.</p>
+<h2 id="4-2-companion-vs-extension-classification-confirmed-not">4.2 Companion-vs-Extension Classification (Confirmed, Not</h2>
+<pre><code> Re-derived)
+</code></pre>
+<p>Per ONP-2000 Section 4.2, rule 2, this document confirms rather than
+re-derives the classification: ONP-0001 Section 7.2 already applied
+the decision test to Rights, as a worked example of a borderline
+case, before this Companion existed:</p>
+<pre><code>&quot;Rights is a full Companion (ONP-2400) rather than an Extension,
+because a rights declaration can be independently referenced (e.g.
+by a licensing marketplace) and revised on its own version lineage,
+which satisfies the independent-identity test.&quot;
+                                    — ONP-0001, Section 7.2
+</code></pre>
+<p>This document is that Companion, now published.</p>
+<h2 id="4-3-content-schema">4.3 Content Schema</h2>
+<ol>
+<li>A Rights Object MUST include at least one of <code>license_identifier</code>
+   or <code>license_url</code> (Section 4.4).</li>
+<li><code>copyright_holder</code>, <code>copyright_year</code>,
+   <code>redistribution_permitted</code>, <code>attribution_required</code>,
+   <code>attribution_text</code>, <code>derivative_works_permitted</code>,
+   <code>commercial_use_permitted</code>, <code>embargo_until</code>, and
+   <code>territory_restrictions</code> are all OPTIONAL, per Sections 4.5-4.7.</li>
+</ol>
+<h2 id="4-4-license-reference">4.4 License Reference</h2>
+<ol>
+<li><code>license_identifier</code>, if present, SHOULD use an existing external
+   identifier system — an SPDX license identifier or a Creative
+   Commons short code (e.g. <code>"CC-BY-4.0"</code>, <code>"CC0-1.0"</code>) — where the
+   license in question is covered by one. This document MUST NOT be
+   read as maintaining or endorsing its own controlled vocabulary of
+   license types; it reuses existing ones, consistent with Principle
+   P3.</li>
+<li><code>license_identifier</code> MAY be a custom string for a license not
+   covered by an existing external system (for example,
+   <code>"all-rights-reserved"</code>); in that case, <code>license_url</code> SHOULD also
+   be present, pointing to the actual license text, since a custom
+   identifier alone conveys no machine-checkable meaning.</li>
+<li><code>license_url</code>, if present, MUST be a well-formed URI pointing to
+   the actual, human-readable license text.</li>
+</ol>
+<h2 id="4-5-permission-flags-are-convenience-never-authoritative">4.5 Permission Flags Are Convenience, Never Authoritative</h2>
+<ol>
+<li><code>redistribution_permitted</code>, <code>attribution_required</code>,
+   <code>derivative_works_permitted</code>, and <code>commercial_use_permitted</code>, if
+   present, MUST be booleans.</li>
+<li>The License Reference (Section 4.4) MUST be treated as
+   authoritative. Permission Flags are a machine-readable convenience
+   summary a rights-holder MAY additionally provide; they MUST NOT be
+   treated as overriding or superseding what the actual license
+   (identified or linked) states.</li>
+<li>A Node MUST NOT interpret an absent Permission Flag as <code>false</code>.
+   Absence means "not stated as a convenience flag," not "denied." A
+   Node needing a definitive answer MUST consult the License
+   Reference, not assume a default from an absent flag.</li>
+</ol>
+<h2 id="4-6-embargo">4.6 Embargo</h2>
+<ol>
+<li><code>embargo_until</code>, if present, MUST be an ISO 8601 timestamp: the
+   time before which the rights-holder declares this content is not
+   yet permitted for use or redistribution by whoever this Rights
+   Object's terms apply to.</li>
+<li><code>embargo_until</code> is a declaration, not an enforcement mechanism
+   (Section 4.8) — ONP provides no technical means to prevent access
+   or redistribution before that time; compliance is an
+   Application-level and, ultimately, a legal or contractual matter
+   entirely outside this document's mechanism.</li>
+</ol>
+<h2 id="4-7-territory-restrictions">4.7 Territory Restrictions</h2>
+<p><code>territory_restrictions</code>, if present, MUST be an array of strings.
+Use of ISO 3166-1 alpha-2 country codes is RECOMMENDED for
+machine-readability, but this document does not mandate a specific
+format, since a territory restriction is itself a declared business
+or contractual fact, not a legal determination this document is
+positioned to formalize.</p>
+<h2 id="4-8-no-enforcement-mechanism">4.8 No Enforcement Mechanism</h2>
+<p>A Rights Object is a cryptographically verifiable declaration of
+what its issuer asserts. ONP MUST NOT be implemented, described, or
+relied upon as providing access control, digital rights management,
+or any technical means of preventing use that contravenes a Rights
+Object's terms. Enforcement, where it exists at all, happens outside
+ONP entirely — through licensing agreements, legal action, or
+platform-level policy — exactly as it does today without this
+Companion.</p>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:rights&quot;,
+  &quot;content&quot;: {
+    &quot;license_identifier&quot;: &quot;string, REQUIRED unless license_url present&quot;,
+    &quot;license_url&quot;: &quot;string (URI), REQUIRED unless license_identifier present&quot;,
+    &quot;copyright_holder&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;copyright_year&quot;: &quot;string or integer, OPTIONAL&quot;,
+    &quot;redistribution_permitted&quot;: &quot;boolean, OPTIONAL&quot;,
+    &quot;attribution_required&quot;: &quot;boolean, OPTIONAL&quot;,
+    &quot;attribution_text&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;derivative_works_permitted&quot;: &quot;boolean, OPTIONAL&quot;,
+    &quot;commercial_use_permitted&quot;: &quot;boolean, OPTIONAL&quot;,
+    &quot;embargo_until&quot;: &quot;string (ISO 8601), OPTIONAL&quot;,
+    &quot;territory_restrictions&quot;: [&quot;string&quot;, &quot;...&quot;]
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>license_identifier</code></td>
+<td>REQUIRED unless <code>license_url</code> present</td>
+<td>SPDX/CC preferred (Section 4.4)</td>
+</tr>
+<tr>
+<td><code>license_url</code></td>
+<td>REQUIRED unless <code>license_identifier</code> present</td>
+<td></td>
+</tr>
+<tr>
+<td><code>copyright_holder</code></td>
+<td>OPTIONAL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>copyright_year</code></td>
+<td>OPTIONAL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>redistribution_permitted</code></td>
+<td>OPTIONAL</td>
+<td>Convenience only (Section 4.5)</td>
+</tr>
+<tr>
+<td><code>attribution_required</code></td>
+<td>OPTIONAL</td>
+<td>Convenience only</td>
+</tr>
+<tr>
+<td><code>attribution_text</code></td>
+<td>OPTIONAL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>derivative_works_permitted</code></td>
+<td>OPTIONAL</td>
+<td>Convenience only</td>
+</tr>
+<tr>
+<td><code>commercial_use_permitted</code></td>
+<td>OPTIONAL</td>
+<td>Convenience only</td>
+</tr>
+<tr>
+<td><code>embargo_until</code></td>
+<td>OPTIONAL</td>
+<td>Declaration, not enforcement (Section 4.6)</td>
+</tr>
+<tr>
+<td><code>territory_restrictions</code></td>
+<td>OPTIONAL</td>
+<td>ISO 3166-1 alpha-2 RECOMMENDED</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-resolution-and-precedence">6.1 Resolution and Precedence</h2>
+<p>A Node resolving an Article's or Media Object's <code>rights_ref</code> follows
+the standard Object Reference resolution procedure (ONP-2000 Section
+6.2). Where a Rights Object's Permission Flags and its License
+Reference could be read as disagreeing, the License Reference governs
+(Section 4.5, rule 2).</p>
+<h2 id="6-2-absence-of-a-rights-object-establishes-nothing">6.2 Absence of a Rights Object Establishes Nothing</h2>
+<p>If an Article or Media Object carries no <code>rights_ref</code> at all, this
+document does not establish any default assumption about usage
+terms — neither "all rights reserved" nor "freely usable." Per
+Principle P5, ONP does not encode a default legal position; what
+applies in the absence of an explicit declaration is a matter for
+whatever law or convention governs the specific context, entirely
+outside this document's scope.</p>
+<h2 id="6-3-interoperability">6.3 Interoperability</h2>
+<p>A Node without Rights Companion support simply does not see usage
+terms — the Article or Media Object it references remains fully
+verifiable and usable exactly as it would be for any other
+unrecognized Companion (ONP-1000 Section 4.4, rule 3). A Rights-aware
+Node gains the ability to check declared permissions before an
+application decides how to use the content; ONP does not require
+every Node to implement this Companion.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-a-creative-commons-rights-object">7.1 A Creative Commons Rights Object</h2>
+<pre><code class="language-json">{
+  &quot;oid&quot;: &quot;onp:oid:regiopurmerend.nl:rights-cc-by-standaard&quot;,
+  &quot;vid&quot;: &quot;onp:vid:sha-256:MnO345-example-digest-bytes&quot;,
+  &quot;publisher&quot;: { &quot;domain&quot;: &quot;regiopurmerend.nl&quot;, &quot;key_id&quot;: &quot;onp:key:2026-07-01&quot; },
+  &quot;signed_at&quot;: &quot;2026-07-01T00:00:00Z&quot;,
+  &quot;signature&quot;: &quot;onp:sig:ed25519:base64url-signature-bytes&quot;,
+  &quot;content_type&quot;: &quot;onp:companion:rights&quot;,
+  &quot;content&quot;: {
+    &quot;license_identifier&quot;: &quot;CC-BY-4.0&quot;,
+    &quot;copyright_holder&quot;: &quot;RegioPurmerend&quot;,
+    &quot;copyright_year&quot;: &quot;2026&quot;,
+    &quot;redistribution_permitted&quot;: true,
+    &quot;attribution_required&quot;: true,
+    &quot;attribution_text&quot;: &quot;Bron: RegioPurmerend.nl&quot;
+  }
+}
+</code></pre>
+<h2 id="7-2-an-all-rights-reserved-rights-object-with-embargo">7.2 An All-Rights-Reserved Rights Object with Embargo</h2>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:rights&quot;,
+  &quot;content&quot;: {
+    &quot;license_identifier&quot;: &quot;all-rights-reserved&quot;,
+    &quot;license_url&quot;: &quot;https://regiopurmerend.nl/gebruiksvoorwaarden&quot;,
+    &quot;copyright_holder&quot;: &quot;RegioPurmerend&quot;,
+    &quot;redistribution_permitted&quot;: false,
+    &quot;embargo_until&quot;: &quot;2026-08-01T06:00:00Z&quot;
+  }
+}
+</code></pre>
+<h2 id="7-3-article-referencing-a-rights-object-anticipating-onp-2100-s">7.3 Article Referencing a Rights Object (Anticipating ONP-2100's</h2>
+<pre><code> Update)
+</code></pre>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:article&quot;,
+  &quot;content&quot;: {
+    &quot;headline&quot;: &quot;Fusie-onderzoek Purmerend gepubliceerd&quot;,
+    &quot;rights_ref&quot;: &quot;onp:oid:regiopurmerend.nl:rights-cc-by-standaard&quot;
+  }
+}
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<p>A Rights Object's authenticity rests on exactly the same guarantees
+as any other Companion: it is only as trustworthy as the publisher's
+own signing key (ONP-0004, ONP-1003). This document introduces no
+new security property beyond what every prior Companion already
+relies on. Because a Rights Object makes no enforceable claim
+(Section 4.8), its compromise or forgery risk is limited to
+misrepresentation of terms, not to any technical bypass of a
+protection mechanism — there is no protection mechanism for a forged
+Rights Object to bypass.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p><code>copyright_holder</code> MAY name a specific individual (a freelance
+photographer or writer holding their own copyright rather than
+assigning it to the publisher) rather than an organization, which is
+personal data in the same limited sense already discussed for
+<code>credit</code> (ONP-2200) and Identity Objects (ONP-2300). This document
+introduces no new privacy mechanism beyond what those documents
+already establish.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0000, Introduction — Section 1.3.3, the Rights pillar this
+  document fulfills.</li>
+<li>ONP-0001, Architecture — Section 7.2, the worked Companion
+  classification confirmed, not re-derived, in Section 4.2.</li>
+<li>ONP-0003, Design Principles — Principle P3 (Ordinary Technology,
+  Section 4.4) and Principle P5 (Jurisdiction Neutrality, throughout
+  this document, most explicitly Sections 2.2, 4.8, and 6.2).</li>
+<li>ONP-2000, Companion Framework — Section 4.3 (Object Reference
+  mechanism), Section 4.2 (mandatory additions, followed throughout).</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>ONP-2100, Article; ONP-2200, Media (both updated concurrently,
+  Section 10.3) — the Companions expected to carry <code>rights_ref</code>.</li>
+<li>ONP-2500, Payments (forward reference — kept cleanly separate,
+  Section 2.2).</li>
+<li>SPDX License List — an external, existing identifier system
+  <code>license_identifier</code> SHOULD reuse where applicable.</li>
+<li>Creative Commons license short codes — likewise reused rather than
+  reinvented.</li>
+</ul>
+<h2 id="10-3-corresponding-updates-to-onp-2100-and-onp-2200">10.3 Corresponding Updates to ONP-2100 and ONP-2200</h2>
+<p>As part of this document's publication, both ONP-2100 (Article) and
+ONP-2200 (Media) are updated to add <code>rights_ref</code> (OPTIONAL, a single
+OID string referencing a Rights Object), following the same Object
+Reference pattern already used for <code>contributor_refs</code> and
+<code>creator_ref</code>. Both changes are classified MINOR (additive) under
+ONP-0007 Section 4.1.</p>
+<hr />
+<h1 id="appendix-a-full-schema-reference">Appendix A: Full Schema Reference</h1>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:rights&quot;,
+  &quot;content&quot;: {
+    &quot;license_identifier&quot;: &quot;string, REQUIRED unless license_url present&quot;,
+    &quot;license_url&quot;: &quot;string (URI), REQUIRED unless license_identifier present&quot;,
+    &quot;copyright_holder&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;copyright_year&quot;: &quot;string or integer, OPTIONAL&quot;,
+    &quot;redistribution_permitted&quot;: &quot;boolean, OPTIONAL, convenience only&quot;,
+    &quot;attribution_required&quot;: &quot;boolean, OPTIONAL, convenience only&quot;,
+    &quot;attribution_text&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;derivative_works_permitted&quot;: &quot;boolean, OPTIONAL, convenience only&quot;,
+    &quot;commercial_use_permitted&quot;: &quot;boolean, OPTIONAL, convenience only&quot;,
+    &quot;embargo_until&quot;: &quot;string (ISO 8601), OPTIONAL, declaration not enforcement&quot;,
+    &quot;territory_restrictions&quot;: &quot;array of strings, OPTIONAL&quot;
+  }
+}
+</code></pre>
+<h1 id="appendix-b-rights-object-checklist">Appendix B: Rights Object Checklist</h1>
+<pre><code>[ ] At least one of license_identifier or license_url present
+[ ] license_identifier, if present, uses SPDX/CC where applicable
+[ ] Permission Flags, if any, are understood as convenience only —
+    never treated as overriding the License Reference
+[ ] Absent Permission Flags are treated as &quot;unstated,&quot; not &quot;false&quot;
+[ ] embargo_until, if present, is understood as declarative only —
+    no enforcement is implied or provided
+[ ] No claim of legal enforceability is made anywhere in this
+    Object or its use
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-full-schema-reference">Appendix A: Full Schema Reference</a></li><li><a href="#appendix-b-rights-object-checklist">Appendix B: Rights Object Checklist</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/2400-rights.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

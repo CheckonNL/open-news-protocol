@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-1004 Open News Protocol (ONP): Validation — Open News Protocol</title>
+<meta name="description" content="ONP-1004: Open News Protocol (ONP): Validation — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-1004</p>
+    <h1 id="top">Open News Protocol (ONP): Validation</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.1</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>ONP-1000 through ONP-1003 fully specify Core-level validation: a
+Node implementing only those four documents can accept or reject any
+News Object on authenticity grounds alone. What has been described
+only abstractly until now — ONP-0001's three-level validation
+diagram (Core, Companion/Extension, Application) — is formalized
+here. This document wraps ONP-1003's Core pipeline with a concrete
+Companion-level content validation procedure, an Extension-level
+namespace validation and conflict-detection procedure, and a
+structured Validation Result contract that Application-level code
+consumes. It fixes the boundary precisely: Core-authentication is
+terminal and independent of everything after it; Companion and
+Extension validity are reported as separate, non-authoritative-over-
+authenticity facts; what an application does with those facts is
+never ONP's concern.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Core series (ONP-1000-1999). It is
+directly implementable and closes the loop ONP-1003 Section 2.2 left
+open ("the full multi-level validation procedure... ONP-1004, not
+yet published, owns the full procedure"). With this document, the
+Core series' central validation story — from raw received bytes to a
+structured, actionable result — is complete. It is a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>ONP-0001 Section 6.2 sketched three validation levels — Core,
+Extension/Companion, Application — as a diagram, without specifying
+what a Node concretely does at levels two and three, or what shape
+the output of validation takes at all. ONP-1003 Section 6.1 filled
+in level one completely. This document fills in level two
+(Companion content validation and Extension namespace validation,
+including conflict detection) and draws the exact line at level
+three: ONP defines the facts an application receives, never the
+business decision the application makes with them.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>the Validation Result data contract;</li>
+<li>Companion-level (content) validation procedure and its failure
+  semantics, including the <code>unknown</code> case for unrecognized
+  <code>content_type</code>;</li>
+<li>Extension-level (<code>onp:extensions</code>) validation procedure, including
+  Horizontal Invariant conflict detection;</li>
+<li>the independence rules between Core-authentication and
+  Companion/Extension validity;</li>
+<li>the precise Application-level boundary.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>Core-level validation itself — fully specified in ONP-1000 through
+  ONP-1003; this document only wraps that pipeline as Level 1 of a
+  larger one;</li>
+<li>any specific Companion's or Extension's own schema validation
+  rules — owned entirely by each of those specifications;</li>
+<li>Application-level business logic or display policy — per
+  Principle P1 (Adjacent Publishing, ONP-0003), that remains
+  entirely outside ONP's concern; this document fixes only the shape
+  of the facts an application receives (Section 4.5), never what it
+  does with them.</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document is the owning specification for the following terms.</p>
+<p><strong>Validation Level</strong>
+: One of the levels a News Object passes through during validation:
+  Core (ONP-1000-1003), Companion, Extension, or Application.
+  Companion and Extension are peer levels, not sequential relative
+  to each other (Section 4.1).</p>
+<p><strong>Core-Authenticated</strong>
+: The status of a News Object that has passed every Core-level check
+  (ONP-1003 Section 6.1). This document formalizes the term ONP-1003
+  used descriptively.</p>
+<p><strong>Validation Result</strong>
+: The structured output (Section 5.1) a Node produces after running
+  a News Object through every Validation Level it implements.</p>
+<p><strong>Extension Conflict</strong>
+: A detected violation of the Horizontal Invariant (ONP-0001 Section
+  5.3; ONP-0005 Section 4.5, rule 2) between two Extensions attached
+  to the same Object.</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-validation-levels">4.1 Validation Levels</h2>
+<ol>
+<li>Core (Level 1) MUST be evaluated first and is fully specified by
+   ONP-1000 through ONP-1003; this document introduces no change to
+   it.</li>
+<li>Companion validation and Extension validation are both Level 2.
+   They MUST both occur only after Level 1 succeeds, and MAY occur
+   in either order relative to each other, except where an Extension
+   explicitly declares a dependency on a named Companion (ONP-0001
+   Section 4.3), in which case that Extension's validation MUST
+   occur after the Companion's.</li>
+<li>Application (Level 3) is never evaluated by ONP itself; it is the
+   consumer of the Validation Result (Section 4.5) produced by
+   Levels 1-2.</li>
+</ol>
+<h2 id="4-2-level-independence">4.2 Level Independence</h2>
+<ol>
+<li>Core-authentication status MUST NOT depend on the outcome of
+   Companion or Extension validation. This restates the Vertical
+   Invariant (ONP-0001 Section 4.1) at the validation-procedure
+   level: a Node MUST NOT allow a Companion or Extension validator,
+   however it is implemented, to influence <code>core_authenticated</code>.</li>
+<li>Companion validation MUST NOT depend on the presence or validity
+   of any Extension.</li>
+<li>An Extension MAY condition its own validation on a named
+   Companion's content, but only where that Extension's own
+   specification explicitly declares the dependency (ONP-0001
+   Section 4.3); absent such a declaration, Extension validation
+   MUST be independent of Companion outcome as well.</li>
+</ol>
+<h2 id="4-3-companion-level-validation-procedure">4.3 Companion-Level Validation Procedure</h2>
+<ol>
+<li>If a Node implements the Companion named by <code>content_type</code>, it
+   MUST validate <code>content</code> against that Companion's own Object Model
+   and Requirements sections, and MUST report the result as
+   <code>companion_valid: true</code> or <code>companion_valid: false</code>.</li>
+<li>A <code>companion_valid: false</code> result MUST NOT alter
+   <code>core_authenticated</code>; the Object remains authentically attributed
+   to its publisher even if its content does not conform to the
+   Companion's schema (ONP-1000 Section 4.4 already established that
+   Core validation does not depend on content; this rule makes the
+   converse explicit — content invalidity does not retroactively
+   revoke authenticity either).</li>
+<li>If a Node does not implement the Companion named by
+   <code>content_type</code>, it MUST report <code>companion_valid: unknown</code>, not
+   <code>false</code>. <code>unknown</code> and <code>false</code> are distinct outcomes and MUST NOT
+   be conflated: <code>false</code> means "recognized and non-conformant,"
+   <code>unknown</code> means "not evaluated because unrecognized" (ONP-1000
+   Section 4.4, rule 3).</li>
+</ol>
+<h2 id="4-4-extension-level-validation-procedure">4.4 Extension-Level Validation Procedure</h2>
+<ol>
+<li>For each namespace present under <code>onp:extensions</code> that a Node
+   implements, the Node MUST validate that namespace's content
+   against the owning Extension's own Requirements, and report
+   <code>valid</code>, <code>invalid</code>, or (for unimplemented namespaces) <code>unknown</code>,
+   per namespace.</li>
+<li>For every pair of implemented Extension namespaces present on the
+   same Object, a Node MUST check for an Extension Conflict as
+   defined by each Extension's own conflict-detection rules (Section
+   6.2). A detected conflict MUST be reported explicitly (Section
+   4.5) and MUST NOT be silently resolved in favor of either
+   Extension, per ONP-0005 Section 4.5, rule 2.</li>
+<li>An Extension Conflict MUST NOT alter <code>core_authenticated</code>, for the
+   same reason stated in Section 4.2 — conflicts at Level 2 do not
+   retroactively affect Level 1.</li>
+</ol>
+<h2 id="4-5-validation-result-contract">4.5 Validation Result Contract</h2>
+<ol>
+<li>A Node MUST be able to produce a Validation Result containing, at
+   minimum, the fields in Section 5.1.</li>
+<li><code>core_authenticated: false</code> MUST be treated as terminal: a Node
+   MUST NOT populate or rely on any other field when
+   <code>core_authenticated</code> is false, and MUST reject the Object outright
+   at the application boundary.</li>
+<li>When <code>core_authenticated: true</code>, every other field MUST reflect
+   only what Levels 2 actually evaluated, using <code>unknown</code> wherever a
+   Companion or Extension was not implemented, per Sections 4.3 and
+   4.4.</li>
+</ol>
+<h2 id="4-6-application-level-boundary">4.6 Application-Level Boundary</h2>
+<ol>
+<li>ONP MUST NOT define what an application does with a Validation
+   Result — whether to display Companion-invalid content, how to
+   surface an Extension Conflict to a user, whether to treat
+   <code>unknown</code> as acceptable for its use case. These are Application-
+   level policy decisions, explicitly out of ONP's scope per
+   Principle P1.</li>
+<li>An application relying on ONP for trust guarantees MUST check
+   <code>core_authenticated</code> before making any use of an Object; this
+   document does not and cannot enforce that an application does so
+   correctly, but states the requirement unambiguously so that
+   non-compliance is a clear application defect, not an ambiguity in
+   this specification (Section 8.2).</li>
+</ol>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<h2 id="5-1-validation-result-authoritative">5.1 Validation Result (Authoritative)</h2>
+<pre><code class="language-json">{
+  &quot;core_authenticated&quot;: true,
+  &quot;companion_valid&quot;: &quot;true | false | unknown&quot;,
+  &quot;extension_results&quot;: {
+    &quot;org.onp.&lt;namespace&gt;&quot;: &quot;valid | invalid | unknown&quot;
+  },
+  &quot;conflicts&quot;: [
+    {
+      &quot;namespaces&quot;: [&quot;org.onp.&lt;a&gt;&quot;, &quot;org.onp.&lt;b&gt;&quot;],
+      &quot;description&quot;: &quot;human-readable conflict summary&quot;
+    }
+  ],
+  &quot;failure_step&quot;: &quot;string or null — which Core step failed, if core_authenticated is false&quot;
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>core_authenticated</code></td>
+<td>REQUIRED</td>
+<td>Terminal. <code>false</code> means reject; no other field is meaningful.</td>
+</tr>
+<tr>
+<td><code>companion_valid</code></td>
+<td>REQUIRED when <code>core_authenticated</code> is true</td>
+<td><code>true</code>, <code>false</code>, or <code>unknown</code> (Section 4.3).</td>
+</tr>
+<tr>
+<td><code>extension_results</code></td>
+<td>REQUIRED when <code>core_authenticated</code> is true</td>
+<td>Map of implemented namespaces to their result.</td>
+</tr>
+<tr>
+<td><code>conflicts</code></td>
+<td>REQUIRED (MAY be empty) when <code>core_authenticated</code> is true</td>
+<td>List of detected Extension Conflicts (Section 4.4, rule 2).</td>
+</tr>
+<tr>
+<td><code>failure_step</code></td>
+<td>REQUIRED when <code>core_authenticated</code> is false</td>
+<td>Which Core step (ONP-1003 Section 6.1) failed, for diagnostics.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-full-four-level-pipeline-final-capstone">6.1 Full Four-Level Pipeline (Final Capstone)</h2>
+<pre><code>INPUT: a received News Object (raw JSON)
+
+LEVEL 1 — CORE (ONP-1000 through ONP-1003):
+  Run the full pipeline (ONP-1003 Section 6.1).
+  -&gt; If any step fails: core_authenticated = false,
+     failure_step = &lt;the failed step&gt;. STOP. Return Validation
+     Result. Do not proceed to Level 2.
+  -&gt; If all steps pass: core_authenticated = true. Proceed.
+
+LEVEL 2a — COMPANION:
+  If content_type's Companion is implemented:
+    validate content against it -&gt; companion_valid = true/false
+  Else:
+    companion_valid = unknown
+
+LEVEL 2b — EXTENSION (independent of 2a unless a declared
+            dependency exists, per Section 4.2, rule 3):
+  For each onp:extensions namespace present:
+    if implemented: validate -&gt; valid/invalid
+    else: unknown
+  For each pair of implemented namespaces:
+    check for Extension Conflict -&gt; append to conflicts[] if found
+
+  (2a and 2b MAY run in parallel; neither affects the other's
+  outcome except where an Extension has declared a Companion
+  dependency.)
+
+OUTPUT: Validation Result (Section 5.1), handed to Level 3.
+
+LEVEL 3 — APPLICATION (never evaluated by ONP itself):
+  Application-specific code consumes the Validation Result and
+  makes whatever business decision it needs to. ONP's involvement
+  ends at producing the Result.
+</code></pre>
+<h2 id="6-2-extension-conflict-detection-forward-looking-obligation">6.2 Extension Conflict Detection (Forward-Looking Obligation)</h2>
+<p>Because no Extension specifications are yet published, this document
+cannot enumerate concrete conflict rules; it instead places an
+obligation on every future Extension specification (ONP-3000
+series): each Extension specification MUST define, in its own
+Requirements section, what constitutes a conflict with another
+Extension's domain claims, in a form a Node can check
+mechanically. A Node implementing two Extensions that have not
+defined any conflict relationship between each other MUST assume no
+conflict exists between them by default — silence between two
+Extension specifications is not itself evidence of a conflict.</p>
+<h2 id="6-3-interoperability">6.3 Interoperability</h2>
+<p>A Node implementing only ONP-1000 through ONP-1004 — no specific
+Companion, no specific Extension — MUST still be able to produce a
+complete, correctly-shaped Validation Result for any Object: Level 1
+runs fully, and Level 2 correctly reports <code>unknown</code> throughout rather
+than guessing or omitting fields. This is the final, concrete form of
+the interoperability guarantee stated abstractly since ONP-0001: a
+minimal Node's output is always well-formed, even when it cannot
+evaluate everything a fuller implementation could.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-fully-valid-recognized-companion-and-extension">7.1 Fully Valid, Recognized Companion and Extension</h2>
+<pre><code class="language-json">{
+  &quot;core_authenticated&quot;: true,
+  &quot;companion_valid&quot;: true,
+  &quot;extension_results&quot;: { &quot;org.onp.ai-metadata&quot;: &quot;valid&quot; },
+  &quot;conflicts&quot;: [],
+  &quot;failure_step&quot;: null
+}
+</code></pre>
+<h2 id="7-2-core-valid-unrecognized-content-type">7.2 Core Valid, Unrecognized content_type</h2>
+<pre><code class="language-json">{
+  &quot;core_authenticated&quot;: true,
+  &quot;companion_valid&quot;: &quot;unknown&quot;,
+  &quot;extension_results&quot;: {},
+  &quot;conflicts&quot;: [],
+  &quot;failure_step&quot;: null
+}
+</code></pre>
+<h2 id="7-3-core-valid-companion-content-malformed">7.3 Core Valid, Companion Content Malformed</h2>
+<pre><code class="language-json">{
+  &quot;core_authenticated&quot;: true,
+  &quot;companion_valid&quot;: false,
+  &quot;extension_results&quot;: {},
+  &quot;conflicts&quot;: [],
+  &quot;failure_step&quot;: null
+}
+</code></pre>
+<p>The Object is still genuinely from its claimed publisher; its
+<code>content</code> simply does not conform to the Article Companion's schema.
+An application MAY choose to still store this Object for audit
+purposes while declining to render it as an article — that choice is
+Level 3, outside this document's concern (Section 4.6).</p>
+<h2 id="7-4-core-invalid-terminal">7.4 Core Invalid (Terminal)</h2>
+<pre><code class="language-json">{
+  &quot;core_authenticated&quot;: false,
+  &quot;failure_step&quot;: &quot;ONP-1003 Section 4.5, step 6 (signature verification failed)&quot;
+}
+</code></pre>
+<p>No other field is present, per Section 4.5, rule 2.</p>
+<h2 id="7-5-extension-conflict-detected">7.5 Extension Conflict Detected</h2>
+<pre><code class="language-json">{
+  &quot;core_authenticated&quot;: true,
+  &quot;companion_valid&quot;: true,
+  &quot;extension_results&quot;: {
+    &quot;org.onp.licensing-example&quot;: &quot;valid&quot;,
+    &quot;org.onp.syndication-example&quot;: &quot;valid&quot;
+  },
+  &quot;conflicts&quot;: [
+    {
+      &quot;namespaces&quot;: [&quot;org.onp.licensing-example&quot;, &quot;org.onp.syndication-example&quot;],
+      &quot;description&quot;: &quot;Syndication declares unrestricted redistribution; Licensing declares no-redistribution.&quot;
+    }
+  ],
+  &quot;failure_step&quot;: null
+}
+</code></pre>
+<p>Both Extensions individually validate; the conflict between their
+claims is what Section 4.4, rule 2 requires surfacing rather than
+silently resolving.</p>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<h2 id="8-1-level-independence-is-where-layer-confusion-is-actually">8.1 Level Independence Is Where Layer Confusion Is Actually</h2>
+<pre><code> Prevented in Code
+</code></pre>
+<p>Section 4.2's independence rules are the concrete implementation of
+the Vertical Invariant (ONP-0001 Section 4.1) and the layer-confusion
+protections (ONP-0005 Section 4.5) at the exact point in a Node's
+code where they could otherwise be violated: if a Companion or
+Extension validator function were allowed to write to
+<code>core_authenticated</code>, every prior document's security analysis would
+be moot in practice, however correct it is on paper. This document
+is where that boundary must be enforced, which is why it is restated
+here rather than assumed to follow automatically from earlier
+documents.</p>
+<h2 id="8-2-the-application-boundary-is-a-documented-requirement-not-an">8.2 The Application Boundary Is a Documented Requirement, Not an</h2>
+<pre><code> Enforced One
+</code></pre>
+<p>Section 4.6, rule 2 states that an application MUST check
+<code>core_authenticated</code> before use. ONP has no mechanism to force
+compliance with this at the application layer — an application that
+ignores the Validation Result entirely and renders Object content
+regardless is not prevented by anything in this document. This
+document's contribution is making that failure mode unambiguously a
+violation of a stated MUST, which matters for conformance testing
+(ONP-9002, Reference series) even though it
+cannot be enforced by the protocol itself.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>The Validation Result structure (Section 5.1) carries no personal
+data of its own. Companion-level and Extension-level validation may
+process <code>content</code> or <code>onp:extensions</code> fields that do carry personal
+data, but the privacy analysis of those fields belongs to their
+owning Companion or Extension specifications, not to this document,
+which only defines the pass/fail/unknown reporting shape.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0001, Architecture — Section 6.2, the three-level validation
+  diagram this document formalizes into a procedure.</li>
+<li>ONP-0003, Design Principles — Principle P1 (Adjacent Publishing),
+  motivating the Application-level boundary (Section 4.6).</li>
+<li>ONP-0005, Security Model — Section 4.5 (layer confusion), restated
+  concretely in Section 8.1; Horizontal Invariant conflict handling,
+  formalized in Section 4.4.</li>
+<li>ONP-1000 through ONP-1003 — fully specify Level 1 (Core), which
+  this document wraps without modification.</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>ONP-2100, Article; ONP-3100, AI Metadata (forward references —
+  example Companion/Extension consumers of this document's
+  Companion- and Extension-level procedures).</li>
+<li>ONP-3000, Extension Framework — the
+  conflict-declaration obligation in Section 6.2 is formally
+  imposed on individual Extensions there.</li>
+<li>ONP-9002, Security Checklist — conformance
+  testing implications of Section 8.2.</li>
+</ul>
+<hr />
+<h1 id="appendix-a-validation-result-json-schema-illustrative">Appendix A: Validation Result JSON Schema (Illustrative)</h1>
+<pre><code class="language-json">{
+  &quot;core_authenticated&quot;: &quot;boolean, REQUIRED&quot;,
+  &quot;companion_valid&quot;: &quot;'true' | 'false' | 'unknown', REQUIRED if core_authenticated&quot;,
+  &quot;extension_results&quot;: &quot;object mapping namespace to 'valid'|'invalid'|'unknown', REQUIRED if core_authenticated&quot;,
+  &quot;conflicts&quot;: &quot;array of {namespaces: [string,string], description: string}, REQUIRED (may be empty) if core_authenticated&quot;,
+  &quot;failure_step&quot;: &quot;string or null, REQUIRED if not core_authenticated&quot;
+}
+</code></pre>
+<h1 id="appendix-b-four-level-pipeline-quick-reference">Appendix B: Four-Level Pipeline Quick Reference</h1>
+<pre><code>[ ] Level 1 (Core, ONP-1000-1003): run full pipeline.
+      FAIL -&gt; core_authenticated=false, failure_step set, STOP.
+      PASS -&gt; core_authenticated=true, continue.
+[ ] Level 2a (Companion): recognized -&gt; validate -&gt; true/false.
+                          unrecognized -&gt; unknown.
+[ ] Level 2b (Extension): per namespace, recognized -&gt; valid/invalid.
+                          unrecognized -&gt; unknown.
+                          check all implemented pairs for conflicts.
+[ ] Assemble Validation Result (Appendix A).
+[ ] Hand off to Level 3 (Application) — ONP's involvement ends here.
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-validation-result-json-schema-illustrative">Appendix A: Validation Result JSON Schema (Illustrative)</a></li><li><a href="#appendix-b-four-level-pipeline-quick-reference">Appendix B: Four-Level Pipeline Quick Reference</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/1004-validation.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

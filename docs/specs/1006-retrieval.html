@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-1006 Open News Protocol (ONP): Retrieval — Open News Protocol</title>
+<meta name="description" content="ONP-1006: Open News Protocol (ONP): Retrieval — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-1006</p>
+    <h1 id="top">Open News Protocol (ONP): Retrieval</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the Retrieval Convention: how a Node that
+holds an OID obtains the News Object it names, and how a consumer
+learns that new Objects or new Versions exist — using only ordinary,
+already-deployed web technology. It defines a canonical Object URL
+derived mechanically from the OID, VID-based conditional retrieval
+via standard HTTP caching semantics, and a convention for carrying
+Object URLs in existing RSS/Atom feeds and HTML pages. It
+deliberately defines no new protocol, no node-to-node
+synchronization, and no discovery index: per ONP-0000 Section 7.2,
+ONP standardizes the object, not the channel — this document makes
+that stance operational instead of leaving "exchanging" (ONP-0000
+Section 1) without any interoperable floor. It extends the Core
+series roadmap; that extension is recorded in ONP-0000 v0.4.0.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Core series (ONP-1000-1999). It is
+directly implementable and normative. It is the first Core document
+added after the roadmap ONP-0000 originally laid out was completed;
+the roadmap extension is a MINOR change to ONP-0000 under ONP-0007
+Section 4.2, called out explicitly there. It is a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>Every Core document so far answers a question about an Object a
+Node already holds: what it is (ONP-1000), how it names itself
+(ONP-1001), how its bytes become deterministic (ONP-1002), how its
+origin is proven (ONP-1003), whether its key was authorized
+(ONP-0004). None answers the question that precedes all of them in
+practice: <em>given an OID, where are the bytes?</em></p>
+<p>Without an answer, interoperability stops at "if you somehow
+obtained the Object." Every consumer needs a per-publisher
+arrangement, which is exactly the fragmentation ONP-0000 Section 1
+names as the problem.</p>
+<p>The answer this document gives is deliberately small, and it is
+made possible by a property ONP-1001 already established: the
+publisher's domain is <em>inside</em> the OID. An OID is therefore almost
+a URL already — one fixed path convention turns
+<code>onp:oid:regiopurmerend.nl:artikel-123</code> into a retrievable HTTPS
+address mechanically, with no registry, no resolver service, and no
+lookup protocol. The same <code>.well-known/onp/</code> path space ONP-0004
+already claims for the Publisher Key Record hosts it.</p>
+<p>Freshness comes equally free: the VID is a content-derived,
+globally unique identifier of a specific Version — which is
+precisely what an HTTP entity tag is for. Serving the VID as the
+ETag makes standard conditional requests (RFC 9110) a
+version-change detector with zero new mechanism.</p>
+<p>Notification reuses what publishers already run: RSS/Atom feeds and
+HTML pages carry a pointer to the Object URL, so existing feed
+infrastructure becomes the "something new exists" channel.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>the canonical Object URL derived from an OID, and the OPTIONAL
+  Version URL for retrieving a specific prior Version;</li>
+<li>server behavior when serving Objects at these URLs (media type,
+  ETag, conditional requests, TLS);</li>
+<li>consumer behavior when retrieving (validation obligation,
+  redirect policy, 404 semantics);</li>
+<li>the convention for carrying Object URLs in RSS 2.0 and Atom
+  feeds and in HTML documents.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>any obligation to serve Objects over HTTP at all — distribution
+  remains non-exclusive (ONP-0000 Section 7.2); a publisher MAY
+  distribute solely via other channels;</li>
+<li>node-to-node synchronization, replication, or reconciliation of
+  Object sets between Nodes;</li>
+<li>any index, listing, or enumeration endpoint ("all Objects of this
+  publisher") — deliberately, see Section 8.4;</li>
+<li>push notification (WebSub, WebSockets, or similar) — feeds are
+  pull;</li>
+<li>trust of any kind: retrieval grants zero trust, and every
+  retrieved Object goes through unchanged Core validation
+  (ONP-1004) including Trust Anchor resolution (ONP-0004).</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document is the owning specification for the following terms.</p>
+<p><strong>Object URL</strong>
+: The canonical HTTPS URL at which the current Version of a News
+  Object is retrievable, derived mechanically from its OID per
+  Section 4.1.</p>
+<p><strong>Version URL</strong>
+: The OPTIONAL HTTPS URL at which one specific Version of a News
+  Object is retrievable, derived from its OID and that Version's
+  VID per Section 4.3.</p>
+<p>Terms used but owned elsewhere: <strong>OID</strong>, <strong>Local Identifier</strong>
+(ONP-1001), <strong>VID</strong> (ONP-0001, structurally ONP-1001), <strong>News
+Object</strong> (ONP-0000/1000), <strong>Claimed Signing Time</strong> (ONP-1000),
+<strong>Publisher Key Record</strong> (ONP-0004), <strong>Supersession</strong> (ONP-0006).</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-object-url-derivation">4.1 Object URL Derivation</h2>
+<ol>
+<li>The Object URL for an OID of the form
+   <code>onp:oid:{domain}:{local-id}</code> (ONP-1001 Appendix A) is:</li>
+</ol>
+<p><code>https://{domain}/.well-known/onp/objects/{local-id}</code></p>
+<p>with <code>{domain}</code> and <code>{local-id}</code> taken byte-identical from the
+   OID. This reuses the <code>.well-known/onp/</code> path space ONP-0004
+   Section 4.2 already establishes, per RFC 8615.
+2. The derivation is total and mechanical: any conforming OID
+   yields exactly one Object URL, with no lookup, registry, or
+   resolver involved. (The Local Identifier grammar — lowercase
+   alphanumerics, <code>-</code>, or a UUID — requires no percent-encoding.)
+3. Serving Objects at the Object URL is OPTIONAL. However, a
+   publisher that makes News Objects retrievable over HTTPS at all
+   SHOULD serve them at their Object URLs, so consumers can derive
+   the location instead of needing per-publisher arrangements. A
+   publisher MAY additionally serve the same Object at any other
+   URL; the Object URL is canonical, not exclusive (ONP-0000
+   Section 7.2).</p>
+<h2 id="4-2-server-behavior">4.2 Server Behavior</h2>
+<ol>
+<li>A successful response at an Object URL MUST carry the complete,
+   byte-serialized current Version of the named News Object — the
+   full envelope including <code>vid</code> and <code>signature</code>, exactly as
+   signed.</li>
+<li>The response SHOULD be served with the media type
+   <code>application/onp+json</code> and MUST be parseable as the JSON
+   envelope ONP-1000 defines regardless of the media type served.
+   <code>application/onp+json</code> is not yet IANA-registered; registration
+   is future work, and consumers MUST also accept
+   <code>application/json</code> in the interim.</li>
+<li>The response SHOULD carry an <code>ETag</code> header whose value is the
+   Object's current VID (quoted, per RFC 9110). The VID is already
+   a globally unique, content-derived identifier of exactly one
+   Version — it is a natural entity tag, and no separate version
+   token is needed.</li>
+<li>A server providing the ETag of rule 3 MUST honor
+   <code>If-None-Match</code> conditional requests per RFC 9110, answering
+   <code>304 Not Modified</code> when the held VID is still current. This is
+   the complete version-freshness mechanism of this document: a
+   consumer re-fetches an Object URL with <code>If-None-Match: "&lt;held
+   VID&gt;"</code> and learns from the status code alone whether a newer
+   Version exists.</li>
+<li>All retrieval is over HTTPS with standard WebPKI certificate
+   validation, with the same posture as ONP-0004 Section 4.2:
+   transport security here protects availability and reader
+   privacy; it is NOT what authenticates the Object — Core
+   validation of the retrieved bytes is (Section 5.2).</li>
+<li><code>404 Not Found</code> at an Object URL means only "not retrievable at
+   this URL." It carries no statement about the Object's existence,
+   validity, or lifecycle state, and a consumer MUST NOT interpret
+   it as retraction — retraction is expressed in-band via
+   <code>lifecycle_state</code> (ONP-1000 Section 4.5), never via HTTP status.</li>
+</ol>
+<h2 id="4-3-version-url-optional">4.3 Version URL (OPTIONAL)</h2>
+<ol>
+<li>A publisher MAY additionally serve specific Versions at:</li>
+</ol>
+<p><code>https://{domain}/.well-known/onp/objects/{local-id}/versions/{vid}</code></p>
+<p>where <code>{vid}</code> is the full VID string (ONP-1001 Appendix A; the
+   <code>:</code> characters it contains are legal in a URL path segment per
+   RFC 3986).
+2. A response at a Version URL MUST carry exactly the Version the
+   VID names — which the consumer can verify unilaterally, since
+   the VID is recomputable from the bytes (ONP-1001 Section 6.1).
+3. Version URLs make a supersession chain (ONP-0006) walkable: a
+   consumer holding a Version whose <code>supersedes</code> names a prior VID
+   can attempt to retrieve that prior Version. Serving history is
+   OPTIONAL and MAY be bounded by local retention policy.</p>
+<h2 id="4-4-feed-and-html-carriage">4.4 Feed and HTML Carriage</h2>
+<ol>
+<li>A publisher distributing an RSS 2.0 feed for content that is
+   also published as News Objects SHOULD include, per item, an
+   <code>onp:object</code> element whose text content is the Object URL, under
+   the XML namespace <code>https://opennewsprotocol.org/ns/feed</code>. RSS
+   extension modules are ordinary, widely deployed practice; no
+   feed consumer that ignores unknown namespaces is affected.</li>
+<li>A publisher distributing an Atom feed SHOULD include, per entry,
+   a <code>link</code> element with <code>rel="alternate"</code> and
+   <code>type="application/onp+json"</code> pointing at the Object URL.</li>
+<li>An HTML page rendering a News Object's content SHOULD include
+   <code>&lt;link rel="alternate" type="application/onp+json"
+   href="{object-url}"&gt;</code> in its head, so the signed Object is
+   discoverable from the human-readable page.</li>
+<li>Feed and HTML carriage are pointers only. The feed entry and the
+   page are unsigned and carry zero trust; the Object at the other
+   end of the pointer is what gets validated. A mismatch between
+   feed metadata and Object content is resolved in the Object's
+   favor, always.</li>
+</ol>
+<hr />
+<h1 id="5-processing-model">5. Processing Model</h1>
+<h2 id="5-1-retrieval-algorithm">5.1 Retrieval Algorithm</h2>
+<pre><code>Given OID = onp:oid:D:L, optionally a held VID H:
+
+1. Object URL := https://D/.well-known/onp/objects/L
+2. GET the Object URL over HTTPS
+   (If-None-Match: &quot;H&quot; when H is held).
+   A consumer MAY follow redirects; every hop MUST be https.
+3. 304 -&gt; the held Version is current. STOP.
+   404 -&gt; not retrievable here (Section 4.2, rule 6). STOP.
+   200 -&gt; continue.
+4. Parse the body as a News Object envelope (ONP-1000).
+5. Perform FULL Core validation on the retrieved bytes
+   (ONP-1004 level 1, including Trust Anchor resolution,
+   ONP-0004). Retrieval confers no trust whatsoever.
+6. Confirm the retrieved Object's oid equals the requested OID.
+   REJECT on mismatch (a server answering for the wrong OID).
+</code></pre>
+<h2 id="5-2-trust-posture">5.2 Trust Posture</h2>
+<p>The self-certifying Object (ONP-1003) is what makes this document
+safe to keep this small: because verification operates on bytes and
+never on the channel, the channel needs no trust properties beyond
+ordinary TLS. A tampered response fails VID or signature
+validation; a response for the wrong Object fails step 6; a
+response signed by an unauthorized key fails Trust Anchor
+resolution. The Retrieval Convention therefore adds convenience,
+not attack surface — with one honest exception stated in Section
+8.2.</p>
+<hr />
+<h1 id="6-examples">6. Examples</h1>
+<h2 id="6-1-oid-to-object-url">6.1 OID to Object URL</h2>
+<pre><code>OID:        onp:oid:regiopurmerend.nl:wheermolen-bommen-2026
+Object URL: https://regiopurmerend.nl/.well-known/onp/objects/wheermolen-bommen-2026
+</code></pre>
+<h2 id="6-2-conditional-retrieval">6.2 Conditional Retrieval</h2>
+<pre><code>GET /.well-known/onp/objects/wheermolen-bommen-2026 HTTP/1.1
+Host: regiopurmerend.nl
+If-None-Match: &quot;onp:vid:sha-256:L4Gvx2LkqQpihK7V61GW82nl-dUdf-FZjnfrTHGOpZc&quot;
+
+-&gt; 304 Not Modified        (held Version is still current)
+-&gt; 200 + new envelope,
+   ETag: &quot;onp:vid:sha-256:&lt;new digest&gt;&quot;   (a newer Version exists)
+</code></pre>
+<h2 id="6-3-rss-item-carriage">6.3 RSS Item Carriage</h2>
+<pre><code class="language-xml">&lt;rss version=&quot;2.0&quot; xmlns:onp=&quot;https://opennewsprotocol.org/ns/feed&quot;&gt;
+  ...
+  &lt;item&gt;
+    &lt;title&gt;Bommenonderzoek Wheermolen-Oost afgerond&lt;/title&gt;
+    &lt;guid isPermaLink=&quot;false&quot;&gt;onp:oid:regiopurmerend.nl:wheermolen-bommen-2026&lt;/guid&gt;
+    &lt;onp:object&gt;https://regiopurmerend.nl/.well-known/onp/objects/wheermolen-bommen-2026&lt;/onp:object&gt;
+  &lt;/item&gt;
+&lt;/rss&gt;
+</code></pre>
+<hr />
+<h1 id="7-interoperability">7. Interoperability</h1>
+<p>A consumer implementing only Sections 4.1 and 5.1 can retrieve and
+fully verify any Object from any publisher that serves its Object
+URLs — with no prior arrangement, no shared configuration, and no
+mechanism beyond HTTPS GET. This is the Retrieval-layer instance of
+the interoperability guarantee pattern (ONP-0001 Section 6.5,
+ONP-0004 Section 6.4, ONP-1000 Section 4.4): the OPTIONAL
+enhancements (Version URLs, feed carriage, HTML links) improve
+reach and freshness but MUST NOT become silent preconditions for
+baseline retrieval.</p>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<h2 id="8-1-retrieval-is-not-trust">8.1 Retrieval Is Not Trust</h2>
+<p>Nothing in this document weakens the rule that only Core validation
+authenticates an Object (ONP-0004 Section 4.1). A consumer that
+skips step 5 of Section 5.1 because "it came from the publisher's
+own domain" has reintroduced messenger trust; implementations MUST
+NOT provide a retrieval path that bypasses validation.</p>
+<h2 id="8-2-current-version-rollback">8.2 Current-Version Rollback</h2>
+<p>The one guarantee this document does NOT provide: that the Version
+served at an Object URL is genuinely the newest that exists. A
+compromised or misconfigured server can serve an older, validly
+signed Version as "current." A consumer that has already seen a
+newer Version can detect the regression (the held VID and the
+supersession chain point forward); a consumer arriving fresh
+cannot. Stronger recency guarantees require evidence mechanisms
+(signed freshness statements, transparency logging of Version
+history) that belong to future work, not to this convention — and
+this limitation is inherited from, not added to, the trust model's
+domain-compromise ceiling (ONP-0004 Section 8.1).</p>
+<h2 id="8-3-redirect-handling">8.3 Redirect Handling</h2>
+<p>Following redirects is permitted for deployment flexibility (CDNs,
+path migrations), but every hop MUST be HTTPS, and step 6 of
+Section 5.1 makes the endpoint's identity irrelevant to
+authenticity: wherever the bytes finally came from, they must be
+the requested Object and must validate.</p>
+<h2 id="8-4-no-enumeration-endpoint-deliberately">8.4 No Enumeration Endpoint, Deliberately</h2>
+<p>This document defines no way to list a publisher's Objects. An
+enumeration surface is a synchronization and discovery concern with
+its own privacy and load consequences (bulk scraping, existence
+disclosure of unlisted Objects), and specifying it here would smuggle
+a discovery protocol into a retrieval convention. If a future
+document defines one, it does so with its own security analysis.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<ol>
+<li>Retrieval requests reveal to the publisher (and any on-path
+   observer of traffic metadata) which Objects a consumer is
+   interested in — ordinary web-browsing exposure, neither better
+   nor worse. TLS (Section 4.2, rule 5) protects request content
+   from on-path observers.</li>
+<li>The absence of an enumeration endpoint (Section 8.4) means
+   publishing an Object at its Object URL does not, by itself,
+   announce that Object's existence; a consumer must learn the OID
+   through some channel first. Publishers should not, however,
+   treat an unannounced Object URL as access control — the URL is
+   derivable by anyone who learns the OID.</li>
+</ol>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>[RFC8615] Nottingham, M., "Well-Known Uniform Resource
+  Identifiers (URIs)", RFC 8615 — basis for the
+  <code>.well-known/onp/</code> path space, shared with ONP-0004.</li>
+<li>[RFC9110] Fielding, R., Nottingham, M., and J. Reschke, "HTTP
+  Semantics", RFC 9110 — entity tags and conditional requests
+  (Section 4.2, rules 3-4).</li>
+<li>ONP-1000, News Object — the envelope retrieved.</li>
+<li>ONP-1001, Identifiers — the OID grammar the derivation in
+  Section 4.1 consumes byte-identically.</li>
+<li>ONP-0004, Trust Model — the <code>.well-known/onp/</code> precedent and the
+  Trust Anchor resolution step 5 of Section 5.1 invokes.</li>
+<li>ONP-1004, Validation — the Core validation a retrieved Object
+  MUST pass.</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>ONP-0000, Introduction — Section 7.2 (Non-Exclusivity of
+  Channels), the stance this document operationalizes; v0.4.0
+  records the roadmap extension adding this document.</li>
+<li>ONP-0006, News Object Lifecycle — the supersession chain Version
+  URLs make walkable.</li>
+<li>ONP-9005, External Standards Interoperability — the RSS/Atom
+  export bridges Section 4.4 builds on.</li>
+<li>[RFC3986] Berners-Lee, T., Fielding, R., and L. Masinter,
+  "Uniform Resource Identifier (URI): Generic Syntax" — legality
+  of <code>:</code> in path segments (Section 4.3).</li>
+</ul>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-processing-model">5. Processing Model</a></li><li><a href="#6-examples">6. Examples</a></li><li><a href="#7-interoperability">7. Interoperability</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/1006-retrieval.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

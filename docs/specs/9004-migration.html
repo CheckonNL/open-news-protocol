@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-9004 Open News Protocol (ONP): Migration — Open News Protocol</title>
+<meta name="description" content="ONP-9004: Open News Protocol (ONP): Migration — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-9004</p>
+    <h1 id="top">Open News Protocol (ONP): Migration</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.1</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the required format and process for Migration
+Guidance accompanying any MAJOR (breaking) change to a Standards-
+Track specification, per ONP-0007 Section 4.3, rule 2. No ONP
+specification has yet reached Standards-Track status — every document
+in this series remains a Working Draft — so no actual historical
+Migration Guidance instance exists yet either. This document sets the
+target format now, and, in place of a real example, reflects honestly
+on this series' own accumulated pre-1.0 corrections (the <code>signed_at</code>
+addition, the Tombstone state reconciliation, the OID/VID reference
+generalization, and others) as illustrative of the <em>kind</em> of reasoning
+Migration Guidance will eventually require — while being explicit that
+none of them were true MAJOR migrations, and that a real one will need
+more than any of these pre-1.0 corrections did. This is the final
+document in the original roadmap ONP-0000 laid out.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Reference series (ONP-9000-9999) and
+is its closing document. It is Informational for the reflective
+material in Section 4.5, but Section 4's format requirement is a real
+obligation on future MAJOR changes, inherited from ONP-0007 Section
+4.3, rule 2, not newly invented here. It is a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>ONP-0007 Section 4.3, rule 2 already requires Migration Guidance to
+accompany any MAJOR version bump on a Standards-Track specification;
+it did not, at the time, specify what that guidance must actually
+contain. This document closes that gap. It arrives, appropriately,
+last: every document before it assumed migration would eventually
+matter and pointed here rather than solving it inline, and now that
+every other document in the original roadmap is published, this is
+the moment to make that promise concrete.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>the required content and structure of Migration Guidance;</li>
+<li>where Migration Guidance is published and how it relates to the
+  Deviation process (ONP-0003 Section 6.3);</li>
+<li>a reflective, explicitly-not-equivalent review of this series' own
+  pre-1.0 corrections as a preview of the reasoning a real migration
+  will require.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT:</p>
+<ul>
+<li>document any actual current migration — none exists, since no
+  specification has reached Standards-Track status;</li>
+<li>retroactively require Migration Guidance for any pre-1.0 correction
+  already made in this series — ONP-0007 Section 4.2 explicitly
+  exempts pre-1.0 changes from the MAJOR-bump Migration Guidance
+  requirement, and this document does not reverse that.</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p><strong>Migration Guidance</strong>
+: The structured explanation, required by ONP-0007 Section 4.3, rule
+  2, that MUST accompany any MAJOR version bump to a Standards-Track
+  specification, per the format Section 4.2 of this document defines.</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-when-migration-guidance-is-required">4.1 When Migration Guidance Is Required</h2>
+<p>Migration Guidance MUST accompany any MAJOR version bump to a
+specification at or beyond Standards-Track status (ONP-0007 Section
+4.3, rule 2). It is NOT required for MINOR or PATCH changes, and it
+is NOT required for pre-1.0 changes, even ones that would otherwise
+meet the MAJOR criteria (ONP-0007 Section 4.2).</p>
+<h2 id="4-2-required-content">4.2 Required Content</h2>
+<p>Migration Guidance MUST include:</p>
+<ol>
+<li><strong>What changed and why</strong> — the specific normative Requirement that
+   changed, and the reasoning (a Security Review finding, a
+   Principles Review finding, or an identified gap) that motivated
+   it.</li>
+<li><strong>Before/after behavior</strong> — a concrete description of what a
+   conformant implementation did before, and what it MUST do after.</li>
+<li><strong>Upgrade path</strong> — the specific steps an existing implementation
+   MUST take to become conformant with the new Requirement.</li>
+<li><strong>Coexistence or cutover</strong> — whether old and new behavior MAY
+   coexist during a transition period (and for how long), or whether
+   the change is atomic with no transition period at all.</li>
+<li><strong>Downgrade resistance during any transition period</strong> — where
+   coexistence (item 4) is permitted, Migration Guidance MUST address
+   whether an adversary could exploit the transition window as a
+   Downgrade Attack (ONP-0005 Section 4.4), forcing continued
+   acceptance of the deprecated behavior past its intended sunset.</li>
+</ol>
+<h2 id="4-3-publication">4.3 Publication</h2>
+<p>Migration Guidance MUST be published either as a numbered subsection
+of the changed specification's own References section — following the
+same "Corresponding Update" pattern this series has used throughout
+for cross-document changes — or, for changes significant enough to
+affect many dependent specifications or implementations, as its own
+dedicated document, at the ONP-WG's discretion by rough consensus
+(CHARTER.md Section 3).</p>
+<h2 id="4-4-relationship-to-the-deviation-process">4.4 Relationship to the Deviation Process</h2>
+<p>A MAJOR change is a different event from a Deviation (ONP-0003
+Section 6.3). A Deviation is a recorded exception from a Principle for
+one specification, granted without changing the Principle itself.
+Migration Guidance is what happens when a Principle-compliant
+specification's own Requirements change, and everyone who built
+against the old Requirements needs a documented path to the new ones.
+The two MAY occur together (a Deviation might itself later be resolved
+by a MAJOR change that removes the need for it) but MUST NOT be
+conflated in specification text.</p>
+<h2 id="4-5-reflection-this-series-own-pre-1-0-corrections-illustrative">4.5 Reflection: This Series' Own Pre-1.0 Corrections (Illustrative,</h2>
+<pre><code> Not Equivalent, Precedent)
+</code></pre>
+<p>This series made several corrections during its own drafting that,
+had they occurred post-1.0, would have needed real Migration Guidance
+under Section 4.2. Reviewing them here previews the reasoning a real
+migration will require, while being explicit that none of them
+actually needed it:</p>
+<ol>
+<li><strong>Adding <code>signed_at</code> to ONP-1000</strong> (Section 4.1, rule 5, v0.1.0 to
+   v0.2.0). What changed: a seventh REQUIRED field, discovered missing
+   while drafting ONP-1003. Because this occurred pre-1.0, ONP-0007
+   Section 4.2 classified it MINOR with an explicit callout rather
+   than requiring Migration Guidance — but had ONP-1000 already been
+   Standards-Track, this would have needed a genuine upgrade path
+   (every existing Object missing <code>signed_at</code> would have needed
+   reissuing) and a coexistence question (can a Node built against
+   the six-field version still process seven-field Objects?) that the
+   actual correction never had to answer, because nothing was yet
+   depending on stability.</li>
+<li><strong>Reconciling Tombstone state with <code>lifecycle_state</code></strong> (ONP-1000
+   Section 4.5). A PATCH-level gloss correction, not a behavior
+   change — this one genuinely would NOT have needed Migration
+   Guidance even post-1.0, since no implementation's behavior was
+   ever actually required to change; only the Terminology Registry's
+   description of an existing mechanism was corrected.</li>
+<li><strong>Generalizing Object Reference to OID-or-VID form</strong> (ONP-2000
+   Section 4.3, v0.1.0 to v0.2.0). What changed: a field that
+   previously accepted only OID form could, after this addition, also
+   accept VID form. Because this was purely additive (existing OID-
+   form references remained valid), it was correctly classified MINOR
+   even under strict post-1.0 semantics, not merely under the pre-1.0
+   exception — a genuine example of a change that would need no
+   Migration Guidance regardless of Status, because Section 4.2's
+   "before/after behavior" item has no actual behavior change to
+   document for existing users of the OID form.</li>
+<li><strong>Correcting ONP-2200's <code>credit</code> field to state its upgrade path</strong>
+   (Section 4.5, rule 3, v0.1.0 to v0.2.0). A documentation
+   inconsistency fix — the field's actual behavior never changed,
+   only what the specification text said about it. Like item 2, this
+   illustrates a class of correction that Migration Guidance's format
+   does not really apply to: fixing what a document says, as opposed
+   to changing what a conformant implementation must do.</li>
+</ol>
+<p>The pattern across all four: this series' actual pre-1.0 corrections
+were, without exception, either purely additive or purely editorial.
+None of them required implementations to change existing behavior in
+a way that could break something already working — which is precisely
+why pre-1.0 status made them low-stakes enough not to need Section
+4.2's full apparatus. A genuine future MAJOR change — removing a
+required-baseline algorithm (ONP-0007 Section 7.2's own hypothetical
+example, still hypothetical as of this document) is the clearer
+illustration of what would actually need everything Section 4.2
+requires, including a real coexistence window and real downgrade-
+resistance analysis, neither of which any correction made during this
+series' drafting ever needed.</p>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<h2 id="5-1-migration-guidance-entry-illustrative">5.1 Migration Guidance Entry (Illustrative)</h2>
+<pre><code class="language-json">{
+  &quot;specification&quot;: &quot;ONP-nnnn&quot;,
+  &quot;old_version&quot;: &quot;string&quot;,
+  &quot;new_version&quot;: &quot;string&quot;,
+  &quot;change_summary&quot;: &quot;string&quot;,
+  &quot;motivating_reason&quot;: &quot;string&quot;,
+  &quot;before_behavior&quot;: &quot;string&quot;,
+  &quot;after_behavior&quot;: &quot;string&quot;,
+  &quot;upgrade_steps&quot;: [&quot;string&quot;, &quot;...&quot;],
+  &quot;coexistence_window&quot;: &quot;string or null&quot;,
+  &quot;downgrade_resistance_notes&quot;: &quot;string or null&quot;
+}
+</code></pre>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-full-process-from-proposed-change-to-published-migration">6.1 Full Process, From Proposed Change to Published Migration</h2>
+<pre><code> Guidance
+</code></pre>
+<p>This is the final capstone this series has been building toward since
+ONP-0003 and ONP-0005 first defined their own review processes:</p>
+<pre><code>1. A MAJOR-level change is proposed against a Standards-Track
+   specification.
+2. Principles Review (ONP-0003 Section 6.1) evaluates it against
+   all seven Principles; a Deviation MAY be recorded if warranted
+   (ONP-0003 Section 6.3).
+3. Security Review (ONP-0005 Section 6.3) evaluates it against the
+   Adversary model (ONP-0005 Section 4.1), including specifically
+   whether the proposed transition window (if any) introduces a
+   Downgrade Attack surface (Section 4.2, item 5 of this document).
+4. Migration Guidance is drafted per Section 4.2 of this document.
+5. The ONP-WG reaches rough consensus (CHARTER.md Section 3) that
+   preconditions 2-4 are satisfied.
+6. The MAJOR version bump is published, with Migration Guidance
+   attached per Section 4.3.
+</code></pre>
+<h2 id="6-2-interoperability">6.2 Interoperability</h2>
+<p>Migration Guidance's entire purpose is protecting interoperability
+across a breaking change: without a documented upgrade path and
+coexistence window, independently built implementations would
+diverge unpredictably at exactly the moment a specification changes
+underneath them — the single interoperability risk every other
+document in this series has been structured to avoid at every other
+point in a specification's life.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-the-algorithm-deprecation-scenario-completed">7.1 The Algorithm Deprecation Scenario, Completed</h2>
+<p>ONP-0007 Section 7.2 posed a hypothetical: ONP-1003 at Standards-Track
+version 2.1.0 needs to replace Ed25519 as required-baseline. Applying
+this document's Section 4.2 to that same hypothetical:</p>
+<pre><code>{
+  &quot;specification&quot;: &quot;ONP-1003&quot;,
+  &quot;old_version&quot;: &quot;2.1.0&quot;,
+  &quot;new_version&quot;: &quot;3.0.0&quot;,
+  &quot;change_summary&quot;: &quot;Required-baseline signature algorithm changed
+                      from Ed25519 to [replacement].&quot;,
+  &quot;motivating_reason&quot;: &quot;Security Advisory (ONP-0005 Section 5.2)
+                         determined Ed25519 no longer meets the
+                         required-baseline bar.&quot;,
+  &quot;before_behavior&quot;: &quot;Nodes MUST support Ed25519 as required-baseline.&quot;,
+  &quot;after_behavior&quot;: &quot;Nodes MUST support [replacement] as required-
+                      baseline; Ed25519 moves to deprecated status
+                      in the Algorithm Registry.&quot;,
+  &quot;upgrade_steps&quot;: [
+    &quot;Implement [replacement] signing and verification.&quot;,
+    &quot;Continue accepting Ed25519-signed historical Objects per their
+     own embedded algorithm identifier (ONP-1001 Section 4.3, rule 4).&quot;,
+    &quot;Cease signing NEW Objects with Ed25519 by [sunset date].&quot;
+  ],
+  &quot;coexistence_window&quot;: &quot;12 months from publication, per WG rough
+                          consensus&quot;,
+  &quot;downgrade_resistance_notes&quot;: &quot;During the coexistence window, a
+                          Node MUST NOT accept a NEWLY-signed Object
+                          using Ed25519 claiming a signed_at after
+                          the sunset date — this would indicate a
+                          downgrade attempt, not legitimate historical
+                          content, per the same signed_at-based
+                          reasoning ONP-0004 Section 4.4 already uses
+                          for key revocation.&quot;
+}
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<p>Section 4.2, item 5 — downgrade-resistance during any coexistence
+window — is this document's central security contribution, and it is
+not automatic: a naive migration that simply "accepts both old and new
+for a while" without an explicit rule distinguishing legitimate
+historical content from an active downgrade attempt reintroduces
+exactly the Downgrade Attack class ONP-0005 Section 4.4 was written to
+prevent, at precisely the moment a specification is most exposed —
+mid-transition, with two valid code paths instead of one.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>This document defines no data fields carrying personal information
+and introduces no privacy impact of its own.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0003, Design Principles — Section 6.3, the Deviation process
+  distinguished from Migration Guidance in Section 4.4.</li>
+<li>ONP-0005, Security Model — Section 4.4 (Downgrade Attack, central
+  to Section 4.2, item 5 and Section 8) and Section 6.3 (Security
+  Review, Section 6.1 of this document).</li>
+<li>ONP-0007, Versioning Policy — Section 4.3, rule 2, the requirement
+  this entire document exists to fulfill; Section 7.2, the
+  hypothetical worked through fully in Section 7.1 of this document.</li>
+<li><code>CHARTER.md</code> — Section 3, the rough-consensus process referenced in
+  Section 4.3 and Section 6.1.</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>ONP-1000, ONP-2000, ONP-2200 — the pre-1.0 corrections reflected on,
+  not treated as precedent, in Section 4.5.</li>
+</ul>
+<hr />
+<h1 id="appendix-a-migration-guidance-checklist">Appendix A: Migration Guidance Checklist</h1>
+<pre><code>[ ] What changed and why is stated, citing the actual motivating
+    Security or Principles Review finding
+[ ] Before/after behavior is concretely described, not left implicit
+[ ] A specific, actionable upgrade path is given
+[ ] Coexistence window (if any) is explicitly bounded, not open-ended
+[ ] Downgrade resistance during any coexistence window is explicitly
+    addressed, not assumed
+[ ] Published either as a subsection of the changed specification or
+    as its own dedicated document, per WG rough consensus
+</code></pre>
+<h1 id="appendix-b-what-the-original-roadmap-does-and-does-not-cover">Appendix B: What the Original Roadmap Does, and Does Not, Cover</h1>
+<p>This document completes ONP-0000's original roadmap: 34 specifications
+across five series (Foundation, Core, Companion, Extension, Reference),
+all now published. What remains explicitly open, acknowledged at the
+point each gap was found rather than glossed over, is real, and
+substantial:</p>
+<pre><code>[ ] eudi Trust Anchor Type — reserved since ONP-0004, still
+    unfulfilled (ONP-2300 Section 2.2)
+[ ] Cross-publisher, self-sovereign contributor identity — out of
+    scope of ONP-2300, no Specification number reserved
+[ ] A true &quot;Analytics Attestation&quot; Companion for periodic metric
+    snapshots — explicitly out of scope of ONP-3300 (Section 4.8 of
+    that document)
+[ ] Extension-vs-Companion Claim Domain conflict detection — ONP-3000's
+    mechanism covers Extension-vs-Extension only (acknowledged in
+    ONP-3100 Section 4.7)
+[x] A minimal, working Reference Implementation with real, computed
+    Test Vectors now exists (sdk/reference-impl/), covering ONP-1000
+    through ONP-1003 per ONP-9000 Section 4.1's minimum scope — but
+    NOT the RECOMMENDED additional scope (ONP-0004 Trust Anchor
+    resolution, ONP-1004 multi-level validation, ONP-1005). Partial,
+    not complete; its own README states this scope boundary
+    explicitly.
+[ ] Every specification remains Working Draft — none has undergone
+    an actual Security Review, Principles Review, or reached Candidate
+    status through the real human governance process CHARTER.md
+    describes, as opposed to having that process defined
+</code></pre>
+<p>The specification is complete. Its implementation, adoption, and the
+governance process actually being exercised by a real Working Group
+are not — and this document, closing the roadmap, is the honest place
+to say so plainly rather than let the completeness of the document set
+itself imply more than it does.</p>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-migration-guidance-checklist">Appendix A: Migration Guidance Checklist</a></li><li><a href="#appendix-b-what-the-original-roadmap-does-and-does-not-cover">Appendix B: What the Original Roadmap Does, and Does Not, Cover</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/9004-migration.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

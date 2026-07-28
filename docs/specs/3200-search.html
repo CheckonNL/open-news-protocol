@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-3200 Open News Protocol (ONP): Search — Open News Protocol</title>
+<meta name="description" content="ONP-3200: Open News Protocol (ONP): Search — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-3200</p>
+    <h1 id="top">Open News Protocol (ONP): Search</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the Search Extension: <code>org.onp.search</code>. It is
+deliberately narrow: an indexing-consent signal (<code>indexable</code>) and an
+optional, publisher-controlled snippet for search result display
+(<code>search_snippet</code>). It does not duplicate the generic discovery
+fields ONP-1005 (Core Metadata) already provides, and it explicitly
+declines to define any ranking, priority, or relevance signal — this
+document is about whether and how content may be indexed, never
+about how prominently it should rank once it is.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Extension series (ONP-3000-3999).
+It is directly implementable. It is a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>ONP-1005 already gives every News Object a Companion-agnostic
+<code>title</code>, <code>summary</code>, <code>language</code>, and <code>tags</code> layer any indexer can use
+without understanding a specific Companion's schema. This document
+does not repeat that work. What it adds is narrower and specific to
+search: an explicit, signed indexing-consent signal, and an optional
+snippet a publisher may craft specifically for how their content
+appears in search results, distinct from the more general-purpose
+<code>onp:metadata.summary</code>.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li><code>indexable</code>: a boolean indexing-consent signal, defaulting to
+  permissive absence (Section 4.4) — a deliberate departure from
+  this series' usual no-default convention, explained in Section 4.4;</li>
+<li><code>search_snippet</code>: an OPTIONAL, publisher-crafted string for search
+  result display;</li>
+<li>the one Claim Domain this Extension declares;</li>
+<li>its relationship to existing <code>robots.txt</code> conventions.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>any ranking, priority, freshness weighting, or relevance signal —
+  deliberately excluded; standardizing such a signal would function
+  as an SEO-manipulation surface this document has no interest in
+  creating;</li>
+<li>a global ONP search index or resolver — consistent with the
+  no-global-resolver posture ONP-1001 Section 4.6 already
+  established, this document defines a consent signal an indexer MAY
+  respect, not an indexing service ONP itself provides;</li>
+<li>any duplication of <code>onp:metadata</code>'s <code>title</code>, <code>summary</code>, <code>language</code>,
+  or <code>tags</code> fields (ONP-1005) — this Extension is additive to that
+  layer, not a replacement for it.</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document introduces no new general terms beyond its namespace
+and Claim Domain registration (Section 4).</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-extension-namespace-declaration">4.1 Extension Namespace Declaration</h2>
+<p>This Extension's fields MUST be carried under
+<code>onp:extensions.org.onp.search</code>.</p>
+<h2 id="4-2-companion-vs-extension-classification">4.2 Companion-vs-Extension Classification</h2>
+<pre><code>Does &quot;Search&quot; have independent identity and an independent
+lifecycle, separable from the Object it describes?
+
+- Indexing consent and a search snippet are inherently properties
+  of an existing Object; neither has any standalone existence a
+  reader would reference on its own.
+- NO -&gt; Extension, consistent with the classification ONP-3100
+  (AI Metadata) already reached for a structurally similar case.
+</code></pre>
+<h2 id="4-3-content-schema">4.3 Content Schema</h2>
+<p><code>indexable</code> and <code>search_snippet</code> are both OPTIONAL, under the single
+Claim Domain <code>search-indexing-consent</code> (Section 4.5).</p>
+<h2 id="4-4-indexing-consent-a-deliberate-default-exception">4.4 Indexing Consent — A Deliberate Default Exception</h2>
+<ol>
+<li><code>indexable</code>, if present, MUST be a boolean.</li>
+<li>Unlike <code>training_permitted</code> (ONP-3100) or Rights permission flags
+   (ONP-2400), an absent <code>indexable</code> MUST be treated as <code>true</code>. This
+   is a deliberate, reasoned departure from this series' usual
+   no-default-assumption discipline: search indexing follows a
+   long-established web convention (content is indexable unless
+   explicitly excluded, mirroring <code>robots.txt</code> and <code>noindex</code>
+   conventions), and the harm profile of over-permissive search
+   indexing is materially different from over-permissive AI training
+   or commercial rights — matching existing, well-understood practice
+   (Principle P3) is judged more valuable here than the general
+   caution that motivates "no default" elsewhere in this series.</li>
+<li><code>indexable</code> and <code>training_permitted</code> (ONP-3100) are independent
+   signals. A Node MUST NOT infer one from the other's value — a
+   publisher MAY be excluded from search indexing while still
+   permitting AI training under a separate arrangement, or the
+   reverse.</li>
+</ol>
+<h2 id="4-5-claim-domain">4.5 Claim Domain</h2>
+<p>This Extension declares one Claim Domain: <code>search-indexing-consent</code>,
+covering both <code>indexable</code> and <code>search_snippet</code>. It MUST be registered
+in ONP-0002 alongside this document's publication (Section 10.3).</p>
+<h2 id="4-6-search-snippet">4.6 Search Snippet</h2>
+<p><code>search_snippet</code>, if present, MUST be a plain-text string, distinct
+from <code>onp:metadata.summary</code>. A publisher MAY use it to provide
+search-result-optimized phrasing without altering the more
+general-purpose summary a non-search consumer would see.</p>
+<h2 id="4-7-relationship-to-robots-txt">4.7 Relationship to <code>robots.txt</code></h2>
+<p><code>indexable</code> operates at the level of a signed News Object, not at the
+level of an HTTP endpoint. It does not replace or override a
+publisher's <code>robots.txt</code> directives for conventional web crawling,
+which remain a separate, HTTP-layer convention this document does not
+alter. Where both exist and appear to disagree for the same content, a
+Node SHOULD apply the more restrictive of the two.</p>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.search&quot;: {
+      &quot;indexable&quot;: &quot;boolean, OPTIONAL, default true if absent&quot;,
+      &quot;search_snippet&quot;: &quot;string, OPTIONAL&quot;
+    }
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Claim Domain</th>
+<th>Required</th>
+<th>Default if Absent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>indexable</code></td>
+<td><code>search-indexing-consent</code></td>
+<td>OPTIONAL</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td><code>search_snippet</code></td>
+<td><code>search-indexing-consent</code></td>
+<td>OPTIONAL</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-consumption">6.1 Consumption</h2>
+<p>A search indexer or crawler consuming a News Object SHOULD check
+<code>onp:extensions.org.onp.search.indexable</code> before indexing it, applying
+the permissive default (Section 4.4) when absent, and MAY use
+<code>search_snippet</code> in place of <code>onp:metadata.summary</code> for result display
+when present.</p>
+<h2 id="6-2-interoperability">6.2 Interoperability</h2>
+<p>A Node without this Extension implemented treats every Object as
+indexable by the same permissive default this document itself
+specifies — implementing this Extension changes what a Node can
+express, not the default outcome for Nodes that do not.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-explicit-opt-out-paywalled-content">7.1 Explicit Opt-Out (Paywalled Content)</h2>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.search&quot;: {
+      &quot;indexable&quot;: false
+    }
+  }
+}
+</code></pre>
+<h2 id="7-2-custom-search-snippet">7.2 Custom Search Snippet</h2>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.search&quot;: {
+      &quot;indexable&quot;: true,
+      &quot;search_snippet&quot;: &quot;Volledig overzicht van het fusieonderzoek tussen Purmerend, Landsmeer, Wormerland en Oostzaan, inclusief budgetanalyse.&quot;
+    }
+  }
+}
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<p><code>indexable</code> is a declared consent signal, not an access control
+mechanism (the same limitation ONP-2400 Section 4.8 already states
+for Rights): a Node or crawler that ignores it can still index the
+content, since ONP provides no technical enforcement of any
+declaration. This document's contribution is a standard, signed place
+to express the preference, not a guarantee it will be honored by
+every consumer.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>This document defines no fields carrying personal data and introduces
+no privacy impact beyond what is already established elsewhere in
+this series.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0001, Architecture — Section 4.4, the decision test applied in
+  Section 4.2.</li>
+<li>ONP-0003, Design Principles — Principle P3 (Ordinary Technology),
+  motivating the permissive default in Section 4.4.</li>
+<li>ONP-1001, Identifiers — Section 4.6, the no-global-resolver posture
+  this document's own scoping (Section 2.2) is consistent with.</li>
+<li>ONP-1005, Core Metadata — the generic discovery layer this
+  Extension is additive to, not a replacement for.</li>
+<li>ONP-3000, Extension Framework — Section 4.1 (namespace
+  registration), Section 4.3 (Claim Domain declaration).</li>
+<li>ONP-3100, AI Metadata — Section 4.2's classification precedent,
+  and Section 4.4, rule 3's independence from <code>training_permitted</code>.</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li><code>robots.txt</code> (Robots Exclusion Protocol) — the existing web
+  convention Section 4.4 and Section 4.7 align with.</li>
+</ul>
+<h2 id="10-3-registry-registration">10.3 Registry Registration</h2>
+<p>As part of this document's publication, <code>org.onp.search</code> and
+<code>search-indexing-consent</code> are registered in ONP-0002.</p>
+<hr />
+<h1 id="appendix-a-full-schema-reference">Appendix A: Full Schema Reference</h1>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.search&quot;: {
+      &quot;indexable&quot;: &quot;boolean, OPTIONAL, default true&quot;,
+      &quot;search_snippet&quot;: &quot;string, OPTIONAL&quot;
+    }
+  }
+}
+</code></pre>
+<h1 id="appendix-b-search-extension-checklist">Appendix B: Search Extension Checklist</h1>
+<pre><code>[ ] Fields carried under onp:extensions.org.onp.search
+[ ] indexable, if absent, is understood as true (deliberate
+    exception to this series' usual no-default rule, Section 4.4)
+[ ] indexable is NOT inferred from training_permitted (ONP-3100) or
+    vice versa — the two are independent
+[ ] search_snippet, if present, is distinct from onp:metadata.summary
+[ ] no ranking, priority, or relevance signal has been added here —
+    that remains explicitly out of scope
+[ ] robots.txt, where present, is checked alongside this signal; the
+    more restrictive of the two SHOULD apply
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-full-schema-reference">Appendix A: Full Schema Reference</a></li><li><a href="#appendix-b-search-extension-checklist">Appendix B: Search Extension Checklist</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/3200-search.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

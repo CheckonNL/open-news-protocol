@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-0001 Open News Protocol (ONP): Architecture — Open News Protocol</title>
+<meta name="description" content="ONP-0001: Open News Protocol (ONP): Architecture — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-0001</p>
+    <h1 id="top">Open News Protocol (ONP): Architecture</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the layered architecture of the Open News
+Protocol: a strict separation between Core (which owns Object
+truth), Companions (which own independent domain models), and
+Extensions (which own domain meaning without altering Object truth).
+It formalizes, under the ONP numbering and template conventions
+established in ONP-0000, the architecture originally described in
+the informal working draft <code>draft-onp-architecture-00</code>. This
+document supersedes that draft; where the two differ, this document
+governs. It does not itself define field-level structure — that is
+the Core series' responsibility (ONP-1000 onward) — and it does not
+own term definitions beyond the architectural vocabulary introduced
+here, which is indexed, together with every other ONP term, in
+ONP-0002.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Foundation series (ONP-0000-0999).
+It is normative: every Core, Companion, and Extension specification
+MUST conform to the layering rules defined here. It obsoletes
+<code>draft-onp-architecture-00</code>, the informal document from which its
+content is derived; any prior citation of that draft SHOULD be read
+as a citation of this document going forward. It is a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>Digital publishing today routes trust through intermediary
+platforms: a reader trusts an article because they trust the
+platform that served it, not because the article itself can be
+verified. ONP's founding principle, stated informally in the
+original architecture draft and formalized here, is:</p>
+<blockquote>
+<p><strong>Trust the Object, not the Messenger.</strong></p>
+</blockquote>
+<p>To make that principle implementable without collapsing under the
+weight of every domain that wants to extend it (advertising,
+payments, AI provenance, moderation, search, and others not yet
+imagined), ONP separates responsibility into three layers, each with
+a narrow, non-overlapping mandate. This document defines those
+layers, the rules that keep them separate, and the decision
+procedure for classifying new functionality into the correct one.
+The problem motivating this separation — why an open protocol is
+needed at all — is stated in ONP-0000 and is not repeated here.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>the three-layer architecture (Core, Companion, Extension) and the
+  rules governing each;</li>
+<li>the Vertical Invariant (no layer may override Core) and the
+  Horizontal Invariant (no Extension or Companion may override
+  another's domain truth);</li>
+<li>the News Object's layered structure (Core State, Content,
+  Extensions);</li>
+<li>the Companion-vs-Extension classification procedure;</li>
+<li>the validation architecture (Core, Extension, Application levels);</li>
+<li>the network and CMS adoption models, at the level of architectural
+  shape rather than wire-level detail.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>concrete field names, types, or constraints for the News Object
+  (see ONP-1000);</li>
+<li>identifier formats (ONP-1001), serialization (ONP-1002), or
+  signature schemes (ONP-1003);</li>
+<li>term ownership beyond the architectural vocabulary introduced in
+  Section 3 (the full registry is ONP-0002);</li>
+<li>trust anchor mechanics — how a Node establishes that a given
+  signing key belongs to a given publisher (see ONP-0004);</li>
+<li>the design principles that constrain how this architecture may be
+  extended over time (see ONP-0003, which this document does not
+  restate).</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document is the owning specification for the following terms.
+Per the single-owner rule (ONP-0000 Section 3.4), no other ONP
+document may redefine them.</p>
+<p><strong>Layer</strong>
+: One of the three architectural tiers defined in Section 4: Core,
+  Companion, or Extension.</p>
+<p><strong>Core</strong>
+: The layer that owns News Object truth: identity, integrity,
+  version lineage, and signature validity. Core answers "what is
+  this Object, and can it be verified?" and nothing else.</p>
+<p><strong>Companion</strong>
+: A specification that defines an independent domain object model
+  with its own identity and lifecycle, layered on top of Core. A
+  Companion does not alter Core truth; it adds a new class of
+  Object that itself has Core-verifiable identity.</p>
+<p><strong>Extension</strong>
+: A specification that adds domain-specific meaning to an existing
+  Object (of any layer) without giving that meaning its own
+  independent identity or lifecycle, and without altering Core
+  truth.</p>
+<p><strong>Vertical Invariant</strong>
+: The rule that a Companion or Extension MUST NOT override, replace,
+  or redefine anything Core controls (Section 5.2).</p>
+<p><strong>Horizontal Invariant</strong>
+: The rule that one Extension MUST NOT override another Extension's
+  domain truth, and one Companion MUST NOT depend on another
+  Companion's internal object state (Section 5.3).</p>
+<p><strong>onp:extensions</strong>
+: The reserved container field, defined structurally in Section 6.2,
+  through which Extension data is carried on a News Object.</p>
+<p>Terms used here but owned elsewhere (News Object, OID, VID,
+Signature, Node) are defined in ONP-0000 and ONP-1000 and are used
+consistently with those definitions.</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-core-ownership">4.1 Core Ownership</h2>
+<ol>
+<li>Core MUST define, and be the sole owner of: Object identifier
+   (OID), version identifier (VID), digital signature, version
+   lineage, and tombstone (deletion/retraction) state.</li>
+<li>Core MUST NOT define domain-specific concerns: advertising,
+   payments, licensing, ranking, moderation, or AI policy. These
+   MUST be defined by Companions or Extensions.</li>
+<li>No Companion or Extension specification MAY introduce a field
+   that redefines, shadows, or overrides a Core-owned field's
+   meaning.</li>
+</ol>
+<h2 id="4-2-companion-requirements">4.2 Companion Requirements</h2>
+<ol>
+<li>A specification MUST be classified as a Companion if and only if
+   the concept it defines has independent identity and an
+   independent lifecycle from any existing Object (see the decision
+   procedure, Section 4.4).</li>
+<li>A Companion-defined Object MUST itself carry Core state (OID,
+   VID, signature) — a Companion Object is a News Object in its own
+   right, not merely a field on another Object.</li>
+<li>A Companion MUST NOT require another Companion's internal state
+   to function (Horizontal Invariant, Section 5.3); it MAY reference
+   another Companion's Object by OID.</li>
+</ol>
+<h2 id="4-3-extension-requirements">4.3 Extension Requirements</h2>
+<p>An Extension:</p>
+<p><strong>MUST:</strong>
+* define its own domain terminology and register it per ONP-0002;
+* reference existing ONP terminology rather than re-deriving it;
+* preserve Core state unmodified;
+* be carried under the <code>onp:extensions</code> container (Section 6.2),
+  namespaced by a reverse-domain-style identifier (e.g.
+  <code>org.onp.&lt;name&gt;</code>).</p>
+<p><strong>MUST NOT:</strong>
+* redefine a Core term or another Extension's or Companion's term;
+* duplicate a term already owned by another document;
+* override another Extension's domain truth (Horizontal Invariant);
+* introduce its own OID/VID/signature scheme; an Extension attaches
+  to an existing Object's identity, it does not mint a new one (that
+  is what distinguishes it from a Companion).</p>
+<h2 id="4-4-companion-vs-extension-decision-procedure">4.4 Companion vs. Extension Decision Procedure</h2>
+<p>A specification author classifying a new concept MUST apply the
+following test:</p>
+<blockquote>
+<p>Does the concept have its own identity and independent lifecycle,
+separable from the Object it relates to?</p>
+<ul>
+<li><strong>YES</strong> → it is a <strong>Companion</strong>. It MUST get its own OID/VID/
+  signature per Section 4.2.</li>
+<li><strong>NO</strong> → it is an <strong>Extension</strong>. It MUST attach to an existing
+  Object under <code>onp:extensions</code> per Section 4.3.</li>
+</ul>
+</blockquote>
+<p>This test MUST be applied and its result stated explicitly in any
+new Companion or Extension specification's Scope section (see
+worked examples in Section 7).</p>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<h2 id="5-1-layered-object-structure">5.1 Layered Object Structure</h2>
+<p>A News Object consists of three layered regions. This is the
+structural model; the field-level content of each region is
+normatively defined elsewhere (Core State in ONP-1000-1005; Content
+per whichever Companion defines the Object's type, e.g. ONP-2100 for
+an Article; Extensions per whichever Extension specifications are
+attached).</p>
+<pre><code>+-------------------------------------------+
+| News Object                                |
++-------------------------------------------+
+| Core State            (owned by Core)      |
+|                                             |
+| - OID                                      |
+| - VID                                      |
+| - Publisher reference                      |
+| - Signature                                |
+| - Version lineage                          |
+| - Tombstone state                          |
++-------------------------------------------+
+| Content                (owned by the       |
+|                          originating        |
+|                          Companion, e.g.    |
+|                          Article, Media)    |
++-------------------------------------------+
+| Extensions              (owned by zero or   |
+|   onp:extensions          more Extension    |
+|                          specifications)    |
++-------------------------------------------+
+</code></pre>
+<h2 id="5-2-the-extension-container">5.2 The Extension Container</h2>
+<p>Extension data MUST be carried under the reserved <code>onp:extensions</code>
+field, keyed by a namespace identifier:</p>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.rights&quot;: {},
+    &quot;org.onp.payments-hint&quot;: {},
+    &quot;org.onp.ai-metadata&quot;: {}
+  }
+}
+</code></pre>
+<p>Note: the namespace identifiers shown here (<code>org.onp.rights</code>, etc.)
+are illustrative of the container's structure only. The authoritative
+namespace identifier for any given Extension is assigned in that
+Extension's own specification, not in this document (see Section
+2.2). Where the original architecture draft used illustrative
+namespaces such as <code>org.onp.licensing</code> or <code>org.onp.media-rights</code>
+that do not correspond one-to-one with the current roadmap (ONP-0000
+Section 4.1), those draft namespaces are non-normative and are
+superseded by whatever the relevant Companion or Extension
+ultimately defines.</p>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-layer-classification-at-authoring-time">6.1 Layer Classification at Authoring Time</h2>
+<p>When a new domain requirement is proposed (e.g. "we need a field for
+X"), a Node or specification author MUST, before writing any field
+definition:</p>
+<ol>
+<li>Check whether X is already owned by an existing Core, Companion,
+   or Extension term (per ONP-0002). If so, use it; do not
+   redefine it.</li>
+<li>If X is new, apply the decision procedure in Section 4.4 to
+   determine whether it is a Companion or an Extension.</li>
+<li>Route the proposal to the appropriate specification: a new or
+   existing Companion document if Companion, a new or existing
+   Extension document if Extension. X MUST NOT be added directly to
+   Core (this also follows from ONP-0003 Principle P6).</li>
+</ol>
+<h2 id="6-2-validation-at-processing-time">6.2 Validation at Processing Time</h2>
+<p>A Node processing a received News Object MUST validate it in the
+following order, and MUST NOT skip or reorder these levels:</p>
+<pre><code>+-----------------------------------+
+| 1. Core                           |
+|    Structure / Signature /        |
+|    Identity                       |
++-----------------------------------+
+                  |
+                  v
++-----------------------------------+
+| 2. Extension / Companion          |
+|    Domain-specific validation     |
++-----------------------------------+
+                  |
+                  v
++-----------------------------------+
+| 3. Application                    |
+|    Business decisions             |
+|    (e.g. &quot;should I display this?&quot;)|
++-----------------------------------+
+</code></pre>
+<p>An Object that fails level 1 (Core) validation MUST be rejected
+before any level 2 or level 3 processing occurs, regardless of how
+well-formed its Extension or Companion data appears. This ordering
+is a direct consequence of the Vertical Invariant (Section 5.2 of
+this document's Requirements... see Section 4.1) and is restated
+here because it is a processing-time, not authoring-time, rule.</p>
+<h2 id="6-3-network-model">6.3 Network Model</h2>
+<p>ONP does not require a central database or registry. Nodes exchange
+signed Objects directly or through intermediate relays, and each
+recipient independently verifies what it receives:</p>
+<pre><code>Publisher Node ---&gt; Signed Object ---&gt; Other Nodes ---&gt; Applications
+</code></pre>
+<p>A relay MAY cache, forward, or index Objects, but MUST NOT be
+trusted as an authority on an Object's validity; validity is
+established by the recipient's own Core-level verification (Section
+6.2), never by the relay's say-so.</p>
+<h2 id="6-4-cms-adoption-model">6.4 CMS Adoption Model</h2>
+<p>Consistent with Principle P1 (Adjacent Publishing, ONP-0003), ONP is
+adopted through existing publishing systems rather than by replacing
+them:</p>
+<pre><code>CMS ---&gt; ONP Plugin ---&gt; Signed News Object ---&gt; ONP Node
+</code></pre>
+<p>The CMS remains the system of record for the publisher's own
+operations; the ONP Plugin produces a signed, layered representation
+of content the CMS already holds. No specification in the ONP series
+may require the reverse (CMS reading its own content back from an
+ONP store) as a precondition for conformance.</p>
+<h2 id="6-5-interoperability">6.5 Interoperability</h2>
+<p>Strict layering is what makes independent implementations
+interoperable at the semantic level, not merely the syntactic one.
+Because Core validation (Section 6.2, level 1) never depends on
+which Companions or Extensions a given Object carries, two Nodes
+that implement only Core — one supporting the Article and Rights
+Companions, another supporting only Media — can each verify the
+authenticity of any Object either one produces, even though neither
+can interpret all of the other's domain-specific content. A
+specification MUST NOT introduce a requirement that makes Core
+verification depend on the presence, absence, or content of any
+specific Companion or Extension; doing so would break this
+guarantee and is prohibited by the Vertical Invariant (Section 5.2).</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-worked-classification-article">7.1 Worked Classification: Article</h2>
+<pre><code>Concept: &quot;Article&quot;
+Test: Does it have independent identity and lifecycle?
+  - An Article is published, corrected, retracted, and archived
+    independently of any other Object.
+  - YES -&gt; Companion.
+Result: Article is a Companion (ONP-2100). It carries its own
+        OID/VID/signature.
+</code></pre>
+<h2 id="7-2-worked-classification-rights-declaration">7.2 Worked Classification: Rights Declaration</h2>
+<pre><code>Concept: &quot;Usage rights for a specific Article&quot;
+Test: Does it have independent identity and lifecycle, separable
+      from the Article it governs?
+  - A rights declaration only makes sense attached to a specific
+    Article; it does not outlive or exist independently of it in
+    the way a correction or a comment might.
+  - Borderline case: rights information changes over time
+    (a license may be updated) and might seem to warrant its own
+    lifecycle.
+  - Resolution: ONP-0000 treats Rights as a full Companion
+    (ONP-2400) rather than an Extension, because a rights
+    declaration can be independently referenced (e.g. by a
+    licensing marketplace) and revised on its own version lineage,
+    which satisfies the independent-identity test. This is recorded
+    here as a worked example of a borderline case, not as a
+    shortcut around the test in Section 4.4 — each new concept MUST
+    still be evaluated on its own facts.
+</code></pre>
+<h2 id="7-3-correct-vs-incorrect-layering">7.3 Correct vs. Incorrect Layering</h2>
+<pre><code>CORRECT:
+  An AI Metadata Extension (ONP-3100) attaches provenance
+  information to an existing Article Object's onp:extensions
+  container. It does not mint a new OID.
+
+INCORRECT:
+  A proposed &quot;AI Metadata Object&quot; with its own OID that duplicates
+  the Article's content. This violates the Extension definition in
+  Section 3 (an Extension does not mint its own identity) and should
+  instead be evaluated as a Companion if independent identity is
+  genuinely required — or, more likely, simplified back into an
+  Extension attached to the Article it describes.
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<p>The Vertical Invariant (Section 5.2 of Requirements, i.e. Section
+4.1) and the validation ordering in Section 6.2 exist specifically
+to prevent layer confusion: a party controlling a Companion or
+Extension must not be able to acquire authority over Core trust
+properties. This is the same security property discussed at the
+document-series level in ONP-0000 Section 5.2; this document is
+where it is enforced architecturally. A Node implementation MUST
+treat a Core validation failure as terminal — no Extension or
+Companion data, however well-formed, can compensate for an invalid
+signature or a malformed identifier.</p>
+<p>The Horizontal Invariant (Section 5.3, i.e. Section 4.2/4.3) prevents
+a second, subtler failure: an Extension that is individually
+well-behaved with respect to Core but that silently overrides
+another Extension's domain claims (for example, a Syndication
+Extension asserting distribution terms that contradict a Rights
+Companion's usage permissions). A Node MUST treat such a conflict as
+a validation error at level 2 (Section 6.2), not resolve it silently
+in favor of whichever Extension it processes first.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>This document defines no data fields and therefore has no direct
+privacy impact. Its layering discipline has an indirect privacy
+benefit: because Extensions and Companions are optional and
+separable from Core (Section 4.1), a Node or implementation can
+support Core verification without ever processing or storing
+privacy-sensitive Companion data such as Identity (ONP-2300) or
+Payments (ONP-2500) fields. Privacy analysis of those fields belongs
+to their owning specifications.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0000, Introduction — mission, four pillars, and document
+  roadmap.</li>
+<li>ONP-0002, Terminology — the full term ownership registry; this
+  document only owns the architectural vocabulary in Section 3.</li>
+<li>ONP-0003, Design Principles — Principle P6 (Core Immutability
+  Bias) and Principle P1 (Adjacent Publishing) directly motivate
+  Sections 4.1 and 6.4 of this document.</li>
+</ul>
+<h2 id="10-2-historical-reference">10.2 Historical Reference</h2>
+<ul>
+<li><code>draft-onp-architecture-00</code>, "Open News Protocol (ONP)
+  Architecture Framework" — the informal working draft this document
+  formalizes and obsoletes. Retained for historical context only;
+  where it conflicts with this document, this document governs.</li>
+</ul>
+<h2 id="10-3-informative-references">10.3 Informative References</h2>
+<ul>
+<li>ONP-1000, News Object (forward reference — normative Core State
+  field definitions).</li>
+<li>ONP-2100, Article; ONP-2400, Rights (forward references — worked
+  examples in Section 7).</li>
+<li>ONP-3100, AI Metadata (forward reference — worked example in
+  Section 7.3).</li>
+</ul>
+<hr />
+<h1 id="appendix-a-full-layering-diagram">Appendix A: Full Layering Diagram</h1>
+<pre><code>                     ONP Ecosystem
+                          |
+                Applications and Users
+                          |
+    +-------------------------------------------+
+    |             Domain Layer                  |
+    |                                            |
+    |   Extensions              Companions       |
+    |   (attach to existing     (independent     |
+    |    Objects; no own        identity;        |
+    |    identity)               own OID/VID)     |
+    +-------------------------------------------+
+                          |
+    +-------------------------------------------+
+    |                 Core                       |
+    |                                            |
+    |   Identity (OID)                           |
+    |   Integrity (Signature)                     |
+    |   Version lineage (VID)                     |
+    |   Object lifecycle (Tombstone state)         |
+    +-------------------------------------------+
+</code></pre>
+<h1 id="appendix-b-companion-vs-extension-checklist">Appendix B: Companion vs. Extension Checklist</h1>
+<pre><code>[ ] Does the concept need to be independently referenced by OID
+    from outside the Object it relates to?
+[ ] Does the concept have its own creation, correction, and
+    retraction lifecycle, distinct from the Object it relates to?
+[ ] Could the concept exist, meaningfully, with no other Object
+    present at all?
+
+If ANY of the above is YES  -&gt; classify as Companion (Section 4.2).
+If ALL of the above are NO  -&gt; classify as Extension (Section 4.3).
+
+Then verify:
+[ ] The specification registers any new terms in ONP-0002.
+[ ] The specification does not redefine a Core-owned term
+    (Section 4.1, rule 3).
+[ ] If a Companion: the specification defines the Companion
+    Object's own Core State per Section 5.1.
+[ ] If an Extension: the specification defines a namespace
+    identifier for the onp:extensions container per Section 5.2.
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-full-layering-diagram">Appendix A: Full Layering Diagram</a></li><li><a href="#appendix-b-companion-vs-extension-checklist">Appendix B: Companion vs. Extension Checklist</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/0001-architecture.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

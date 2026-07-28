@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-2600 Open News Protocol (ONP): Sources — Open News Protocol</title>
+<meta name="description" content="ONP-2600: Open News Protocol (ONP): Sources — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-2600</p>
+    <h1 id="top">Open News Protocol (ONP): Sources</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the Sources Companion:
+<code>content_type = "onp:companion:sources"</code>, enabling structured,
+verifiable attribution of what a story is based on — a document, a
+named official, an anonymous or protected individual. ONP-2000
+Section 9 flagged this Companion, before it existed, as the one
+where source protection would need to take precedence over
+completeness. This document follows through on that: its visibility
+model hard-forbids identifying information from accompanying an
+anonymous or protected source declaration, and its guidance
+explicitly recommends that the most sensitive cases avoid creating a
+structured, distributable Source Object at all — accepting reduced
+machine-readability in exchange for not creating a permanent,
+widely-copyable record of a fact that could endanger someone.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Companion series (ONP-2000-2999).
+It is directly implementable. Concurrently with its publication,
+ONP-2100 (Article) is updated with a new OPTIONAL <code>source_refs</code>
+field (Section 10.3). It is a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>Structured source attribution has real value: it lets a reader, a
+fact-checker, or an AI system see what a story is actually built on,
+rather than trusting an unverifiable "sources say." ONP-2000 Section
+9 already named the cost of that value before this Companion existed
+to weigh it properly: a Sources Companion could, if designed
+carelessly, become a mechanism for inadvertently exposing exactly
+the people journalism's confidentiality protections exist to shield.
+This document is designed with that risk as a primary constraint,
+not an afterthought.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>the <code>onp:companion:sources</code> content schema;</li>
+<li>the visibility model (<code>named</code> / <code>anonymous</code> / <code>protected</code>) and its
+  hard constraints preventing identifying fields from accompanying a
+  non-named source;</li>
+<li>guidance on when a structured Source Object should not be created
+  at all, given ONP's permanent-record properties.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>any technical anonymization, redaction, or de-identification
+  mechanism — ensuring a <code>description</code> field does not inadvertently
+  identify a protected source remains entirely an editorial,
+  human-judgment responsibility this document cannot automate;</li>
+<li>legal shield law interpretation or any jurisdiction's source
+  protection statute — consistent with Principle P5, this document
+  provides structural support for whatever protection a publisher's
+  own legal and editorial process requires, without interpreting any
+  specific law;</li>
+<li>verification methodology — <code>credibility_note</code> (Section 4.3) is a
+  free-text editorial field, not a structured fact-checking protocol.</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document is the owning specification for the following terms.</p>
+<p><strong>Source Object</strong>
+: An informal name for a News Object whose <code>content_type</code> is
+  <code>onp:companion:sources</code>.</p>
+<p><strong>Visibility</strong>
+: The <code>visibility</code> field: <code>"named"</code>, <code>"anonymous"</code>, or <code>"protected"</code>
+  — the central declaration governing what identifying information a
+  Source Object may carry (Section 4.4).</p>
+<p><strong>Protected Source</strong>
+: A Source Object with <code>visibility: "protected"</code>, signaling an
+  explicit confidentiality commitment by the publisher, distinct from
+  ordinary, lower-stakes anonymity (Section 4.4, rule 3).</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-content-type-declaration">4.1 content_type Declaration</h2>
+<p>Every Source Object MUST declare <code>content_type</code> as exactly
+<code>onp:companion:sources</code>.</p>
+<h2 id="4-2-companion-vs-extension-classification">4.2 Companion-vs-Extension Classification</h2>
+<pre><code>Does &quot;Source&quot; have independent identity and an independent
+lifecycle, separable from any Article that cites it?
+
+- A recurring source (a standing public database, a regularly
+  quoted official, a repeatedly referenced report) is commonly cited
+  by more than one Article over time, independently of any single
+  Article's own lifecycle.
+- YES -&gt; Companion.
+</code></pre>
+<h2 id="4-3-content-schema">4.3 Content Schema</h2>
+<ol>
+<li><code>source_type</code> is REQUIRED: one of <code>"document"</code>, <code>"person"</code>,
+   <code>"organization"</code>, <code>"event"</code>.</li>
+<li><code>visibility</code> is REQUIRED: one of <code>"named"</code>, <code>"anonymous"</code>,
+   <code>"protected"</code> (Section 4.4).</li>
+<li><code>source_ref</code>, <code>description</code>, <code>document_ref</code>, <code>credibility_note</code>,
+   and <code>access_date</code> are OPTIONAL, subject to the constraints in
+   Sections 4.4 and 4.5.</li>
+</ol>
+<h2 id="4-4-visibility-model">4.4 Visibility Model</h2>
+<ol>
+<li>When <code>visibility</code> is <code>"named"</code>, <code>source_ref</code> (an Object Reference
+   to an Identity Object, ONP-2300) MAY be present, identifying the
+   source directly.</li>
+<li>When <code>visibility</code> is <code>"anonymous"</code> or <code>"protected"</code>, <code>source_ref</code>
+   MUST NOT be present. This is a hard constraint, not a
+   recommendation: the entire purpose of these visibility values is
+   that no field in this Object identifies the source, and a
+   present <code>source_ref</code> would directly defeat that purpose. A Node
+   encountering <code>source_ref</code> alongside <code>visibility: "anonymous"</code> or
+   <code>"protected"</code> MUST treat the Source Object as malformed.</li>
+<li><code>"protected"</code> signals an explicit confidentiality commitment
+   (e.g. a whistleblower whose safety depends on non-disclosure),
+   distinct from <code>"anonymous"</code>, which MAY simply reflect editorial
+   style (an official who preferred not to be named for a routine
+   reason). This distinction exists so that downstream handling —
+   editorial, legal, or technical — can treat the two differently
+   where that matters.</li>
+<li><code>description</code>, if present, MUST be a general, non-identifying
+   characterization when <code>visibility</code> is <code>"anonymous"</code> or
+   <code>"protected"</code> (e.g. "a senior official at the Ministry of
+   Finance," not anything narrow enough to identify one specific
+   person). This document cannot enforce this — whether a
+   description is actually non-identifying is an editorial judgment
+   call, not something Core or this Companion can validate
+   mechanically (Section 8.1).</li>
+</ol>
+<h2 id="4-5-document-and-access-fields">4.5 Document and Access Fields</h2>
+<ol>
+<li><code>document_ref</code>, if present, MUST be a single Object Reference to
+   a Media Object (ONP-2200) representing the source document itself
+   (e.g. a leaked report), reusing that Companion's Verified Asset
+   Reference pattern for the document's own integrity.</li>
+<li><code>access_date</code>, if present, MUST be an ISO 8601 timestamp: when
+   the information was obtained or accessed.</li>
+<li><code>credibility_note</code>, if present, MUST be a string: an editorial
+   note on how this source's reliability was assessed.</li>
+</ol>
+<h2 id="4-6-guidance-when-not-to-create-a-structured-source-object">4.6 Guidance: When Not to Create a Structured Source Object</h2>
+<p>For a <code>"protected"</code> source whose safety depends on non-disclosure, a
+publisher SHOULD weigh whether creating any structured, independently
+distributable Source Object is appropriate at all, given that
+retraction does not guarantee removal from Nodes that have already
+copied it (ONP-0006 Section 8.3). A publisher MAY instead represent
+such a source only in the Article's own <code>body</code> prose (ONP-2100),
+with no separate Source Object and no <code>source_refs</code> entry — accepting
+reduced machine-readability and cross-referenceability in exchange
+for not creating a permanent, independently distributable record of
+the source's existence at all. This document does not mandate this
+choice; it states it as a genuine, RECOMMENDED option for the highest-
+stakes cases, not a fallback of last resort.</p>
+<h2 id="4-7-local-identifier-guidance-for-protected-sources">4.7 Local Identifier Guidance for Protected Sources</h2>
+<p>Where a <code>"protected"</code> Source Object is created, its OID's Local
+Identifier (ONP-1001 Section 4.2) SHOULD be an opaque, non-descriptive
+token rather than a human-readable slug, to avoid the identifier
+string itself becoming an inadvertent identifying clue.</p>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:sources&quot;,
+  &quot;content&quot;: {
+    &quot;source_type&quot;: &quot;'document' | 'person' | 'organization' | 'event', REQUIRED&quot;,
+    &quot;visibility&quot;: &quot;'named' | 'anonymous' | 'protected', REQUIRED&quot;,
+    &quot;source_ref&quot;: &quot;onp:oid:..., OPTIONAL, ONLY when visibility='named'&quot;,
+    &quot;description&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;document_ref&quot;: &quot;onp:oid:..., OPTIONAL&quot;,
+    &quot;credibility_note&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;access_date&quot;: &quot;string (ISO 8601), OPTIONAL&quot;
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Required</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source_type</code></td>
+<td>REQUIRED</td>
+<td></td>
+</tr>
+<tr>
+<td><code>visibility</code></td>
+<td>REQUIRED</td>
+<td>Section 4.4</td>
+</tr>
+<tr>
+<td><code>source_ref</code></td>
+<td>OPTIONAL</td>
+<td>MUST NOT appear unless <code>visibility: "named"</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>OPTIONAL</td>
+<td>Non-identifying when not named (Section 4.4, rule 4)</td>
+</tr>
+<tr>
+<td><code>document_ref</code></td>
+<td>OPTIONAL</td>
+<td>Object Reference to a Media Object</td>
+</tr>
+<tr>
+<td><code>credibility_note</code></td>
+<td>OPTIONAL</td>
+<td></td>
+</tr>
+<tr>
+<td><code>access_date</code></td>
+<td>OPTIONAL</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-structural-validity">6.1 Structural Validity</h2>
+<p>A Node MUST reject a Source Object as malformed if <code>source_ref</code> is
+present alongside <code>visibility: "anonymous"</code> or <code>"protected"</code> (Section
+4.4, rule 2). This is a structural check, evaluable without any
+editorial judgment, unlike the non-identifying-description guidance
+(Section 4.4, rule 4), which is not mechanically checkable.</p>
+<h2 id="6-2-interoperability">6.2 Interoperability</h2>
+<p>A Node without Sources Companion support simply does not see source
+attribution — the referencing Article remains fully verifiable and
+usable, exactly as for any unrecognized Companion. This document does
+not require every Article to carry <code>source_refs</code>.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-a-named-source">7.1 A Named Source</h2>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:sources&quot;,
+  &quot;content&quot;: {
+    &quot;source_type&quot;: &quot;person&quot;,
+    &quot;visibility&quot;: &quot;named&quot;,
+    &quot;source_ref&quot;: &quot;onp:oid:regiopurmerend.nl:wethouder-devries&quot;,
+    &quot;credibility_note&quot;: &quot;Direct citaat tijdens raadsvergadering, 27 juli 2026.&quot;
+  }
+}
+</code></pre>
+<h2 id="7-2-an-anonymous-source">7.2 An Anonymous Source</h2>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:sources&quot;,
+  &quot;content&quot;: {
+    &quot;source_type&quot;: &quot;person&quot;,
+    &quot;visibility&quot;: &quot;anonymous&quot;,
+    &quot;description&quot;: &quot;Een ambtenaar betrokken bij het fusieonderzoek.&quot;,
+    &quot;credibility_note&quot;: &quot;Bevestigd door een tweede, onafhankelijke bron.&quot;
+  }
+}
+</code></pre>
+<p>Note <code>source_ref</code> is correctly absent.</p>
+<h2 id="7-3-malformed-named-reference-on-an-anonymous-source-rejected">7.3 Malformed: Named Reference on an Anonymous Source (Rejected)</h2>
+<pre><code class="language-json">{
+  &quot;content&quot;: {
+    &quot;visibility&quot;: &quot;anonymous&quot;,
+    &quot;source_ref&quot;: &quot;onp:oid:regiopurmerend.nl:ambtenaar-devries&quot;
+  }
+}
+</code></pre>
+<p>REJECTED per Section 4.4, rule 2 / Section 6.1 — this defeats the
+entire purpose of declaring <code>"anonymous"</code>.</p>
+<h2 id="7-4-a-protected-source-handled-per-section-4-6-s-guidance">7.4 A Protected Source, Handled per Section 4.6's Guidance</h2>
+<pre><code>Rather than creating a Source Object at all, the publisher
+represents this source only in the Article's own body text:
+
+&quot;Volgens een bron die vanwege haar veiligheid anoniem wenst te
+blijven en niet nader is aangeduid, ...&quot;
+
+No Source Object, no source_refs entry — the safer choice this
+document explicitly recommends for the highest-stakes case.
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<h2 id="8-1-the-structural-check-cannot-replace-editorial-judgment">8.1 The Structural Check Cannot Replace Editorial Judgment</h2>
+<p>Section 6.1's structural check (rejecting <code>source_ref</code> alongside
+non-named visibility) catches only the most direct failure mode. It
+cannot detect an overly specific <code>description</code> that identifies a
+supposedly anonymous source through inference (e.g. a description
+narrow enough to name exactly one person in context). This remains
+entirely an editorial responsibility this document has no mechanical
+way to enforce.</p>
+<h2 id="8-2-oid-local-identifiers-as-a-leakage-vector">8.2 OID Local Identifiers as a Leakage Vector</h2>
+<p>Section 4.7's guidance exists because an OID's Local Identifier
+(ONP-1001) is, throughout this series' examples, human-readable and
+descriptive by convention — appropriate for public Articles and
+Media, but a real risk if that convention were followed unthinkingly
+for a protected source's own OID.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>This document's entire design is a response to the concern ONP-2000
+Section 9 raised before this Companion existed: source relationships
+are, in investigative journalism specifically, sometimes a matter of
+a real person's physical safety, not merely conventional privacy. The
+visibility model's hard constraints (Section 4.4) and the explicit
+guidance to avoid creating a structured Object at all for the highest-
+stakes cases (Section 4.6) both exist because ONP's permanent,
+widely-distributable-by-design nature (ONP-0001 Section 6.3; ONP-0006
+Section 8.3) is, for this specific use case, a risk to be actively
+designed around rather than a neutral property. Publishers SHOULD
+treat the decision to create any Source Object — even a <code>"protected"</code>
+one — as a deliberate choice with permanence implications, not a
+default.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0000, Introduction — the Trusted News pillar, extended here to
+  the reporting process itself, not only the Object.</li>
+<li>ONP-0003, Design Principles — Principle P5 (Jurisdiction
+  Neutrality, Section 2.2).</li>
+<li>ONP-0006, News Object Lifecycle — Section 8.3, the retraction-does-
+  not-erase-history property central to Section 4.6 and Section 9 of
+  this document.</li>
+<li>ONP-1001, Identifiers — Section 4.2 (Local Identifier), extended
+  with protective guidance in Section 4.7.</li>
+<li>ONP-2000, Companion Framework — Section 9, which named this
+  document's central risk before it was written; Section 4.3 (Object
+  Reference mechanism).</li>
+<li>ONP-2200, Media — the Verified Asset Reference pattern
+  <code>document_ref</code> reuses.</li>
+<li>ONP-2300, Identity — the target of <code>source_ref</code> when
+  <code>visibility: "named"</code>.</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>ONP-2100, Article (updated concurrently, Section 10.3) — the
+  Companion expected to carry <code>source_refs</code>.</li>
+</ul>
+<h2 id="10-3-corresponding-update-to-onp-2100">10.3 Corresponding Update to ONP-2100</h2>
+<p>As part of this document's publication, ONP-2100 (Article) is updated
+to add <code>source_refs</code> (OPTIONAL, array of OID strings referencing
+Source Objects), following the same Object Reference pattern already
+established for <code>contributor_refs</code>, <code>rights_ref</code>, and <code>payment_ref</code>.
+Classified MINOR (additive) under ONP-0007 Section 4.1.</p>
+<hr />
+<h1 id="appendix-a-full-schema-reference">Appendix A: Full Schema Reference</h1>
+<pre><code class="language-json">{
+  &quot;content_type&quot;: &quot;onp:companion:sources&quot;,
+  &quot;content&quot;: {
+    &quot;source_type&quot;: &quot;enum, REQUIRED&quot;,
+    &quot;visibility&quot;: &quot;enum, REQUIRED&quot;,
+    &quot;source_ref&quot;: &quot;string (OID), OPTIONAL, ONLY if visibility='named'&quot;,
+    &quot;description&quot;: &quot;string, OPTIONAL, non-identifying if not named&quot;,
+    &quot;document_ref&quot;: &quot;string (OID), OPTIONAL&quot;,
+    &quot;credibility_note&quot;: &quot;string, OPTIONAL&quot;,
+    &quot;access_date&quot;: &quot;string (ISO 8601), OPTIONAL&quot;
+  }
+}
+</code></pre>
+<h1 id="appendix-b-source-object-checklist">Appendix B: Source Object Checklist</h1>
+<pre><code>[ ] source_type and visibility both present
+[ ] if visibility is 'anonymous' or 'protected': source_ref is
+    ABSENT (hard requirement, Section 4.4, rule 2)
+[ ] if visibility is not 'named': description, if present, has
+    been reviewed by an editor for inadvertent identifiability
+[ ] for 'protected' sources: has the publisher considered
+    Section 4.6 — would prose-only attribution, with no Source
+    Object at all, be the safer choice here?
+[ ] for 'protected' sources that DO get a Source Object: Local
+    Identifier is an opaque token, not a descriptive slug
+    (Section 4.7)
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-full-schema-reference">Appendix A: Full Schema Reference</a></li><li><a href="#appendix-b-source-object-checklist">Appendix B: Source Object Checklist</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/2600-sources.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

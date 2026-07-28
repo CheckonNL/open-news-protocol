@@ -105,3 +105,17 @@ jobs:
             sdk/reference-impl/examples/test-vectors.json > /tmp/php-signed.json
           php implementations/wordpress/onp-connector/bin/onp-wp-simulation.php > /tmp/wp-sim.json
           node tools/verify-interop.mjs /tmp/php-signed.json /tmp/wp-sim.json
+
+  site:
+    name: "Site: spec pages match specs/"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install markdown
+      # The website's specification pages are GENERATED from specs/*.md.
+      # This fails if a spec was edited without rebuilding the site, so
+      # published pages can never drift from the normative sources.
+      - run: python3 tools/build-site.py --check

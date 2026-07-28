@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-3500 Open News Protocol (ONP): Accessibility — Open News Protocol</title>
+<meta name="description" content="ONP-3500: Open News Protocol (ONP): Accessibility — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-3500</p>
+    <h1 id="top">Open News Protocol (ONP): Accessibility</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.0</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document defines the Accessibility Extension:
+<code>org.onp.accessibility</code>, fulfilling the promise ONP-2200 Section 4.5
+made when it kept <code>alt_text</code> deliberately minimal and deferred richer
+accessibility metadata here. Rather than embedding alternative
+content (transcripts, captions, audio descriptions, plain-language
+rewrites) directly as new field values, this Extension points to
+them as properly-typed, independently verifiable Companion Objects —
+an Article for a transcript or plain-language version, a Media Object
+for captions or an audio-described video — reusing the existing
+Companion machinery rather than introducing a second, unverified way
+to carry the same kinds of content. With this document, every
+Companion and Extension named in ONP-0000's original roadmap
+(0000-3500) is published.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Extension series (ONP-3000-3999)
+and completes the original Extension roadmap (ONP-0000 Section 4.1).
+It is directly implementable. It is a Working Draft.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>ONP-2200 Section 4.5 gave Media a baseline <code>alt_text</code> field and
+explicitly deferred anything richer to this document, to avoid
+raising Media's own required-effort bar (Principle P2) while still
+acknowledging that a single short string cannot serve every
+accessibility need — a complex chart needs a longer description than
+a photograph does; a video needs captions and, separately, an
+audio-described version; an article MAY benefit from a plain-language
+alternative for readers with cognitive disabilities or those reading
+in a non-native language. This document supplies those, each as a
+pointer to a properly-typed Object rather than a new, informally-
+structured field.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li><code>long_description</code>, <code>transcript_ref</code>, <code>captions_ref</code>,
+  <code>audio_description_ref</code>, <code>reading_level</code>, and <code>plain_language_ref</code>;</li>
+<li>the design choice to represent alternative content as Object
+  References to Media or Article Companion Objects, not as inline,
+  unverified strings or URLs;</li>
+<li>the one Claim Domain this Extension declares, and its declared
+  dependency on the Article and Media Companions.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li><code>alt_text</code> itself — remains owned by ONP-2200 Section 4.5;</li>
+<li>any specific captioning file format, transcript formatting
+  convention, or readability scoring algorithm — this document points
+  to where such content lives, it does not standardize the content's
+  own internal format;</li>
+<li>any rendering or assistive-technology implementation detail.</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document introduces no new general terms beyond its namespace
+and Claim Domain registration (Section 4).</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-extension-namespace-declaration">4.1 Extension Namespace Declaration</h2>
+<p>This Extension's fields MUST be carried under
+<code>onp:extensions.org.onp.accessibility</code>.</p>
+<h2 id="4-2-companion-vs-extension-classification">4.2 Companion-vs-Extension Classification</h2>
+<pre><code>Does &quot;Accessibility&quot; have independent identity and an independent
+lifecycle, separable from the Object it describes?
+
+- Accessibility metadata is inherently a property of, or a set of
+  pointers from, an existing Object; it has no standalone existence
+  a reader would reference on its own.
+- NO -&gt; Extension, consistent with every other Extension published
+  in this series.
+</code></pre>
+<h2 id="4-3-companion-dependency-declaration">4.3 Companion Dependency Declaration</h2>
+<p>Per ONP-3000 Section 4.2, rule 4, this Extension declares a
+dependency on two Companions: ONP-2100 (Article), the target of
+<code>transcript_ref</code> and <code>plain_language_ref</code>, and ONP-2200 (Media), the
+target of <code>captions_ref</code> and <code>audio_description_ref</code>. It does not
+depend on any other Companion.</p>
+<h2 id="4-4-content-schema">4.4 Content Schema</h2>
+<p><code>long_description</code>, <code>transcript_ref</code>, <code>captions_ref</code>,
+<code>audio_description_ref</code>, <code>reading_level</code>, and <code>plain_language_ref</code>
+are all OPTIONAL, under the single Claim Domain
+<code>accessibility-alternatives</code> (Section 4.9).</p>
+<h2 id="4-5-long-description">4.5 Long Description</h2>
+<p><code>long_description</code>, if present, MUST be a string: an extended
+description for content too complex for a short <code>alt_text</code> alone (a
+chart, an infographic, a complex diagram) — supplementary to, not a
+replacement for, <code>alt_text</code> (ONP-2200 Section 4.5).</p>
+<h2 id="4-6-transcript-and-captions">4.6 Transcript and Captions</h2>
+<ol>
+<li><code>transcript_ref</code>, if present, MUST be an Object Reference (OID
+   form) to an Article Companion Object (ONP-2100) containing the full
+   text transcript of audio or video content.</li>
+<li><code>captions_ref</code>, if present, MUST be an Object Reference (OID form)
+   to a Media Companion Object (ONP-2200) whose <code>asset_url</code> locates a
+   timed captions/subtitles file, verifiable via that Companion's
+   Verified Asset Reference pattern (ONP-2200 Section 4.4).</li>
+<li><code>audio_description_ref</code>, if present, MUST be an Object Reference
+   (OID form) to a Media Companion Object representing an alternate,
+   audio-described version of a video, for users who cannot see its
+   visual content.</li>
+</ol>
+<h2 id="4-7-reading-level">4.7 Reading Level</h2>
+<p><code>reading_level</code>, if present, MUST be a string identifying an
+established, existing readability metric and its value (e.g. a
+Flesch-Kincaid grade level) rather than a newly-invented scale,
+consistent with Principle P3.</p>
+<h2 id="4-8-plain-language-reference">4.8 Plain-Language Reference</h2>
+<p><code>plain_language_ref</code>, if present, MUST be an Object Reference (OID
+form) to a separate Article Companion Object containing a
+plain-language version of the same story, for readers with cognitive
+disabilities or those who benefit from simplified text. It MUST NOT
+be treated as a correction (ONP-2700) or a new Version in the
+original Article's own lineage (ONP-0006) — it is a parallel,
+independently existing Object, not a supersession.</p>
+<h2 id="4-9-claim-domain">4.9 Claim Domain</h2>
+<p>This Extension declares one Claim Domain:
+<code>accessibility-alternatives</code>, covering all six fields in Section 4.4.
+It MUST be registered in ONP-0002 alongside this document's
+publication (Section 10.3).</p>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.accessibility&quot;: {
+      &quot;long_description&quot;: &quot;string, OPTIONAL&quot;,
+      &quot;transcript_ref&quot;: &quot;onp:oid:..., OPTIONAL — Article Object&quot;,
+      &quot;captions_ref&quot;: &quot;onp:oid:..., OPTIONAL — Media Object&quot;,
+      &quot;audio_description_ref&quot;: &quot;onp:oid:..., OPTIONAL — Media Object&quot;,
+      &quot;reading_level&quot;: &quot;string, OPTIONAL&quot;,
+      &quot;plain_language_ref&quot;: &quot;onp:oid:..., OPTIONAL — Article Object&quot;
+    }
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Points To</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>long_description</code></td>
+<td>(inline string)</td>
+<td>OPTIONAL</td>
+</tr>
+<tr>
+<td><code>transcript_ref</code></td>
+<td>Article Object (ONP-2100)</td>
+<td>OPTIONAL</td>
+</tr>
+<tr>
+<td><code>captions_ref</code></td>
+<td>Media Object (ONP-2200)</td>
+<td>OPTIONAL</td>
+</tr>
+<tr>
+<td><code>audio_description_ref</code></td>
+<td>Media Object (ONP-2200)</td>
+<td>OPTIONAL</td>
+</tr>
+<tr>
+<td><code>reading_level</code></td>
+<td>(inline string)</td>
+<td>OPTIONAL</td>
+</tr>
+<tr>
+<td><code>plain_language_ref</code></td>
+<td>Article Object (ONP-2100)</td>
+<td>OPTIONAL</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-consumption">6.1 Consumption</h2>
+<p>An assistive technology or accessibility-aware Node MAY resolve
+<code>transcript_ref</code>, <code>captions_ref</code>, <code>audio_description_ref</code>, or
+<code>plain_language_ref</code> using the standard Object Reference resolution
+procedure (ONP-2000 Section 6.2), then process the resolved Object
+through its own Companion (ONP-2100 or ONP-2200) exactly as it would
+for any other Article or Media Object — no new resolution logic is
+required beyond what those Companions already define.</p>
+<h2 id="6-2-interoperability">6.2 Interoperability</h2>
+<p>A Node without this Extension implemented simply does not see
+accessibility alternatives; the base Object (with its <code>alt_text</code>, if
+any) remains fully usable regardless. This Extension is not
+Companion-agnostic in the same sense as ONP-3100 through ONP-3400 —
+it explicitly depends on Article and Media (Section 4.3) — but it
+does not require both to be present simultaneously; a publisher MAY
+populate only the fields relevant to a given Object's own content
+type.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-a-video-with-captions-and-audio-description">7.1 A Video with Captions and Audio Description</h2>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.accessibility&quot;: {
+      &quot;captions_ref&quot;: &quot;onp:oid:regiopurmerend.nl:ondertiteling-fusie-bijeenkomst&quot;,
+      &quot;audio_description_ref&quot;: &quot;onp:oid:regiopurmerend.nl:audiodescriptie-fusie-bijeenkomst&quot;,
+      &quot;transcript_ref&quot;: &quot;onp:oid:regiopurmerend.nl:transcript-fusie-bijeenkomst&quot;
+    }
+  }
+}
+</code></pre>
+<h2 id="7-2-a-plain-language-version-of-an-article">7.2 A Plain-Language Version of an Article</h2>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.accessibility&quot;: {
+      &quot;reading_level&quot;: &quot;Flesch-Kincaid grade 6&quot;,
+      &quot;plain_language_ref&quot;: &quot;onp:oid:regiopurmerend.nl:fusie-onderzoek-eenvoudig&quot;
+    }
+  }
+}
+</code></pre>
+<p>The original Article keeps its own reading level implicitly higher;
+<code>plain_language_ref</code> points to a genuinely separate, independently
+signed Article Object with its own OID — not a Version in the same
+lineage.</p>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<p>Every reference field in this Extension resolves through the
+standard Object Reference mechanism (ONP-2000 Section 6.2) and is
+therefore subject to the same non-blocking, independently-verified
+resolution rules as any other reference in this series: an
+unreachable <code>transcript_ref</code> does not affect the base Object's own
+Core validity, and a resolved target is verified through its own
+Companion's ordinary Core validation, not granted any special trust
+for being accessibility-related content.</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>This document defines no fields carrying personal data directly.
+Where a <code>transcript_ref</code> or <code>captions_ref</code> target contains spoken
+content naming or otherwise identifying individuals, the referenced
+Article or Media Object's own privacy considerations apply — this
+Extension introduces no additional privacy mechanism beyond pointing
+to that content.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0001, Architecture — Section 4.4, the decision test applied in
+  Section 4.2.</li>
+<li>ONP-0003, Design Principles — Principle P2 (Minimal Required
+  Surface, Section 1) and Principle P3 (Ordinary Technology, Section
+  4.7).</li>
+<li>ONP-2000, Companion Framework — Section 4.3 (Object Reference
+  mechanism), Section 6.2 (resolution procedure, reused in Section
+  6.1).</li>
+<li>ONP-2100, Article; ONP-2200, Media — the Companions this Extension
+  declares a dependency on (Section 4.3) and points into throughout.</li>
+<li>ONP-2700, Corrections — the boundary Section 4.8 draws against,
+  clarifying <code>plain_language_ref</code> is not a correction.</li>
+<li>ONP-3000, Extension Framework — Section 4.1 (namespace
+  registration), Section 4.2, rule 4 (Companion dependency
+  declaration), Section 4.3 (Claim Domain declaration).</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>None beyond the normative set.</li>
+</ul>
+<h2 id="10-3-registry-registration">10.3 Registry Registration</h2>
+<p>As part of this document's publication, <code>org.onp.accessibility</code> and
+<code>accessibility-alternatives</code> are registered in ONP-0002.</p>
+<hr />
+<h1 id="appendix-a-full-schema-reference">Appendix A: Full Schema Reference</h1>
+<pre><code class="language-json">{
+  &quot;onp:extensions&quot;: {
+    &quot;org.onp.accessibility&quot;: {
+      &quot;long_description&quot;: &quot;string, OPTIONAL&quot;,
+      &quot;transcript_ref&quot;: &quot;string (OID), OPTIONAL&quot;,
+      &quot;captions_ref&quot;: &quot;string (OID), OPTIONAL&quot;,
+      &quot;audio_description_ref&quot;: &quot;string (OID), OPTIONAL&quot;,
+      &quot;reading_level&quot;: &quot;string, OPTIONAL&quot;,
+      &quot;plain_language_ref&quot;: &quot;string (OID), OPTIONAL&quot;
+    }
+  }
+}
+</code></pre>
+<h1 id="appendix-b-accessibility-extension-checklist">Appendix B: Accessibility Extension Checklist</h1>
+<pre><code>[ ] Fields carried under onp:extensions.org.onp.accessibility
+[ ] transcript_ref and plain_language_ref, if present, point to
+    Article Objects (ONP-2100), not Media Objects
+[ ] captions_ref and audio_description_ref, if present, point to
+    Media Objects (ONP-2200), not Article Objects
+[ ] plain_language_ref target is a separate Object with its own
+    OID, not a Version in the original Article's own lineage
+[ ] alt_text itself remains defined on the Media Object per
+    ONP-2200 — not redefined here
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-full-schema-reference">Appendix A: Full Schema Reference</a></li><li><a href="#appendix-b-accessibility-extension-checklist">Appendix B: Accessibility Extension Checklist</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/3500-accessibility.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>

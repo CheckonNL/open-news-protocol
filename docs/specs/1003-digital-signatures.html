@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONP-1003 Open News Protocol (ONP): Digital Signatures — Open News Protocol</title>
+<meta name="description" content="ONP-1003: Open News Protocol (ONP): Digital Signatures — part of the Open News Protocol specification series.">
+<link rel="icon" href="../assets/onp-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <nav>
+      <a href="../#verify">Verify</a>
+      <a href="../#how">How it works</a>
+      <a href="./">Specifications</a>
+      <a href="../#build">Implementations</a>
+      <a href="https://github.com/CheckonNL/open-news-protocol">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+<div class="doc-layout">
+  <article class="prose">
+    <p class="eyebrow">ONP-1003</p>
+    <h1 id="top">Open News Protocol (ONP): Digital Signatures</h1>
+    <div class="doc-meta">
+      <span class="status">Working Draft</span>
+      <span>Version 0.1.1</span>
+      <span>Updated 2026-07-28</span>
+    </div>
+    <h1 id="abstract">Abstract</h1>
+<p>This document fixes the exact <code>signature</code> field format, defines the
+<code>signing-preimage</code> Pre-Image Profile that ONP-1002 named but left
+for this document to fill in, and specifies the full signing and
+verification procedures. It confirms Ed25519 as the required-
+baseline signature algorithm already listed in ONP-0005 Appendix A,
+and integrates ONP-1001 (identifiers), ONP-1002 (canonicalization),
+and ONP-0004 (Trust Anchor resolution) into one end-to-end
+verification pipeline. With this document, the minimal Core chain
+(ONP-1000 through ONP-1003) is complete: a Node implementing only
+these four documents can fully verify any News Object.</p>
+<hr />
+<h1 id="status-of-this-document">Status of This Document</h1>
+<p>This document is part of the ONP Core series (ONP-1000-1999). It is
+directly implementable and is the document that ONP-1000 (Section
+4.1), ONP-1002 (Section 4.3), ONP-0004 (Section 6.1), and ONP-0005
+(Section 4.2) all forward-referenced. It is a Working Draft.</p>
+<p><strong>Correction note:</strong> while drafting this document, it became
+apparent that ONP-1000's envelope lacked a field ONP-0004's key
+rotation validity-window check requires — the Object's own claimed
+signing time. ONP-1000 has been corrected to version 0.2.0, adding
+<code>signed_at</code> as a seventh REQUIRED envelope field, classified MINOR
+under ONP-0007 Section 4.2 with explicit callout there. This
+document consumes that field (Section 4.4) but does not own it.</p>
+<hr />
+<h1 id="normative-language">Normative Language</h1>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+"OPTIONAL" in this document are to be interpreted as described in
+BCP 14 [RFC2119] [RFC8174], per the interpretation established in
+ONP-0000.</p>
+<hr />
+<h1 id="1-introduction">1. Introduction</h1>
+<p>"Trust the Object, not the Messenger" has, until this document, been
+a promise under construction: ONP-1001 fixed how an Object names
+itself, ONP-1002 fixed how an Object's bytes become deterministic,
+ONP-0004 fixed how a Node learns which key a publisher actually
+controls. This document is where those three pieces are finally
+put to use for their intended purpose — proving that a specific,
+unmodified Object was produced by the key its <code>publisher</code> field
+claims, at the time its <code>signed_at</code> field claims, in a way any
+independent Node can check without asking anyone's permission.</p>
+<hr />
+<h1 id="2-scope">2. Scope</h1>
+<h2 id="2-1-in-scope">2.1 In Scope</h2>
+<ul>
+<li>the exact <code>signature</code> field format;</li>
+<li>the <code>signing-preimage</code> Pre-Image Profile's field list;</li>
+<li>the signing procedure;</li>
+<li>the verification procedure, integrating Algorithm Registry
+  checking, Trust Anchor resolution, and cryptographic verification;</li>
+<li>the required-baseline algorithm confirmation (Ed25519);</li>
+<li>the cross-check between a signature's declared algorithm and the
+  algorithm the resolved Publisher Key Record states for that key.</li>
+</ul>
+<h2 id="2-2-out-of-scope">2.2 Out of Scope</h2>
+<p>This document does NOT define:</p>
+<ul>
+<li>the Algorithm Registry's governance or full content (ONP-0005);</li>
+<li>Trust Anchor resolution mechanics themselves (ONP-0004);</li>
+<li>canonicalization mechanics (ONP-1002) or identifier mechanics
+  (ONP-1001) — this document consumes both;</li>
+<li>the multi-level validation procedure beyond the Core-level
+  signature step (ONP-1004 owns the full
+  procedure including Companion/Extension-level validation).</li>
+</ul>
+<hr />
+<h1 id="3-terminology">3. Terminology</h1>
+<p>This document is the owning specification for the following term.</p>
+<p><strong>Signature String</strong>
+: The exact wire encoding of the <code>signature</code> field, taking the form
+  fixed in Section 4.2.</p>
+<p>Terms used but owned elsewhere: <strong>Signature</strong> (ONP-0001, this
+document supplies its structural definition, fulfilling the
+registry's "structurally defined in ONP-1003" reference), <strong>Pre-Image
+Profile</strong>, <strong>Pre-Image</strong> (ONP-1002, this document fills in the
+<code>signing-preimage</code> Profile those terms' mechanism supports),
+<code>signed_at</code> (ONP-1000, this document consumes but does not own it).</p>
+<hr />
+<h1 id="4-requirements">4. Requirements</h1>
+<h2 id="4-1-signing-pre-image-finalizing-signing-preimage">4.1 Signing Pre-Image (Finalizing <code>signing-preimage</code>)</h2>
+<ol>
+<li>The <code>signing-preimage</code> Pre-Image Profile (named in ONP-1002
+   Section 4.3, rule 2) MUST exclude exactly <code>{ signature }</code> and
+   include every other envelope field, including the now-assigned
+   <code>vid</code> and the <code>signed_at</code> field.</li>
+<li>A Node MUST construct the signing pre-image using the exact
+   procedure in ONP-1002 Section 4.2 (field exclusion, then JCS
+   canonicalization).</li>
+</ol>
+<h2 id="4-2-signature-field-format">4.2 Signature Field Format</h2>
+<ol>
+<li><code>signature</code> MUST take the form <code>onp:sig:&lt;algorithm-id&gt;:&lt;digest&gt;</code>,
+   where <code>&lt;algorithm-id&gt;</code> is the lowercase wire form of an Algorithm
+   Registry entry (ONP-0005 Section 5.1) with <code>purpose = signature</code>,
+   and <code>&lt;digest&gt;</code> is the base64url-encoded (unpadded) signature
+   bytes.</li>
+<li>Wire-level algorithm identifiers embedded in any ONP identifier
+   or signature string (<code>oid</code>, <code>vid</code>, <code>signature</code>) MUST be lowercase.
+   The Algorithm Registry's display table (ONP-0005 Appendix A) MAY
+   use different display casing (e.g. "Ed25519"); its lowercase form
+   (<code>ed25519</code>) is what is embedded on the wire. This resolves a
+   casing inconsistency between ONP-1001's examples and ONP-0005's
+   display table, neither of which was normatively wrong, but which
+   this document now fixes explicitly to remove ambiguity.</li>
+</ol>
+<h2 id="4-3-required-baseline-algorithm">4.3 Required-Baseline Algorithm</h2>
+<ol>
+<li>Every conforming Node MUST support Ed25519 (wire form <code>ed25519</code>)
+   for both signing and verification, per its <code>required-baseline</code>
+   status in ONP-0005 Appendix A.</li>
+<li>A Node MAY support additional <code>recommended</code>-status algorithms
+   from the Algorithm Registry, consistent with Cryptographic
+   Agility (ONP-0005 Section 4.2), but MUST NOT claim conformance
+   without Ed25519 support.</li>
+</ol>
+<h2 id="4-4-signing-procedure">4.4 Signing Procedure</h2>
+<p>A publisher signing a News Object MUST perform the following, in
+order:</p>
+<pre><code>1. Assemble the envelope with oid, vid (per ONP-1001), publisher,
+   signed_at, content_type, content, and any OPTIONAL fields set,
+   but without signature.
+2. Construct the signing pre-image (Section 4.1).
+3. Sign the signing pre-image bytes using the private key
+   corresponding to publisher.key_id, with the algorithm that key's
+   Publisher Key Record entry (ONP-0004 Section 5.1) declares.
+4. Encode the resulting signature bytes as unpadded base64url.
+5. Form signature = &quot;onp:sig:&quot; + algorithm-id + &quot;:&quot; + encoded-bytes.
+6. Add signature to the envelope. The envelope is now complete.
+</code></pre>
+<h2 id="4-5-verification-procedure">4.5 Verification Procedure</h2>
+<p>A Node verifying a News Object MUST perform the following, in order,
+after the structural checks ONP-1000 Section 6.1 and ONP-1001
+Section 6.1 already require:</p>
+<pre><code>1. Parse the signature field into algorithm-id and digest.
+2. Check algorithm-id against the Algorithm Registry
+   (ONP-0005 Section 6.1). REJECT (fail closed) if forbidden or
+   unrecognized.
+3. Resolve the Trust Anchor for publisher.domain / publisher.key_id
+   at claimed time signed_at, per ONP-0004 Section 6.1.
+   REJECT if resolution fails.
+4. Cross-check: does the algorithm-id in this Object's signature
+   match the algorithm the resolved Publisher Key Record (ONP-0004
+   Section 5.1) declares for publisher.key_id?
+   REJECT if they disagree (Section 8.1).
+5. Reconstruct the signing pre-image from the Object's own fields
+   (Section 4.1).
+6. Cryptographically verify the signature over the reconstructed
+   pre-image, using the public key resolved in step 3 and the
+   algorithm confirmed in step 4.
+   REJECT if verification fails.
+7. If all of steps 1-6 succeed, the Object is Core-authenticated.
+</code></pre>
+<h2 id="4-6-ordering-relative-to-other-core-checks">4.6 Ordering Relative to Other Core Checks</h2>
+<p>The full Core-level validation of a News Object, combining every
+Core document published so far, MUST proceed in this order and MUST
+NOT be reordered:</p>
+<pre><code>1. ONP-1000 Section 6.1: envelope structural check
+   (required fields present, well-formed).
+2. ONP-1001 Section 6.1: OID domain match, Local Identifier
+   grammar, VID structural integrity (recomputed hash match).
+3. This document, Section 4.5: Algorithm Registry check, Trust
+   Anchor resolution, algorithm cross-check, cryptographic
+   signature verification.
+</code></pre>
+<p>A failure at any step is terminal for Core validation; no later step
+is evaluated, and Companion/Extension-level processing (ONP-0001
+Section 6.2, levels 2-3) MUST NOT begin.</p>
+<hr />
+<h1 id="5-object-model">5. Object Model</h1>
+<h2 id="5-1-signature-grammar-abnf-style">5.1 Signature Grammar (ABNF-Style)</h2>
+<pre><code>signature        = &quot;onp:sig:&quot; algorithm-id &quot;:&quot; digest
+
+algorithm-id     = 1*32( ALPHA-LOWER / DIGIT / &quot;-&quot; )
+                    ; MUST match an Algorithm Registry identifier
+                    ; (ONP-0005 Appendix A), lowercased,
+                    ; e.g. &quot;ed25519&quot;
+
+digest           = 1*( BASE64URL-CHAR )
+                    ; unpadded base64url encoding of the raw
+                    ; signature output bytes
+
+ALPHA-LOWER      = %x61-7A  ; a-z
+DIGIT            = %x30-39  ; 0-9
+BASE64URL-CHAR   = ALPHA-LOWER / %x41-5A / DIGIT / &quot;-&quot; / &quot;_&quot;
+</code></pre>
+<p>This mirrors the OID/VID grammar established in ONP-1001 Appendix A,
+so an implementer who has already parsed those needs no new parsing
+logic beyond a different prefix.</p>
+<hr />
+<h1 id="6-processing-model">6. Processing Model</h1>
+<h2 id="6-1-full-end-to-end-core-validation-pipeline-capstone">6.1 Full End-to-End Core Validation Pipeline (Capstone)</h2>
+<p>This section assembles every Core document published so far into
+one pipeline, for implementers who want the complete picture in one
+place rather than following forward references across four
+documents:</p>
+<pre><code>INPUT: a received News Object (raw JSON)
+
+STEP 1 (ONP-1000): Parse top-level JSON. Confirm the seven REQUIRED
+  keys are present and individually well-formed. Apply defaults for
+  absent OPTIONAL keys.
+  -&gt; FAIL if malformed.
+
+STEP 2 (ONP-1001): Confirm oid's domain component matches
+  publisher.domain. Confirm local-id grammar. Recompute the
+  vid-preimage hash (ONP-1002 mechanism) and compare to the
+  declared vid.
+  -&gt; FAIL if mismatched.
+
+STEP 3 (this document, Section 4.5): Check signature's algorithm
+  against the Algorithm Registry. Resolve the Trust Anchor for
+  publisher.domain/key_id at signed_at. Cross-check algorithm
+  agreement. Reconstruct the signing-preimage (ONP-1002 mechanism)
+  and cryptographically verify.
+  -&gt; FAIL if any sub-step fails.
+
+STEP 4: If all of STEP 1-3 pass, the Object is Core-authenticated.
+  Hand off to Companion-level processing (per content_type) and
+  Extension-level processing (per onp:extensions namespaces),
+  neither of which can affect the outcome of STEPS 1-3 (Vertical
+  Invariant, ONP-0001 Section 4.1).
+
+OUTPUT: Core-authenticated Object, ready for Companion/Extension
+  interpretation — or a terminal rejection at whichever step failed.
+</code></pre>
+<h2 id="6-2-interoperability">6.2 Interoperability</h2>
+<p>A Node implementing exactly ONP-1000 through ONP-1003 — no
+Companions, no Extensions, no knowledge of any specific
+<code>content_type</code> or <code>onp:extensions</code> namespace — MUST be able to run
+the complete pipeline in Section 6.1 and correctly accept or reject
+any News Object on Core grounds alone. This is the concrete,
+now-fully-specified form of the interoperability guarantee every
+prior Core and Foundation document promised in the abstract; with
+this document, that promise is no longer aspirational.</p>
+<hr />
+<h1 id="7-examples">7. Examples</h1>
+<h2 id="7-1-end-to-end-sign-and-verify">7.1 End-to-End: Sign and Verify</h2>
+<pre><code>1. Publisher assembles envelope (oid, publisher, signed_at,
+   content_type, content) without vid or signature.
+2. Publisher computes vid (ONP-1001 Section 4.3, using ONP-1002's
+   vid-preimage Profile) -&gt; vid = &quot;onp:vid:sha-256:AbC123...&quot;
+3. Publisher adds vid to the envelope.
+4. Publisher constructs the signing pre-image (this document,
+   Section 4.1) -&gt; canonical bytes including oid, vid, publisher,
+   signed_at, content_type, content.
+5. Publisher signs those bytes with the Ed25519 private key for
+   onp:key:2026-07-01.
+6. signature = &quot;onp:sig:ed25519:base64url(sig-bytes)&quot;
+7. Publisher adds signature. Envelope is complete and published.
+
+--- Node receiving this Object ---
+
+8. Node runs ONP-1000 Section 6.1 -&gt; structurally valid.
+9. Node runs ONP-1001 Section 6.1 -&gt; vid matches recomputed hash.
+10. Node runs this document's Section 4.5:
+    - algorithm-id &quot;ed25519&quot; is required-baseline -&gt; OK
+    - Trust Anchor resolves: regiopurmerend.nl's Publisher Key
+      Record lists onp:key:2026-07-01 as current, algorithm
+      &quot;Ed25519&quot; -&gt; matches signature's declared &quot;ed25519&quot; -&gt; OK
+    - signing-preimage reconstructed, matches what was signed
+    - cryptographic verification succeeds
+11. Object is Core-authenticated.
+</code></pre>
+<h2 id="7-2-algorithm-cross-check-catching-a-downgrade-attempt">7.2 Algorithm Cross-Check Catching a Downgrade Attempt</h2>
+<pre><code>Publisher Key Record states onp:key:2026-07-01 uses algorithm
+&quot;Ed25519&quot;.
+An adversary crafts an Object claiming:
+  signature = &quot;onp:sig:ecdsa-p256:forged-bytes&quot;
+  publisher.key_id = &quot;onp:key:2026-07-01&quot;
+
+Node's Section 4.5, step 4 cross-check:
+  Publisher Key Record says this key_id is Ed25519.
+  Signature claims ecdsa-p256.
+  MISMATCH -&gt; REJECT, before even attempting cryptographic
+  verification. This defeats an attempt to claim a different
+  algorithm than the actual key uses, which Section 8.1 discusses
+  further.
+</code></pre>
+<h2 id="7-3-fail-closed-on-unrecognized-algorithm">7.3 Fail-Closed on Unrecognized Algorithm</h2>
+<pre><code>Object declares: signature = &quot;onp:sig:md5:...&quot;
+Algorithm Registry (ONP-0005 Appendix A): MD5 status = forbidden
+  (and, separately, purpose = hash, not signature — doubly invalid)
+Node: REJECT at Section 4.5, step 2, before any further processing.
+</code></pre>
+<hr />
+<h1 id="8-security-considerations">8. Security Considerations</h1>
+<h2 id="8-1-the-algorithm-cross-check-closes-a-downgrade-gap">8.1 The Algorithm Cross-Check Closes a Downgrade Gap</h2>
+<p>Without Section 4.5, step 4 (the cross-check between a signature's
+declared algorithm and the Publisher Key Record's declared algorithm
+for that key), an adversary controlling only the network path (not
+the key) could potentially relabel a signature's declared algorithm
+to something a poorly implemented Node accepts more permissively,
+even though the underlying key was never meant to be used with that
+algorithm. Requiring agreement between what the signature claims and
+what the publisher's own key record states removes this gap without
+requiring any change to ONP-0004 or ONP-0005 — it is a consistency
+check this document introduces at the point where both pieces of
+information are simultaneously available.</p>
+<h2 id="8-2-this-document-completes-not-replaces-prior-security">8.2 This Document Completes, Not Replaces, Prior Security</h2>
+<pre><code> Analysis
+</code></pre>
+<p>Nothing in this document weakens or overrides the adversary model
+(ONP-0005 Section 4.1), the compromise-window limitation (ONP-0004
+Section 8.1), or the layer-confusion protections (ONP-0001, ONP-0005
+Section 4.5). This document's contribution is making those already-
+analyzed properties concretely checkable in code (Section 6.1), not
+introducing new trust assumptions.</p>
+<h2 id="8-3-signing-pre-image-completeness">8.3 Signing Pre-Image Completeness</h2>
+<p>Because the signing pre-image (Section 4.1) includes every envelope
+field except <code>signature</code> itself — critically, including <code>content</code>
+and <code>onp:extensions</code> — a valid signature covers the entire Object as
+received, not merely its Core fields. Tampering with <code>content</code> or
+any Extension namespace after signing invalidates the signature just
+as surely as tampering with <code>oid</code> would, even though Core-level
+validation does not interpret <code>content</code>'s meaning (ONP-1000 Section
+4.4, ONP-1002 Section 4.7).</p>
+<hr />
+<h1 id="9-privacy-considerations">9. Privacy Considerations</h1>
+<p>The <code>signature</code> field and Algorithm Registry identifiers carry no
+personal data. <code>signed_at</code>'s privacy implications (revealing
+publication timing) are already addressed at the general level in
+ONP-0006 Section 9 and are not repeated here; this document only
+consumes that field, it does not introduce a new privacy
+consideration beyond what ONP-0006 already covers.</p>
+<hr />
+<h1 id="10-references">10. References</h1>
+<h2 id="10-1-normative-references">10.1 Normative References</h2>
+<ul>
+<li>[RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+  Requirement Levels", BCP 14, RFC 2119.</li>
+<li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+  2119 Key Words", BCP 14, RFC 8174.</li>
+<li>ONP-0000, Introduction; ONP-0001, Architecture — own the term
+  "Signature"; this document supplies its structural definition.</li>
+<li>ONP-0003, Design Principles — Principle P3 (Ordinary Technology),
+  motivating reuse of an existing, well-analyzed algorithm
+  (Ed25519) rather than a bespoke one.</li>
+<li>ONP-0004, Trust Model — Section 6.1 (Resolution Algorithm) and
+  Section 5.1 (Publisher Key Record's <code>algorithm</code> field), both
+  consumed directly in Section 4.5 of this document.</li>
+<li>ONP-0005, Security Model — the Algorithm Registry (Section 5.1 /
+  Appendix A) and Cryptographic Agility (Section 4.2), both fixed
+  concretely here.</li>
+<li>ONP-1000, News Object — the envelope this document's <code>signature</code>
+  and (consumed) <code>signed_at</code> fields belong to; corrected to v0.2.0
+  alongside this document's publication (see Status of This
+  Document).</li>
+<li>ONP-1001, Identifiers — Section 6.1's validation ordering, which
+  this document's Section 4.6 extends.</li>
+<li>ONP-1002, Serialization — the Pre-Image mechanism this document's
+  Section 4.1 finalizes for the <code>signing-preimage</code> Profile.</li>
+</ul>
+<h2 id="10-2-informative-references">10.2 Informative References</h2>
+<ul>
+<li>ONP-1004, Validation — the full multi-level
+  validation procedure that wraps this document's Section 6.1
+  Core-level pipeline with Companion/Extension-level checks).</li>
+</ul>
+<hr />
+<h1 id="appendix-a-signing-checklist">Appendix A: Signing Checklist</h1>
+<pre><code>[ ] Envelope assembled without vid and signature
+[ ] vid computed (ONP-1001) and added
+[ ] signing pre-image constructed (Section 4.1: exclude signature
+    only, canonicalize per ONP-1002)
+[ ] signed with the private key matching publisher.key_id,
+    using that key's declared algorithm
+[ ] signature = &quot;onp:sig:&quot; + algorithm-id + &quot;:&quot; + base64url(bytes)
+[ ] signature added; envelope complete
+</code></pre>
+<h1 id="appendix-b-full-core-verification-checklist">Appendix B: Full Core Verification Checklist</h1>
+<pre><code>[ ] ONP-1000: seven REQUIRED fields present and well-formed
+[ ] ONP-1001: oid domain matches publisher.domain; local-id
+    well-formed; vid matches recomputed hash
+[ ] This document: signature algorithm recognized and not
+    forbidden
+[ ] This document: Trust Anchor resolves (ONP-0004) for
+    publisher.domain/key_id at signed_at
+[ ] This document: signature's algorithm matches the Publisher
+    Key Record's declared algorithm for that key_id
+[ ] This document: signing-preimage reconstructed and signature
+    cryptographically verified
+[ ] All of the above pass -&gt; Object is Core-authenticated;
+    proceed to Companion/Extension processing
+[ ] Any failure -&gt; REJECT; do not proceed further
+</code></pre>
+<hr />
+<p><em>End of Document</em></p>
+  </article>
+  <aside class="toc">
+    <h4>On this page</h4>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-signing-checklist">Appendix A: Signing Checklist</a></li><li><a href="#appendix-b-full-core-verification-checklist">Appendix B: Full Core Verification Checklist</a></li></ul>
+  </aside>
+</div>
+</main>
+<footer class="site">
+  <div class="wrap">
+    <p style="margin:0">
+      <a href="./">← All specifications</a> ·
+      <a href="https://github.com/CheckonNL/open-news-protocol/blob/main/specs/1003-digital-signatures.md">Source on GitHub</a>
+    </p>
+    <p class="colophon">Apache 2.0. Working Draft — expect changes.</p>
+  </div>
+</footer>
+</body>
+</html>
