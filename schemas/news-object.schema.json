@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opennewsprotocol.org/schemas/news-object.schema.json",
+  "title": "ONP News Object Envelope",
+  "description": "Machine-checkable structural schema for the News Object envelope, derived from ONP-1000 v0.3.0 Section 5.1 (field list, closed top level per Section 4.1 rule 3 via ONP-0001), ONP-1001 Appendix A (OID/VID grammar), and ONP-1003 Section 4.2 (signature string). SCOPE: this schema checks STRUCTURE ONLY — it is the machine form of ONP-1000 Section 6.1's structural check. It does not and cannot verify VID integrity, signature validity, or Trust Anchor resolution (ONP-1001/1003/0004); passing this schema is necessary, never sufficient, for Core authentication. The specification text remains authoritative wherever this schema and the text disagree.",
+  "type": "object",
+  "required": [
+    "oid",
+    "vid",
+    "publisher",
+    "signed_at",
+    "signature",
+    "content_type",
+    "content"
+  ],
+  "properties": {
+    "oid": {
+      "description": "ONP-1001 Section 4.1 / Appendix A: onp:oid:<domain>:<local-id>, where local-id is 1*128(a-z 0-9 '-') or a UUIDv4.",
+      "type": "string",
+      "pattern": "^onp:oid:[a-z0-9.-]{1,253}:([a-z0-9-]{1,128}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+    },
+    "vid": {
+      "$ref": "#/$defs/vid"
+    },
+    "publisher": {
+      "description": "ONP-1000 Section 5.1: the Publisher Reference — the Core-owned pointer used for Trust Anchor resolution (ONP-0004).",
+      "type": "object",
+      "required": ["domain", "key_id"],
+      "properties": {
+        "domain": {
+          "description": "Publisher domain; ONP-1001 Section 6.1 additionally requires it to be byte-identical to the OID's domain segment (a cross-field check outside JSON Schema's reach — enforced by validateCore, not here).",
+          "type": "string",
+          "pattern": "^[a-z0-9.-]{1,253}$"
+        },
+        "key_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "signed_at": {
+      "description": "ONP-1000 v0.2.0: the Claimed Signing Time — ISO 8601 UTC ('Z' suffix required), consumed by ONP-0004 key-rotation window checks and ONP-1003.",
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "signature": {
+      "description": "ONP-1003 Section 4.2: onp:sig:<algorithm-id>:<base64url sig bytes>. Algorithm-id form per ONP-0005 Appendix A (lowercase, hyphenated).",
+      "type": "string",
+      "pattern": "^onp:sig:[a-z0-9-]{1,32}:[A-Za-z0-9_-]+$"
+    },
+    "content_type": {
+      "description": "ONP-1000 Section 4.4 rule 2: onp:companion:<name>, naming the Companion that owns content's schema.",
+      "type": "string",
+      "pattern": "^onp:companion:[a-z0-9-]+$"
+    },
+    "content": {
+      "description": "ONP-1000 Section 4.4 rule 1: opaque to Core validation; its internal schema is owned entirely by the Companion named in content_type and is deliberately unconstrained here.",
+      "type": "object"
+    },
+    "lifecycle_state": {
+      "description": "ONP-0006, wire format finalized in ONP-1000 Section 5.1. Absent means 'published' (absence-has-meaning; a schema default is intentionally NOT declared so validators never inject the value into signed bytes).",
+      "type": "string",
+      "enum": ["published", "retracted"]
+    },
+    "supersedes": {
+      "description": "ONP-0006: a prior VID in the same OID lineage.",
+      "$ref": "#/$defs/vid"
+    },
+    "revision_reason": {
+      "type": "string"
+    },
+    "republish_of_retraction": {
+      "description": "ONP-0006: a prior VID; only on a republish following a retraction.",
+      "$ref": "#/$defs/vid"
+    },
+    "onp:extensions": {
+      "description": "ONP-0001 Section 5.2: the reserved Extension container, keyed by reverse-DNS namespace identifiers. Each Extension's internal schema is owned by that Extension's own specification.",
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z0-9-]+(\\.[a-z0-9-]+)+$"
+      },
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "onp:metadata": {
+      "description": "ONP-1005: Core metadata container; internal structure owned by ONP-1005 and not duplicated here.",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "vid": {
+      "description": "ONP-1001 Appendix A: onp:vid:<hash-algorithm-id>:<unpadded base64url digest>.",
+      "type": "string",
+      "pattern": "^onp:vid:[a-z0-9-]{1,32}:[A-Za-z0-9_-]+$"
+    }
+  }
+}

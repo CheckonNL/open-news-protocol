@@ -1,0 +1,31 @@
+{
+  "name": "@onp/reference-impl",
+  "version": "0.3.0",
+  "description": "ONP Reference Implementation: ONP-1000 through ONP-1004 (envelope, identifiers, serialization, signatures, multi-level validation), ONP-0004 Trust Anchor resolution, and ONP-1006 Retrieval, per ONP-9000.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/test/*.test.js",
+    "example": "npm run build && node dist/examples/fusie-onderzoek.js",
+    "bridges": "npm run build && node dist/examples/export-bridges.js"
+  },
+  "keywords": [
+    "onp",
+    "open-news-protocol",
+    "news",
+    "provenance"
+  ],
+  "author": "Open News Protocol Working Group",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "canonicalize": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "typescript": "^5.6.0"
+  }
+}

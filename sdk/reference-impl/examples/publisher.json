@@ -1,0 +1,14 @@
+{
+  "_comment": "Example Publisher Key Record per ONP-0004 Section 5.1. Host at https://{publisher-domain}/.well-known/onp/publisher.json. The public_key below is the same published test key used in test-vectors.json (safe to publish; test use only).",
+  "onp_trust_anchor_type": "domain",
+  "publisher_domain": "example.onp.dev",
+  "current_keys": [
+    {
+      "key_id": "onp:key:test-2026",
+      "algorithm": "Ed25519",
+      "public_key": "eph9gqldpi59ShqTjQrEw_kx-UtqdbYWp2HUY2g4PK4",
+      "valid_from": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "previous_keys": []
+}

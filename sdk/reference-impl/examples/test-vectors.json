@@ -1,0 +1,83 @@
+{
+  "test_vector_set": "onp-core-v0.1.0",
+  "generated_by": "@onp/reference-impl example generator",
+  "note": "Real, computed values — not placeholders. Public test key is safe to publish; private key material above is for vector regeneration only and MUST NOT be used for anything else.",
+  "vectors": [
+    {
+      "test_vector_id": "onp-tv-001",
+      "description": "Minimal Viable Object, per ONP-1000 Section 4.2",
+      "test_keypair": {
+        "algorithm": "ed25519",
+        "public_key": "eph9gqldpi59ShqTjQrEw_kx-UtqdbYWp2HUY2g4PK4",
+        "note": "Published test key only — see PUBLISHED TEST KEYPAIR above"
+      },
+      "input_envelope": {
+        "oid": "onp:oid:example.onp.dev:test-vector-001",
+        "publisher": {
+          "domain": "example.onp.dev",
+          "key_id": "onp:key:test-2026"
+        },
+        "signed_at": "2026-07-28T00:00:00Z",
+        "content_type": "onp:companion:article",
+        "content": {
+          "headline": "Test Vector Article",
+          "body": "Test body text."
+        }
+      },
+      "expected_vid": "onp:vid:sha-256:L4Gvx2LkqQpihK7V61GW82nl-dUdf-FZjnfrTHGOpZc",
+      "expected_signature": "onp:sig:ed25519:cxyIJYCwJHmHd11UDNkdDj4_HLwWoW5uKf_vQ2pdHfhY3PmLXe0FsfEihdJQxg94ZULHsqmHhG1RiJQMv5XzAA",
+      "expected_result": "valid"
+    },
+    {
+      "test_vector_id": "onp-tv-002",
+      "description": "A Version with non-null supersedes (ONP-0006)",
+      "test_keypair": {
+        "algorithm": "ed25519",
+        "public_key": "eph9gqldpi59ShqTjQrEw_kx-UtqdbYWp2HUY2g4PK4",
+        "note": "Published test key only"
+      },
+      "input_envelope": {
+        "oid": "onp:oid:example.onp.dev:test-vector-001",
+        "publisher": {
+          "domain": "example.onp.dev",
+          "key_id": "onp:key:test-2026"
+        },
+        "signed_at": "2026-07-29T08:00:00Z",
+        "content_type": "onp:companion:article",
+        "content": {
+          "headline": "Test Vector Article (corrected)",
+          "body": "Corrected body text."
+        },
+        "revision_reason": "Corrected a factual error in the body.",
+        "supersedes": "onp:vid:sha-256:L4Gvx2LkqQpihK7V61GW82nl-dUdf-FZjnfrTHGOpZc"
+      },
+      "expected_vid": "onp:vid:sha-256:um2C-FqcadXvaXTq3rGz-w29kVc-G216qtYvDTpnd5c",
+      "expected_signature": "onp:sig:ed25519:3raGSHo6T-V6nRvcKMmRJg8BPVLDKdtlnnsZU3CFuRoVOaM546mbAD24uap1D6LhxNNpfrZkyP5DjzJ-ugDjAg",
+      "expected_result": "valid"
+    },
+    {
+      "test_vector_id": "onp-tv-003",
+      "description": "Structurally invalid: missing REQUIRED signed_at field",
+      "test_keypair": {
+        "algorithm": "ed25519",
+        "public_key": "eph9gqldpi59ShqTjQrEw_kx-UtqdbYWp2HUY2g4PK4",
+        "note": "Published test key only"
+      },
+      "input_envelope": {
+        "oid": "onp:oid:example.onp.dev:test-vector-003",
+        "publisher": {
+          "domain": "example.onp.dev",
+          "key_id": "onp:key:test-2026"
+        },
+        "content_type": "onp:companion:article",
+        "content": {
+          "headline": "Missing signed_at",
+          "body": "This should be rejected."
+        }
+      },
+      "expected_vid": null,
+      "expected_signature": null,
+      "expected_result": "structurally-invalid"
+    }
+  ]
+}

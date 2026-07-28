@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  sdk:
+    name: "SDK: build + tests (incl. schema coherence)"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20, 22]
+    defaults:
+      run:
+        working-directory: sdk/reference-impl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: sdk/reference-impl/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      # The test suite covers: Core validation (ONP-1000-1003), Trust
+      # Anchor resolution (ONP-0004), and schema coherence — every
+      # SDK-produced Object and every published test vector is checked
+      # against schemas/*.schema.json, so spec text, schema, code, and
+      # vectors cannot drift apart without failing this job.
+      - run: npm test
+
+  spec-lint:
+    name: "Specs: headers + terminology single-source + registry sync"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Enforces: (1) every spec carries the required header fields;
+      # (2) no term is defined by more than one document (ONP-0002
+      # Section 4.1's single-source rule, machine-checked); (3) every
+      # owned term has an Appendix A row and every active row's owner
+      # actually uses that term — registry drift in either direction
+      # fails the build.
+      - run: python3 tools/check-specs.py
+
+  schema-validity:
+    name: "Schemas: valid against JSON Schema 2020-12"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/reference-impl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: sdk/reference-impl/package-lock.json
+      - run: npm ci
+      # Compile-only check: a schema that fails to compile under ajv
+      # strict mode is itself broken, independent of any instance.
+      - run: |
+          node --input-type=module -e "
+          import { readFileSync, readdirSync } from 'node:fs';
+          import { Ajv2020 } from 'ajv/dist/2020.js';
+          import addFormats from 'ajv-formats';
+          const ajv = new Ajv2020({ strict: true });
+          addFormats.default(ajv);
+          for (const f of readdirSync('../../schemas')) {
+            ajv.compile(JSON.parse(readFileSync('../../schemas/' + f, 'utf8')));
+            console.log('OK', f);
+          }
+          "
+
+  interop:
+    name: "Interop: PHP (WordPress plugin) <-> TypeScript SDK"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: sdk/reference-impl/package-lock.json
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: sodium
+      - run: npm ci
+        working-directory: sdk/reference-impl
+      - run: npm run build
+        working-directory: sdk/reference-impl
+      # TS -> PHP: PHP re-verifies the SDK's published test vectors.
+      # PHP -> TS: the SDK validates a PHP-signed envelope AND the full
+      # publish/edit/retract lifecycle output of the WordPress code
+      # paths (via WP stubs), including the supersedes chain. Any
+      # byte-level JCS divergence between the two implementations
+      # fails this job.
+      - run: |
+          php implementations/wordpress/onp-connector/bin/onp-selftest.php \
+            sdk/reference-impl/examples/test-vectors.json > /tmp/php-signed.json
+          php implementations/wordpress/onp-connector/bin/onp-wp-simulation.php > /tmp/wp-sim.json
+          node tools/verify-interop.mjs /tmp/php-signed.json /tmp/wp-sim.json

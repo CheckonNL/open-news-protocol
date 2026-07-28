@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opennewsprotocol.org/schemas/publisher-key-record.schema.json",
+  "title": "ONP Publisher Key Record",
+  "description": "Machine-checkable structural schema for the Publisher Key Record hosted at https://{publisher-domain}/.well-known/onp/publisher.json, derived from ONP-0004 v0.2.0 Section 5.1 and Appendix A. Structural check only: TLS/WebPKI validation, the resolution algorithm (Section 6.1), and revocation-window semantics (Section 4.4) are runtime behavior outside JSON Schema's reach. Unknown additional members are permitted (unlike the closed News Object envelope): the record is a hosted document a publisher may extend, and ONP-0004 nowhere closes its member set.",
+  "type": "object",
+  "required": ["onp_trust_anchor_type", "publisher_domain", "current_keys"],
+  "properties": {
+    "onp_trust_anchor_type": {
+      "description": "ONP-0004 Section 4.2: 'domain' is the REQUIRED baseline; 'eudi' is reserved for ONP-2300 and not yet normatively defined, so this schema accepts only 'domain'.",
+      "const": "domain"
+    },
+    "publisher_domain": {
+      "type": "string",
+      "pattern": "^[a-z0-9.-]{1,253}$"
+    },
+    "current_keys": {
+      "description": "ONP-0004 Section 4.4 rule 1: keys presently authorized. valid_until/revoked_at are not required here; they belong to previous_keys entries.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/currentKeyEntry" }
+    },
+    "previous_keys": {
+      "description": "ONP-0004 Section 4.4 rules 1-2: rotated keys, each REQUIRED to carry both validity-window bounds.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/previousKeyEntry" }
+    },
+    "transparency_log": {
+      "description": "ONP-0004 Section 4.5: OPTIONAL, never a validation precondition (rule 3).",
+      "type": "object",
+      "required": ["log_url"],
+      "properties": {
+        "log_url": { "type": "string", "format": "uri" },
+        "entry_id": { "type": "string" }
+      }
+    },
+    "rotation_continuity_signature": {
+      "description": "ONP-0004 Section 4.4 rule 5: RECOMMENDED continuity evidence; a Node MUST NOT require it.",
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "keyEntryBase": {
+      "type": "object",
+      "required": ["key_id", "algorithm", "public_key", "valid_from"],
+      "properties": {
+        "key_id": { "type": "string", "minLength": 1 },
+        "algorithm": {
+          "description": "Compared case-insensitively against the signature's algorithm-id per ONP-1003 Section 4.5 step 4.",
+          "type": "string",
+          "minLength": 1
+        },
+        "public_key": {
+          "description": "Unpadded base64url-encoded raw public key bytes.",
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "valid_from": { "type": "string", "format": "date-time" }
+      }
+    },
+    "currentKeyEntry": {
+      "allOf": [{ "$ref": "#/$defs/keyEntryBase" }]
+    },
+    "previousKeyEntry": {
+      "allOf": [
+        { "$ref": "#/$defs/keyEntryBase" },
+        {
+          "type": "object",
+          "required": ["valid_until"],
+          "properties": {
+            "valid_until": { "type": "string", "format": "date-time" },
+            "revoked_at": {
+              "description": "ONP-0004 Section 4.4 rule 4: signing time at or after this instant is untrusted.",
+              "type": ["string", "null"],
+              "format": "date-time"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
