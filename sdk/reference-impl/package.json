@@ -11,6 +11,9 @@
       "default": "./dist/src/index.js"
     }
   },
+  "bin": {
+    "onp": "./dist/src/cli.js"
+  },
   "files": [
     "dist/src"
   ],

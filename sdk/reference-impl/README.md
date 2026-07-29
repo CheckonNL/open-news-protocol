@@ -135,11 +135,32 @@ ONP-9000 intends.)
 ```bash
 npm install
 npm run build
-npm test                 # runs the test suite (60 tests)
+npm test                 # runs the test suite (71 tests)
 npm run example          # signs and verifies the running fusie-onderzoek Article
 npm run bridges           # exports the same Article to schema.org JSON-LD and RSS XML
 node dist/examples/generate-test-vectors.js   # regenerates examples/test-vectors.json
 ```
+
+## CLI
+
+After `npm run build`, the `onp` command (also exposed as the package's
+`bin`) drives the SDK from the shell — no TypeScript required. `verify`
+exits 0 when the Object is Core-authenticated and 1 when it is
+rejected, so it drops straight into CI and pipelines.
+
+```bash
+onp keygen [--algorithm ed25519|ecdsa-p256]
+onp sign <unsigned.json> --key <b64url-private> [--algorithm <id>] [--out <file>]
+onp verify <file|url> [--key <b64url-public>] [--anchor <publisher.json>]
+onp publisher-json --domain <d> --key-id <id> --public-key <b64url> [--algorithm <name>]
+```
+
+`verify` runs the full pipeline — Trust Anchor resolution over HTTPS
+against the Object's own domain — by default; `--key` does offline
+crypto-only verification against a supplied public key, and `--anchor`
+resolves against a local Publisher Key Record instead of fetching one.
+Run the built entry directly during development with
+`node dist/src/cli.js <command>`.
 
 ## Test Vectors
 
