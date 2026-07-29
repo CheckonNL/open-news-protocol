@@ -1,11 +1,16 @@
 # ONP Reference Implementation
 
-A minimal, working TypeScript implementation of **ONP-1000 through
-ONP-1003**: envelope construction, identifier computation (VID,
+A working TypeScript implementation of **ONP-1000 through ONP-1004**,
+plus Trust Anchor resolution (**ONP-0004**) and Retrieval
+(**ONP-1006**): envelope construction, identifier computation (VID,
 content-addressed per ONP-1001), canonicalization (JCS/RFC 8785, per
-ONP-1002), and Ed25519 signing/verification (per ONP-1003), following
-the minimum scope [`specs/9000-reference-implementation.md`](../../specs/9000-reference-implementation.md)
-Section 4.1 requires.
+ONP-1002), Ed25519 signing/verification (per ONP-1003), the full
+multi-level validation pipeline (ONP-1004), domain-anchored Trust
+Anchor resolution (ONP-0004), and the Retrieval Convention (ONP-1006).
+This goes beyond the minimum scope
+[`specs/9000-reference-implementation.md`](../../specs/9000-reference-implementation.md)
+Section 4.1 requires; the sections below state exactly what is and is
+not covered.
 
 This is real, tested code — not pseudocode. It computes actual VID
 and signature values; nothing here uses the placeholder
