@@ -76,7 +76,8 @@ docs/        The public website (GitHub Pages), including an
              in-browser verifier that runs the real ONP-1003
              pipeline on an editable signed object
 examples/    Standalone example News Objects (not yet populated)
-diagrams/    Source files for diagrams used across specs (not yet populated)
+diagrams/    Hand-drawn SVG diagrams (no build step, no external
+             fonts): layer-model, verification-pipeline, version-chain
 sdk/         Reference SDK / client libraries
   reference-impl/  A minimal, working TypeScript implementation of
                     ONP-1000-1003 (envelope, identifiers,

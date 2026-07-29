@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 520" width="880" height="520" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">ONP layer model</title>
+  <desc id="d">The five specification series. Core alone decides whether an object is authentic; Companion and Extension layers add meaning but can never change that verdict.</desc>
+
+  <rect width="880" height="520" fill="#f6f7f9"/>
+
+  <text x="40" y="46" font-size="13" font-weight="600" letter-spacing="1.6" fill="#165eb4">ONP-0001 · LAYER MODEL</text>
+  <line x1="40" y1="60" x2="840" y2="60" stroke="#dde3ea"/>
+
+  <!-- Foundation -->
+  <rect x="40" y="86" width="560" height="62" fill="#ffffff" stroke="#dde3ea"/>
+  <text x="60" y="112" font-size="15" font-weight="600" fill="#092137">Foundation</text>
+  <text x="60" y="132" font-size="12.5" fill="#56687e">Mission, architecture, terminology, trust, security, lifecycle, versioning</text>
+  <text x="620" y="120" font-size="12.5" font-family="ui-monospace, Menlo, monospace" fill="#165eb4">0000–0007</text>
+  <text x="740" y="120" font-size="12" fill="#8a9bad">sets the rules</text>
+
+  <!-- Core -->
+  <rect x="40" y="164" width="560" height="86" fill="#092137"/>
+  <text x="60" y="194" font-size="16" font-weight="600" fill="#ffffff">Core</text>
+  <text x="60" y="215" font-size="12.5" fill="#a8bed6">Envelope · identifiers · canonical bytes · signatures · validation · retrieval</text>
+  <text x="60" y="234" font-size="12.5" font-weight="600" fill="#4d9af0">Decides authenticity. Nothing above may overturn it.</text>
+  <text x="620" y="205" font-size="12.5" font-family="ui-monospace, Menlo, monospace" fill="#165eb4">1000–1006</text>
+  <text x="740" y="205" font-size="12" fill="#8a9bad">answers yes / no</text>
+
+  <!-- Companion + Extension side by side -->
+  <rect x="40" y="266" width="272" height="76" fill="#ffffff" stroke="#dde3ea"/>
+  <text x="60" y="292" font-size="15" font-weight="600" fill="#092137">Companion</text>
+  <text x="60" y="312" font-size="12.5" fill="#56687e">Article, media, identity, rights,</text>
+  <text x="60" y="329" font-size="12.5" fill="#56687e">payments, sources, corrections</text>
+
+  <rect x="328" y="266" width="272" height="76" fill="#ffffff" stroke="#dde3ea"/>
+  <text x="348" y="292" font-size="15" font-weight="600" fill="#092137">Extension</text>
+  <text x="348" y="312" font-size="12.5" fill="#56687e">AI metadata, search, analytics,</text>
+  <text x="348" y="329" font-size="12.5" fill="#56687e">geolocation, accessibility</text>
+
+  <text x="620" y="300" font-size="12.5" font-family="ui-monospace, Menlo, monospace" fill="#165eb4">2000–2800</text>
+  <text x="620" y="320" font-size="12.5" font-family="ui-monospace, Menlo, monospace" fill="#165eb4">3000–3500</text>
+  <text x="740" y="310" font-size="12" fill="#8a9bad">add meaning</text>
+
+  <!-- Reference -->
+  <rect x="40" y="358" width="560" height="58" fill="#ffffff" stroke="#dde3ea" stroke-dasharray="4 3"/>
+  <text x="60" y="382" font-size="15" font-weight="600" fill="#092137">Reference</text>
+  <text x="60" y="401" font-size="12.5" fill="#56687e">Implementation, best practices, security checklist, performance, migration</text>
+  <text x="620" y="392" font-size="12.5" font-family="ui-monospace, Menlo, monospace" fill="#165eb4">9000–9005</text>
+  <text x="740" y="392" font-size="12" fill="#8a9bad">non-normative</text>
+
+  <!-- the invariant -->
+  <line x1="40" y1="446" x2="840" y2="446" stroke="#dde3ea"/>
+  <text x="40" y="472" font-size="13" font-weight="600" fill="#092137">The vertical invariant</text>
+  <text x="40" y="493" font-size="12.5" fill="#56687e">A Node implementing Core alone can verify any object from any publisher. Companion and Extension results are reported</text>
+  <text x="40" y="510" font-size="12.5" fill="#56687e">separately: “unknown” is a valid answer, and never means “invalid”.</text>
+</svg>

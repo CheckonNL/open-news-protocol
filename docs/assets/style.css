@@ -65,10 +65,19 @@ a:hover { color: var(--navy); }
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  min-height: 68px;
+  min-height: 78px;
 }
 .brand { display: flex; align-items: center; gap: 0.7rem; text-decoration: none; color: inherit; }
-.brand img { height: 30px; width: auto; display: block; }
+.brand img { width: auto; display: block; }
+/* Wide screens get the full horizontal lockup (mark + wordmark);
+   narrow ones get the mark alone, because the wordmark alone is nine
+   times wider than tall and would crowd out the navigation. */
+.brand .lockup { height: 46px; }
+.brand .mark { height: 40px; display: none; }
+@media (max-width: 900px) {
+  .brand .lockup { display: none; }
+  .brand .mark { display: block; }
+}
 .brand b {
   font-family: var(--mono);
   font-weight: 600;
@@ -86,8 +95,8 @@ a:hover { color: var(--navy); }
 .masthead nav a:hover { color: var(--navy); }
 
 @media (max-width: 720px) {
-  .masthead .wrap { min-height: 56px; gap: 1rem; }
-  .brand img { height: 24px; }
+  .masthead .wrap { min-height: 62px; gap: 1rem; }
+  .brand .mark { height: 36px; }
   /* Nav becomes a single scrollable strip instead of wrapping into
      three rows and pushing the page down. */
   .masthead nav {
@@ -406,7 +415,7 @@ footer.site .colophon { margin-top: 2.6rem; padding-top: 1.4rem; border-top: 1px
 .prose blockquote { margin: 0 0 1.2rem; padding-left: 1.1rem; border-left: 2px solid var(--rule); color: var(--muted); }
 .prose hr { border: 0; border-top: 1px solid var(--rule); margin: 2.4rem 0; }
 
-.toc { position: sticky; top: 92px; font-size: 0.87rem; }
+.toc { position: sticky; top: 102px; font-size: 0.87rem; }
 .toc h4 { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 0.8rem; font-weight: 500; }
 .toc ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45rem; border-left: 1px solid var(--rule); }
 .toc a { color: var(--muted); text-decoration: none; display: block; padding-left: 0.9rem; margin-left: -1px; border-left: 1px solid transparent; line-height: 1.35; }
@@ -435,4 +444,29 @@ footer.site .colophon { margin-top: 2.6rem; padding-top: 1.4rem; border-top: 1px
 @media (max-width: 560px) {
   .spec-list a { grid-template-columns: 5rem 1fr; }
   .spec-list .ver { grid-column: 2; }
+}
+
+
+/* ---------- diagrams ---------- */
+
+/* Below roughly 700px a full-width diagram scales its labels down to
+   about five pixels, so the figure scrolls instead of shrinking. */
+figure.diagram { margin: 2.6rem 0 0; }
+figure.diagram .frame {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--rule);
+  background: var(--white);
+}
+figure.diagram img { display: block; width: 100%; min-width: 660px; height: auto; }
+figure.diagram figcaption {
+  margin-top: .7rem;
+  font-size: .85rem;
+  color: var(--muted);
+}
+@media (max-width: 700px) {
+  figure.diagram figcaption::after {
+    content: " — scroll the diagram sideways to read it.";
+    color: var(--signal);
+  }
 }

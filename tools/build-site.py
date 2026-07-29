@@ -50,7 +50,10 @@ PAGE = """<!DOCTYPE html>
 <body>
 <header class="masthead">
   <div class="wrap">
-    <a class="brand" href="../"><img src="../assets/onp-mark.png" alt="Open News Protocol"></a>
+    <a class="brand" href="../">
+      <img class="lockup" src="../assets/onp-lockup.png" alt="Open News Protocol">
+      <img class="mark" src="../assets/onp-mark.png" alt="">
+    </a>
     <nav>
       <a href="../#verify">Verify</a>
       <a href="../#how">How it works</a>

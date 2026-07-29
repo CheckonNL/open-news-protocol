@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 560" width="880" height="560" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">ONP verification pipeline</title>
+  <desc id="d">From an identifier to a validation result: derive the object URL, retrieve the bytes, then run four checks — structure, fingerprint, publisher key, signature.</desc>
+
+  <rect width="880" height="560" fill="#f6f7f9"/>
+
+  <text x="40" y="46" font-size="13" font-weight="600" letter-spacing="1.6" fill="#165eb4">ONP-1006 + ONP-1003 · VERIFICATION</text>
+  <line x1="40" y1="60" x2="840" y2="60" stroke="#dde3ea"/>
+
+  <!-- step 1: the identifier -->
+  <text x="40" y="92" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#8a9bad">01 · IDENTIFY</text>
+  <rect x="40" y="102" width="800" height="46" fill="#ffffff" stroke="#dde3ea"/>
+  <text x="58" y="131" font-size="13.5" font-family="ui-monospace, Menlo, monospace" fill="#092137">onp:oid:<tspan fill="#165eb4">regiopurmerend.nl</tspan>:wheermolen-bommenonderzoek</text>
+  <text x="640" y="131" font-size="12" fill="#8a9bad">domain is inside the name</text>
+
+  <path d="M440 148 L440 172" stroke="#8a9bad" stroke-width="1.2" marker-end="url(#a)"/>
+
+  <!-- step 2: the address -->
+  <text x="40" y="196" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#8a9bad">02 · RETRIEVE</text>
+  <rect x="40" y="206" width="800" height="46" fill="#ffffff" stroke="#dde3ea"/>
+  <text x="58" y="235" font-size="12.5" font-family="ui-monospace, Menlo, monospace" fill="#092137">https://regiopurmerend.nl/.well-known/onp/objects/wheermolen-bommenonderzoek</text>
+  <text x="700" y="235" font-size="12" fill="#8a9bad">derived, not looked up</text>
+
+  <path d="M440 252 L440 276" stroke="#8a9bad" stroke-width="1.2" marker-end="url(#a)"/>
+
+  <!-- step 3: the four checks -->
+  <text x="40" y="300" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#8a9bad">03 · CHECK THE BYTES</text>
+  <rect x="40" y="310" width="800" height="126" fill="#092137"/>
+
+  <g font-size="12.5">
+    <rect x="58" y="328" width="182" height="90" fill="#0d2b45"/>
+    <text x="74" y="352" font-size="11" font-family="ui-monospace, Menlo, monospace" fill="#4d9af0">ONP-1000</text>
+    <text x="74" y="374" font-size="13.5" font-weight="600" fill="#ffffff">Structure</text>
+    <text x="74" y="395" fill="#a8bed6">seven envelope</text>
+    <text x="74" y="411" fill="#a8bed6">fields present</text>
+
+    <rect x="252" y="328" width="182" height="90" fill="#0d2b45"/>
+    <text x="268" y="352" font-size="11" font-family="ui-monospace, Menlo, monospace" fill="#4d9af0">ONP-1001</text>
+    <text x="268" y="374" font-size="13.5" font-weight="600" fill="#ffffff">Fingerprint</text>
+    <text x="268" y="395" fill="#a8bed6">recompute the VID</text>
+    <text x="268" y="411" fill="#a8bed6">from the bytes</text>
+
+    <rect x="446" y="328" width="182" height="90" fill="#0d2b45"/>
+    <text x="462" y="352" font-size="11" font-family="ui-monospace, Menlo, monospace" fill="#4d9af0">ONP-0004</text>
+    <text x="462" y="374" font-size="13.5" font-weight="600" fill="#ffffff">Publisher key</text>
+    <text x="462" y="395" fill="#a8bed6">authorised in</text>
+    <text x="462" y="411" fill="#a8bed6">publisher.json?</text>
+
+    <rect x="640" y="328" width="182" height="90" fill="#0d2b45"/>
+    <text x="656" y="352" font-size="11" font-family="ui-monospace, Menlo, monospace" fill="#4d9af0">ONP-1003</text>
+    <text x="656" y="374" font-size="13.5" font-weight="600" fill="#ffffff">Signature</text>
+    <text x="656" y="395" fill="#a8bed6">Ed25519 over the</text>
+    <text x="656" y="411" fill="#a8bed6">canonical bytes</text>
+  </g>
+
+  <path d="M440 436 L440 460" stroke="#8a9bad" stroke-width="1.2" marker-end="url(#a)"/>
+
+  <!-- outcome -->
+  <rect x="40" y="470" width="392" height="54" fill="#ffffff" stroke="#0b7a55" stroke-width="1.5"/>
+  <text x="58" y="494" font-size="13.5" font-weight="600" fill="#0b7a55">core_authenticated: true</text>
+  <text x="58" y="514" font-size="12" fill="#56687e">Signed by that publisher, unchanged since</text>
+
+  <rect x="448" y="470" width="392" height="54" fill="#ffffff" stroke="#b23a32" stroke-width="1.5"/>
+  <text x="466" y="494" font-size="13.5" font-weight="600" fill="#b23a32">core_authenticated: false</text>
+  <text x="466" y="514" font-size="12" fill="#56687e">Any single check failing is terminal — nothing further is reported</text>
+
+  <text x="40" y="548" font-size="12" fill="#8a9bad">Retrieval grants no trust: bytes from the publisher's own server are checked exactly as strictly as bytes from anywhere else.</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#8a9bad"/>
+    </marker>
+  </defs>
+</svg>

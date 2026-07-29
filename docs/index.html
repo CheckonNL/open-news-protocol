@@ -20,7 +20,8 @@
 <header class="masthead">
   <div class="wrap">
     <a class="brand" href="./">
-      <img src="assets/onp-mark.png" alt="Open News Protocol">
+      <img class="lockup" src="assets/onp-lockup.png" alt="Open News Protocol">
+      <img class="mark" src="assets/onp-mark.png" alt="">
     </a>
     <nav>
       <a href="#verify">Verify</a>
@@ -112,7 +113,7 @@
       <div class="card">
         <span class="tag">Trusted news</span>
         <h3>Origin travels with the text</h3>
-        <p>Every version is signed by the publisher's own key. Verification needs the bytes and nothing else — no login, no API, no permission.</p>
+        <p>Every version carries its own signature. Checking one takes the bytes and the publisher's public key file — no login, no API, no permission.</p>
       </div>
       <div class="card">
         <span class="tag">Open distribution</span>
@@ -122,12 +123,12 @@
       <div class="card">
         <span class="tag">Rights</span>
         <h3>Terms stated in the work</h3>
-        <p>Reuse and AI-training terms are declared inside the signed object, so they cannot be quietly stripped in transit.</p>
+        <p>Reuse and AI-training terms are signed along with the article, so removing them breaks the signature instead of passing unnoticed.</p>
       </div>
       <div class="card">
         <span class="tag">Fair value</span>
         <h3>Payment terms attach to the article</h3>
-        <p>Compensation signals travel with the piece rather than living in a contract that only two parties can see.</p>
+        <p>Compensation signals are bound to the piece by signature rather than living in a contract only two parties can see.</p>
       </div>
     </div>
   </div>
@@ -185,6 +186,12 @@
         </div>
       </div>
     </div>
+    <figure class="diagram">
+      <div class="frame">
+        <img src="assets/verification-pipeline.svg" alt="From identifier to validation result: derive the object URL, retrieve the bytes, then run four checks — structure, fingerprint, publisher key, signature.">
+      </div>
+      <figcaption>The same four checks the panel above runs as you type.</figcaption>
+    </figure>
     <p class="note" style="margin-top:2rem">
       Retrieval grants no trust of its own. An object fetched straight from the publisher's
       own server is checked exactly as strictly as one found on a stranger's hard drive.
@@ -215,6 +222,12 @@
         <tr><td class="range">9000–9005</td><td>Reference</td><td class="what">Reference implementation, best practices, security checklist, performance, migration, external standards</td></tr>
       </tbody>
     </table>
+    <figure class="diagram">
+      <div class="frame">
+        <img src="assets/layer-model.svg" alt="The five specification series. Core alone decides whether an object is authentic; Companion and Extension layers add meaning but never change that verdict.">
+      </div>
+      <figcaption>Core decides authenticity; every layer above it adds meaning without touching that verdict.</figcaption>
+    </figure>
     <div class="facts">
       <div class="fact"><b>36</b><span>specifications</span></div>
       <div class="fact"><b>2</b><span>independent implementations</span></div>
@@ -271,7 +284,7 @@
   <div class="wrap">
     <div class="cols">
       <div>
-        <img src="assets/onp-logo.png" alt="Open News Protocol" style="width:210px;height:auto;filter:brightness(0) invert(1);opacity:.92">
+        <img src="assets/onp-logo-light.png" alt="Open News Protocol" style="width:250px;height:auto;max-width:100%">
         <p style="margin:1rem 0 0;max-width:34ch">
           An open standard for news that carries its own proof. Started in Purmerend, the
           Netherlands, and open to anyone.
