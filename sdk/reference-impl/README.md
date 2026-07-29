@@ -24,9 +24,19 @@ itself uses for illustration.
   package (an RFC 8785 reference implementation, written by one of the
   RFC's own authors — reuse over reinvention, per Principle P3).
 - `src/identifiers.ts` — OID construction and VID computation
-  (ONP-1001).
-- `src/signatures.ts` — Ed25519 signing and verification (ONP-1003),
-  using Node's native `node:crypto`.
+  (ONP-1001), hashing with [`@noble/hashes`](https://www.npmjs.com/package/@noble/hashes)
+  and base64url via [`@scure/base`](https://www.npmjs.com/package/@scure/base).
+- `src/algorithms.ts` (+ `src/algorithms/`) — a signature-algorithm
+  provider registry keyed by the algorithm-id in `onp:sig:<id>:...`.
+  Ed25519 (via [`@noble/curves`](https://www.npmjs.com/package/@noble/curves))
+  is the required-baseline provider; adding ECDSA-P256 (ONP-0005
+  Appendix A lists it `recommended`) or a post-quantum algorithm is one
+  provider file plus a `registerSignatureAlgorithm` call — no change to
+  signing, verification, or validation.
+- `src/signatures.ts` — Ed25519 signing and verification (ONP-1003)
+  over the provider registry. Keys are raw bytes and the crypto is
+  pure-JS (no `node:crypto`), so the whole SDK runs unchanged on Node,
+  browsers, Deno, edge runtimes, and EUDI-style wallet contexts.
 - `src/validate.ts` — the full Core validation pipeline (ONP-1003
   Section 6.1): structural check → VID integrity → algorithm check →
   signature verification, each step terminal on failure.

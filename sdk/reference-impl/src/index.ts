@@ -1,5 +1,6 @@
 export * from "./preimage.js";
 export * from "./identifiers.js";
+export * from "./algorithms.js";
 export * from "./signatures.js";
 export * from "./create.js";
 export * from "./envelope.js";

@@ -10,7 +10,6 @@
 
 import {
   generateKeypair,
-  publicKeyFromRaw,
   signObject,
   validateCore,
   buildOid,
@@ -22,8 +21,9 @@ import {
 function main() {
   // 1. Generate a keypair (in production, this is done once and the
   //    public key published at .well-known/onp/publisher.json, ONP-0004).
-  const { privateKey, publicKeyRaw } = generateKeypair();
-  const publicKey = publicKeyFromRaw(publicKeyRaw);
+  //    Keys are raw bytes, so the same code runs in Node, browser, or
+  //    an EUDI-style wallet context.
+  const { privateKey, publicKey } = generateKeypair();
 
   console.log("=== Publisher Key Record excerpt (ONP-0004 Section 5.1) ===");
   console.log(
@@ -34,7 +34,7 @@ function main() {
           {
             key_id: "onp:key:2026-07-01",
             algorithm: "Ed25519",
-            public_key: base64url(publicKeyRaw),
+            public_key: base64url(publicKey),
           },
         ],
       },

@@ -34,6 +34,9 @@
   "author": "Open News Protocol Working Group",
   "license": "Apache-2.0",
   "dependencies": {
+    "@noble/curves": "^1.6.0",
+    "@noble/hashes": "^1.5.0",
+    "@scure/base": "^1.1.9",
     "canonicalize": "^3.0.0"
   },
   "devDependencies": {

@@ -11,37 +11,33 @@
  */
 
 import { writeFileSync } from "node:fs";
-import { generateKeyPairSync } from "node:crypto";
 import {
+  generateKeypair,
   computeVid,
   signEnvelope,
   buildOid,
   base64url,
-  publicKeyFromRaw,
   validateCore,
   type UnsignedEnvelope,
 } from "../src/index.js";
 
 /**
  * Generates a fresh Ed25519 keypair to serve as the FIXED, published
- * test keypair for this vector set. Its raw bytes are printed so they
- * can be committed to the repository as the canonical test key going
+ * test keypair for this vector set. Raw key bytes (Uint8Array) are
+ * printed so they can be committed as the canonical test key going
  * forward — this script is meant to be run once to establish the
  * fixture, not on every build.
  */
 function fixedTestKeypair() {
-  const { publicKey, privateKey } = generateKeyPairSync("ed25519");
-  const rawPub = (publicKey.export({ type: "spki", format: "der" }) as Buffer).subarray(-32);
-  const rawPriv = privateKey.export({ type: "pkcs8", format: "der" }) as Buffer;
-  return { publicKey, privateKey, rawPub, rawPriv };
+  return generateKeypair();
 }
 
 function main() {
-  const { privateKey, publicKey, rawPub, rawPriv } = fixedTestKeypair();
+  const { privateKey, publicKey } = fixedTestKeypair();
 
   console.log("=== PUBLISHED TEST KEYPAIR (not production, per ONP-9000 5.1) ===");
-  console.log("public_key (base64url):", base64url(rawPub));
-  console.log("private_key_pkcs8 (base64, for regenerating vectors only):", rawPriv.toString("base64"));
+  console.log("public_key (base64url):", base64url(publicKey));
+  console.log("private_key (base64url, for regenerating vectors only):", base64url(privateKey));
 
   const vectors: unknown[] = [];
 
@@ -62,7 +58,7 @@ function main() {
     description: "Minimal Viable Object, per ONP-1000 Section 4.2",
     test_keypair: {
       algorithm: "ed25519",
-      public_key: base64url(rawPub),
+      public_key: base64url(publicKey),
       note: "Published test key only — see PUBLISHED TEST KEYPAIR above",
     },
     input_envelope: mvo,
@@ -90,7 +86,7 @@ function main() {
     description: "A Version with non-null supersedes (ONP-0006)",
     test_keypair: {
       algorithm: "ed25519",
-      public_key: base64url(rawPub),
+      public_key: base64url(publicKey),
       note: "Published test key only",
     },
     input_envelope: v2WithSupersedes,
@@ -112,7 +108,7 @@ function main() {
     description: "Structurally invalid: missing REQUIRED signed_at field",
     test_keypair: {
       algorithm: "ed25519",
-      public_key: base64url(rawPub),
+      public_key: base64url(publicKey),
       note: "Published test key only",
     },
     input_envelope: invalid,
@@ -122,9 +118,8 @@ function main() {
   });
 
   // --- Self-check: verify vectors 1 and 2 actually validate ---
-  const pubKeyObj = publicKeyFromRaw(rawPub);
-  const r1 = validateCore(mvoEnvelope as any, pubKeyObj);
-  const r2 = validateCore(v2Envelope as any, pubKeyObj);
+  const r1 = validateCore(mvoEnvelope as any, publicKey);
+  const r2 = validateCore(v2Envelope as any, publicKey);
   console.log("\nSelf-check vector 1:", r1);
   console.log("Self-check vector 2:", r2);
   if (!r1.core_authenticated || !r2.core_authenticated) {

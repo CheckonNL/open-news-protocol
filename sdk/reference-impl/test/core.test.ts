@@ -2,19 +2,16 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   generateKeypair,
-  publicKeyFromRaw,
+  signObject,
   computeVid,
-  signEnvelope,
   validateCore,
   buildOid,
   isMinimalViableObject,
   type UnsignedEnvelope,
-  type NewsObjectEnvelope,
 } from "../src/index.js";
 
 function makeSignedObject() {
-  const { privateKey, publicKeyRaw } = generateKeypair();
-  const publicKey = publicKeyFromRaw(publicKeyRaw);
+  const { privateKey, publicKey } = generateKeypair();
   const unsigned: UnsignedEnvelope = {
     oid: buildOid("example.onp.dev", "test-article-01"),
     publisher: { domain: "example.onp.dev", key_id: "onp:key:test" },
@@ -22,10 +19,7 @@ function makeSignedObject() {
     content_type: "onp:companion:article",
     content: { headline: "Test", body: "Test body." },
   };
-  const vid = computeVid(unsigned);
-  const withVid: Record<string, unknown> = { ...unsigned, vid };
-  const signature = signEnvelope(withVid, privateKey);
-  const envelope = { ...withVid, signature } as unknown as NewsObjectEnvelope;
+  const envelope = signObject(unsigned, privateKey);
   return { envelope, publicKey, privateKey };
 }
 
@@ -64,8 +58,7 @@ test("ONP-1001 Section 6.1: oid domain mismatch is rejected", () => {
 
 test("ONP-1004 Section 4.5: wrong public key is rejected at signature-invalid", () => {
   const { envelope } = makeSignedObject();
-  const { publicKeyRaw: wrongRaw } = generateKeypair();
-  const wrongPublicKey = publicKeyFromRaw(wrongRaw);
+  const { publicKey: wrongPublicKey } = generateKeypair();
   const result = validateCore(envelope, wrongPublicKey);
   assert.equal(result.core_authenticated, false);
   assert.equal(result.failure_step, "signature-invalid");

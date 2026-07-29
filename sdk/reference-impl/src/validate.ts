@@ -10,10 +10,10 @@
  * A failure at any step is terminal; later steps are not evaluated.
  */
 
-import type { KeyObject } from "node:crypto";
 import { isMinimalViableObject, type NewsObjectEnvelope } from "./envelope.js";
 import { parseOidDomain, verifyVid } from "./identifiers.js";
 import { verifySignature, parseSignature } from "./signatures.js";
+import { getSignatureAlgorithm } from "./algorithms.js";
 
 export type ValidationFailureStep =
   | "structural"
@@ -27,11 +27,18 @@ export interface CoreValidationResult {
   failure_step: ValidationFailureStep | null;
 }
 
-const RECOGNIZED_ALGORITHMS = new Set(["ed25519"]); // Algorithm Registry, ONP-0005 Appendix A
+// The Algorithm Registry (ONP-0005 Appendix A) is the set of signature
+// algorithms this Node recognizes. It is exactly the set of registered
+// providers, so recognized == implemented and adding ECDSA-P256 or a
+// post-quantum provider extends both at once. `isRecognizedAlgorithm`
+// is the single check both validation pipelines use.
+function isRecognizedAlgorithm(algorithmId: string): boolean {
+  return getSignatureAlgorithm(algorithmId) !== undefined;
+}
 
 export function validateCore(
   envelope: NewsObjectEnvelope,
-  publicKey: KeyObject
+  publicKey: Uint8Array
 ): CoreValidationResult {
   // STEP 1 — ONP-1000 Section 6.1: structural check.
   if (!isMinimalViableObject(envelope)) {
@@ -49,7 +56,7 @@ export function validateCore(
 
   // STEP 3 — ONP-1003 Section 4.5: algorithm check + signature verification.
   const { algorithmId } = parseSignature(envelope.signature);
-  if (!RECOGNIZED_ALGORITHMS.has(algorithmId)) {
+  if (!isRecognizedAlgorithm(algorithmId)) {
     return { core_authenticated: false, failure_step: "unrecognized-algorithm" };
   }
   if (!verifySignature(envelope, publicKey)) {
@@ -65,7 +72,6 @@ export function validateCore(
 // ---------------------------------------------------------------------------
 
 import { TrustAnchorResolver, type ResolutionResult } from "./trust.js";
-import { publicKeyFromRaw } from "./signatures.js";
 import { base64urlDecode } from "./identifiers.js";
 
 export type TrustValidationFailureStep =
@@ -123,7 +129,7 @@ export async function validateCoreWithTrust(
 
   // STEP 3a — Algorithm Registry (fail closed on unrecognized).
   const { algorithmId } = parseSignature(envelope.signature);
-  if (!RECOGNIZED_ALGORITHMS.has(algorithmId)) {
+  if (!isRecognizedAlgorithm(algorithmId)) {
     return fail("unrecognized-algorithm", null);
   }
 
@@ -143,9 +149,7 @@ export async function validateCoreWithTrust(
   }
 
   // STEP 3d — cryptographic verification with the resolved key.
-  const publicKey = publicKeyFromRaw(
-    base64urlDecode(resolution.key.public_key)
-  );
+  const publicKey = base64urlDecode(resolution.key.public_key);
   if (!verifySignature(envelope, publicKey)) {
     return fail("signature-invalid", resolution);
   }

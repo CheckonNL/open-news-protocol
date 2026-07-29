@@ -31,7 +31,7 @@ function makeWorld() {
       {
         key_id: CURRENT_KEY_ID,
         algorithm: "Ed25519",
-        public_key: base64url(current.publicKeyRaw),
+        public_key: base64url(current.publicKey),
         valid_from: "2026-07-01T00:00:00Z",
       },
     ],
@@ -39,7 +39,7 @@ function makeWorld() {
       {
         key_id: PREVIOUS_KEY_ID,
         algorithm: "Ed25519",
-        public_key: base64url(previous.publicKeyRaw),
+        public_key: base64url(previous.publicKey),
         valid_from: "2025-01-15T00:00:00Z",
         valid_until: "2026-07-01T00:00:00Z",
         revoked_at: null,
@@ -240,7 +240,7 @@ test("ONP-0004 Section 6.2: key substitution in the record still fails signature
   // substituted key.
   const { record, current, makeObject } = makeWorld();
   const substitute = generateKeypair();
-  record.current_keys[0].public_key = base64url(substitute.publicKeyRaw);
+  record.current_keys[0].public_key = base64url(substitute.publicKey);
   const envelope = makeObject(
     CURRENT_KEY_ID, current.privateKey, "2026-07-28T00:00:00Z"
   );

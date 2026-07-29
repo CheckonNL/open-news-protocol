@@ -2,9 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   generateKeypair,
-  publicKeyFromRaw,
-  computeVid,
-  signEnvelope,
+  signObject,
   buildOid,
   toSchemaOrgNewsArticle,
   toRssItem,
@@ -30,10 +28,7 @@ function makeArticle(): NewsObjectEnvelope {
     },
     "onp:metadata": { language: "nl-NL" },
   } as UnsignedEnvelope;
-  const vid = computeVid(unsigned);
-  const withVid: Record<string, unknown> = { ...unsigned, vid };
-  const signature = signEnvelope(withVid, privateKey);
-  return { ...withVid, signature } as unknown as NewsObjectEnvelope;
+  return signObject(unsigned, privateKey);
 }
 
 test("ONP-9005 Section 4.1: schema.org export maps headline, publisher, dates", () => {

@@ -31,7 +31,7 @@ function makeWorld() {
       {
         key_id: KEY_ID,
         algorithm: "Ed25519",
-        public_key: base64url(kp.publicKeyRaw),
+        public_key: base64url(kp.publicKey),
         valid_from: "2026-01-01T00:00:00Z",
       },
     ],

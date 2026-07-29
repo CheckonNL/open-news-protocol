@@ -5,7 +5,8 @@
  * VID:  onp:vid:<hash-algorithm-id>:<digest>  (Section 4.3)
  */
 
-import { createHash } from "node:crypto";
+import { sha256 } from "@noble/hashes/sha2";
+import { base64urlnopad } from "@scure/base";
 import { buildPreImage, preImageBytes } from "./preimage.js";
 
 const LOCAL_ID_RE = /^[a-z0-9-]{1,128}$/;
@@ -37,7 +38,7 @@ export function parseOidDomain(oid: string): { domain: string; localId: string }
  */
 export function computeVid(envelope: Record<string, unknown>): string {
   const preImage = buildPreImage(envelope, "vid-preimage");
-  const digest = createHash("sha256").update(preImageBytes(preImage)).digest();
+  const digest = sha256(preImageBytes(preImage));
   return `onp:vid:sha-256:${base64url(digest)}`;
 }
 
@@ -54,15 +55,10 @@ export function parseVid(vid: string): { algorithmId: string; digest: string } {
   return { algorithmId: m[1], digest: m[2] };
 }
 
-export function base64url(buf: Buffer | Uint8Array): string {
-  return Buffer.from(buf)
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+export function base64url(buf: Uint8Array): string {
+  return base64urlnopad.encode(buf);
 }
 
-export function base64urlDecode(s: string): Buffer {
-  const pad = s.length % 4 === 0 ? "" : "=".repeat(4 - (s.length % 4));
-  return Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/") + pad, "base64");
+export function base64urlDecode(s: string): Uint8Array {
+  return base64urlnopad.decode(s);
 }

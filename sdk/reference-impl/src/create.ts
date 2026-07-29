@@ -16,7 +16,6 @@
  * complete round trip.
  */
 
-import type { KeyObject } from "node:crypto";
 import { computeVid } from "./identifiers.js";
 import { signEnvelope } from "./signatures.js";
 import type { UnsignedEnvelope, NewsObjectEnvelope } from "./envelope.js";
@@ -33,7 +32,7 @@ import type { UnsignedEnvelope, NewsObjectEnvelope } from "./envelope.js";
  */
 export function signObject(
   unsigned: UnsignedEnvelope,
-  privateKey: KeyObject
+  privateKey: Uint8Array
 ): NewsObjectEnvelope {
   const vid = computeVid(unsigned);
   const withVid = { ...unsigned, vid };

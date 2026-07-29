@@ -19,7 +19,7 @@
  * TLS stack — this module never disables or overrides it.
  */
 
-import { createHash } from "node:crypto";
+import { sha256 } from "@noble/hashes/sha2";
 import canonicalize from "canonicalize";
 import { base64url } from "./identifiers.js";
 
@@ -213,9 +213,7 @@ export function keyRecordFingerprint(record: PublisherKeyRecord): string {
   if (canonical === undefined) {
     throw new Error("Canonicalization of Publisher Key Record failed");
   }
-  const digest = createHash("sha256")
-    .update(new TextEncoder().encode(canonical))
-    .digest();
+  const digest = sha256(new TextEncoder().encode(canonical));
   return `sha-256:${base64url(digest)}`;
 }
 
