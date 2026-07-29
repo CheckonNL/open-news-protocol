@@ -3,13 +3,27 @@
   "version": "0.3.0",
   "description": "ONP Reference Implementation: ONP-1000 through ONP-1004 (envelope, identifiers, serialization, signatures, multi-level validation), ONP-0004 Trust Anchor resolution, and ONP-1006 Retrieval, per ONP-9000.",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "files": [
+    "dist/src"
+  ],
+  "sideEffects": false,
   "scripts": {
     "build": "tsc",
     "test": "node --test dist/test/*.test.js",
     "example": "npm run build && node dist/examples/fusie-onderzoek.js",
-    "bridges": "npm run build && node dist/examples/export-bridges.js"
+    "bridges": "npm run build && node dist/examples/export-bridges.js",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [
     "onp",

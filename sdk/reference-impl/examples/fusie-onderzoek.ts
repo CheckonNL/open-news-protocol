@@ -11,8 +11,7 @@
 import {
   generateKeypair,
   publicKeyFromRaw,
-  computeVid,
-  signEnvelope,
+  signObject,
   validateCore,
   buildOid,
   base64url,
@@ -60,14 +59,9 @@ function main() {
     },
   };
 
-  // 3. Compute vid (ONP-1001 Section 4.3).
-  const vid = computeVid(unsigned);
-
-  // 4. Sign (ONP-1003 Section 4.4).
-  const withVid: Record<string, unknown> = { ...unsigned, vid };
-  const signature = signEnvelope(withVid, privateKey);
-
-  const envelope = { ...withVid, signature } as unknown as NewsObjectEnvelope;
+  // 3-4. Compute the VID (ONP-1001 Section 4.3) and sign (ONP-1003
+  //      Section 4.4) in one call.
+  const envelope = signObject(unsigned, privateKey);
 
   console.log("\n=== Complete, REALLY-signed News Object ===");
   console.log(JSON.stringify(envelope, null, 2));

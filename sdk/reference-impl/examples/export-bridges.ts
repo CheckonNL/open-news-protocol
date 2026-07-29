@@ -1,13 +1,11 @@
 import {
   generateKeypair,
-  computeVid,
-  signEnvelope,
+  signObject,
   buildOid,
   toSchemaOrgNewsArticle,
   toRssItem,
   rssItemToXml,
   type UnsignedEnvelope,
-  type NewsObjectEnvelope,
 } from "../src/index.js";
 
 function main() {
@@ -27,10 +25,7 @@ function main() {
     },
     "onp:metadata": { language: "nl-NL" },
   } as UnsignedEnvelope;
-  const vid = computeVid(unsigned);
-  const withVid: Record<string, unknown> = { ...unsigned, vid };
-  const signature = signEnvelope(withVid, privateKey);
-  const envelope = { ...withVid, signature } as unknown as NewsObjectEnvelope;
+  const envelope = signObject(unsigned, privateKey);
 
   console.log("=== ONP-9005 Section 4.1: schema.org/NewsArticle export ===");
   console.log(JSON.stringify(toSchemaOrgNewsArticle(envelope), null, 2));

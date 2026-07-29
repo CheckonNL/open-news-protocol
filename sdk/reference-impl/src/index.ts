@@ -1,6 +1,7 @@
 export * from "./preimage.js";
 export * from "./identifiers.js";
 export * from "./signatures.js";
+export * from "./create.js";
 export * from "./envelope.js";
 export * from "./validate.js";
 export * from "./export-schemaorg.js";
