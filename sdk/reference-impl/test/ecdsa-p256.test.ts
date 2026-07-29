@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { p256 } from "@noble/curves/p256";
 import {
   generateKeypair,
   signObject,
@@ -60,6 +61,19 @@ test("ECDSA-P256: wrong public key is rejected at signature-invalid", () => {
   const { publicKey: wrong } = generateKeypair("ecdsa-p256");
   const envelope = signObject(unsignedObject(), privateKey, "ecdsa-p256");
   const result = validateCore(envelope, wrong);
+  assert.equal(result.core_authenticated, false);
+  assert.equal(result.failure_step, "signature-invalid");
+});
+
+test("ECDSA-P256: an uncompressed (65-byte) public key is rejected (ONP-1003 Appendix C.2)", () => {
+  const { privateKey } = generateKeypair("ecdsa-p256");
+  const envelope = signObject(unsignedObject(), privateKey, "ecdsa-p256");
+  // The 65-byte uncompressed SEC1 point is a valid key mathematically,
+  // but Appendix C.2 forbids it in `public_key`; the provider must
+  // reject it on length rather than verify against it.
+  const uncompressed = p256.getPublicKey(privateKey, false);
+  assert.equal(uncompressed.length, 65);
+  const result = validateCore(envelope, uncompressed);
   assert.equal(result.core_authenticated, false);
   assert.equal(result.failure_step, "signature-invalid");
 });

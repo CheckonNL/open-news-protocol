@@ -34,8 +34,8 @@
     <h1 id="top">Open News Protocol (ONP): Digital Signatures</h1>
     <div class="doc-meta">
       <span class="status">Working Draft</span>
-      <span>Version 0.1.1</span>
-      <span>Updated 2026-07-28</span>
+      <span>Version 0.2.0</span>
+      <span>Updated 2026-07-29</span>
     </div>
     <h1 id="abstract">Abstract</h1>
 <p>This document fixes the exact <code>signature</code> field format, defines the
@@ -61,6 +61,16 @@ signing time. ONP-1000 has been corrected to version 0.2.0, adding
 <code>signed_at</code> as a seventh REQUIRED envelope field, classified MINOR
 under ONP-0007 Section 4.2 with explicit callout there. This
 document consumes that field (Section 4.4) but does not own it.</p>
+<p><strong>Version note (0.2.0):</strong> this revision adds Appendix C, which fixes
+the algorithm-specific wire encodings — the exact signature-output and
+public-key byte formats, and the digest applied before signing — for
+both the <code>ed25519</code> required-baseline and the <code>ecdsa-p256</code>
+<code>recommended</code> algorithm (ONP-0005 Appendix A). The Ed25519 encoding
+was previously implicit; the ECDSA-P256 encoding was undefined, a gap
+a second reference-implementation signature provider surfaced. Fixing
+it is additive and breaks no existing Requirement, classified MINOR
+under ONP-0007 Section 4.2. Section 4.2 gains rule 3, a pointer to the
+new appendix.</p>
 <hr />
 <h1 id="normative-language">Normative Language</h1>
 <p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
@@ -142,6 +152,13 @@ Profile</strong>, <strong>Pre-Image</strong> (ONP-1002, this document fills in t
    casing inconsistency between ONP-1001's examples and ONP-0005's
    display table, neither of which was normatively wrong, but which
    this document now fixes explicitly to remove ambiguity.</li>
+<li>The raw bytes carried in <code>&lt;digest&gt;</code> (the signature output, before
+   base64url) and in the <code>public_key</code> of the signer's Publisher Key
+   Record entry (ONP-0004 Section 5.1) are algorithm-specific. Their
+   exact encoding — including any digest applied before signing — is
+   fixed per algorithm-id in Appendix C. A Node MUST reject (fail
+   closed) a signature or public key whose length or structure does
+   not match Appendix C for the declared algorithm-id.</li>
 </ol>
 <h2 id="4-3-required-baseline-algorithm">4.3 Required-Baseline Algorithm</h2>
 <ol>
@@ -369,6 +386,22 @@ consideration beyond what ONP-0006 already covers.</p>
   Requirement Levels", BCP 14, RFC 2119.</li>
 <li>[RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
   2119 Key Words", BCP 14, RFC 8174.</li>
+<li>[RFC8032] Josefsson, S. and I. Liusvaara, "Edwards-Curve Digital
+  Signature Algorithm (EdDSA)", RFC 8032 — the Ed25519 signature and
+  public-key byte encodings fixed in Appendix C.1.</li>
+<li>[FIPS186-5] National Institute of Standards and Technology,
+  "Digital Signature Standard (DSS)", FIPS PUB 186-5 — NIST P-256
+  (secp256r1) and ECDSA, per Appendix C.2.</li>
+<li>[SEC1] Certicom Research, "SEC 1: Elliptic Curve Cryptography",
+  Version 2.0 — the compressed point encoding used for <code>ecdsa-p256</code>
+  public keys in Appendix C.2.</li>
+<li>[RFC6979] Pornin, T., "Deterministic Usage of the Digital
+  Signature Algorithm (DSA) and Elliptic Curve Digital Signature
+  Algorithm (ECDSA)", RFC 6979 — the deterministic nonce and low-S
+  form referenced in Appendix C.2.</li>
+<li>[RFC7518] Jones, M., "JSON Web Algorithms (JWA)", RFC 7518 — the
+  <code>ES256</code> conventions (P-256, SHA-256, raw r||s) Appendix C.2 aligns
+  with for eIDAS / EUDI interoperability.</li>
 <li>ONP-0000, Introduction; ONP-0001, Architecture — own the term
   "Signature"; this document supplies its structural definition.</li>
 <li>ONP-0003, Design Principles — Principle P3 (Ordinary Technology),
@@ -422,12 +455,69 @@ consideration beyond what ONP-0006 already covers.</p>
     proceed to Companion/Extension processing
 [ ] Any failure -&gt; REJECT; do not proceed further
 </code></pre>
+<h1 id="appendix-c-algorithm-specific-wire-encodings">Appendix C: Algorithm-Specific Wire Encodings</h1>
+<p>The Signature String (Section 4.2) and the <code>public_key</code> of a Publisher
+Key Record entry (ONP-0004 Section 5.1) both carry raw
+algorithm-output bytes as unpadded base64url. Those raw bytes are
+algorithm-specific. This appendix fixes them normatively for each
+Algorithm Registry entry (ONP-0005 Appendix A) whose
+<code>purpose = signature</code>. A Node MUST reject (fail closed) an Object or a
+Publisher Key Record entry whose byte length or structure does not
+match the encoding below for its declared algorithm-id.</p>
+<h2 id="c-1-ed25519-required-baseline">C.1 <code>ed25519</code> (required-baseline)</h2>
+<ul>
+<li>Digest before signing: none applied by ONP. The input to the
+  algorithm is the signing pre-image bytes (Section 4.1) directly;
+  Ed25519 [RFC8032] performs its own internal hashing (PureEdDSA, not
+  Ed25519ph).</li>
+<li>Signature output: the 64-byte Ed25519 signature [RFC8032]
+  Section 5.1.6, base64url-unpadded as the <code>&lt;digest&gt;</code> of the Signature
+  String.</li>
+<li>Public key: the 32-byte Ed25519 public key [RFC8032] Section 5.1.5,
+  base64url-unpadded as <code>public_key</code>.</li>
+</ul>
+<p>This encoding was implicit in v0.1.x and is unchanged; it is stated
+here only so every algorithm's encoding lives in one place.</p>
+<h2 id="c-2-ecdsa-p256-recommended">C.2 <code>ecdsa-p256</code> (recommended)</h2>
+<p>ECDSA over NIST P-256 (secp256r1) [FIPS186-5]. The encoding follows
+the JOSE <code>ES256</code> conventions [RFC7518] so that keys and signatures
+produced by eIDAS and EU Digital Identity Wallet (EUDI) toolchains,
+which use the same curve and encoding, interoperate without
+transcoding.</p>
+<ul>
+<li>Digest before signing: SHA-256 over the signing pre-image bytes
+  (Section 4.1). The resulting 32-byte digest is the input to ECDSA.</li>
+<li>Signature output: the raw <code>r || s</code> concatenation — <code>r</code> then <code>s</code>,
+  each a 32-byte big-endian unsigned integer, 64 bytes total —
+  base64url-unpadded as the <code>&lt;digest&gt;</code> of the Signature String. The
+  ASN.1/DER encoding MUST NOT be used. <code>s</code> MUST be in the low-S form
+  (<code>s &lt;= n/2</code>, where <code>n</code> is the curve order) [RFC6979]; a Node MUST
+  reject a signature that is not exactly 64 bytes or whose <code>s</code> is in
+  the high-S form, which closes an ECDSA signature-malleability gap.</li>
+<li>Public key: the 33-byte compressed SEC1 point [SEC1] — a leading
+  <code>0x02</code> or <code>0x03</code> parity byte followed by the 32-byte big-endian X
+  coordinate — base64url-unpadded as <code>public_key</code>. The 65-byte
+  uncompressed form MUST NOT be used in <code>public_key</code>.</li>
+</ul>
+<p>Signing SHOULD use the deterministic nonce of [RFC6979]. Determinism
+is a signer-side property only: a verifier MUST NOT treat a
+deterministic and a non-deterministic signature over the same key and
+pre-image as distinguishable, since only the verification equation and
+the encoding constraints above are normative.</p>
+<blockquote>
+<p><strong>Status of <code>ecdsa-p256</code>.</strong> This algorithm is <code>recommended</code>, not
+<code>required-baseline</code> (ONP-0005 Appendix A): a conforming Node MUST
+still support <code>ed25519</code> (Section 4.3) and MAY additionally support
+<code>ecdsa-p256</code>. This appendix ratifies its encoding so the two
+reference implementations and any third party agree on the bytes; it
+does not change Ed25519's baseline status.</p>
+</blockquote>
 <hr />
 <p><em>End of Document</em></p>
   </article>
   <aside class="toc">
     <h4>On this page</h4>
-    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-signing-checklist">Appendix A: Signing Checklist</a></li><li><a href="#appendix-b-full-core-verification-checklist">Appendix B: Full Core Verification Checklist</a></li></ul>
+    <ul><li><a href="#abstract">Abstract</a></li><li><a href="#status-of-this-document">Status of This Document</a></li><li><a href="#normative-language">Normative Language</a></li><li><a href="#1-introduction">1. Introduction</a></li><li><a href="#2-scope">2. Scope</a></li><li><a href="#3-terminology">3. Terminology</a></li><li><a href="#4-requirements">4. Requirements</a></li><li><a href="#5-object-model">5. Object Model</a></li><li><a href="#6-processing-model">6. Processing Model</a></li><li><a href="#7-examples">7. Examples</a></li><li><a href="#8-security-considerations">8. Security Considerations</a></li><li><a href="#9-privacy-considerations">9. Privacy Considerations</a></li><li><a href="#10-references">10. References</a></li><li><a href="#appendix-a-signing-checklist">Appendix A: Signing Checklist</a></li><li><a href="#appendix-b-full-core-verification-checklist">Appendix B: Full Core Verification Checklist</a></li><li><a href="#appendix-c-algorithm-specific-wire-encodings">Appendix C: Algorithm-Specific Wire Encodings</a></li></ul>
   </aside>
 </div>
 </main>

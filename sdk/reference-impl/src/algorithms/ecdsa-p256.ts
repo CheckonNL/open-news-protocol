@@ -14,20 +14,17 @@
  * deterministic (RFC 6979), so signatures are reproducible and the
  * provider runs identically on every JavaScript runtime.
  *
- * ── SPEC GAP ────────────────────────────────────────────────────────
- * ONP-1003 fixes the *Ed25519* wire encoding but does NOT yet define
- * ECDSA-P256's. This provider follows the JOSE **ES256** conventions —
- * the same ones the EUDI / eIDAS stack uses — so ratifying them in
- * ONP-1003 / ONP-0005 should be a formality rather than a change:
+ * Wire encoding is fixed normatively in ONP-1003 Appendix C.2 (added
+ * in v0.2.0), following the JOSE ES256 conventions the EUDI / eIDAS
+ * stack uses:
  *
  *   - message digest : SHA-256 over the pre-image bytes (ES256);
- *   - signature bytes: raw r‖s, 64 bytes, low-S normalized (NOT DER);
- *   - public key     : compressed SEC1 point, 33 bytes.
+ *   - signature bytes: raw r‖s, exactly 64 bytes, low-S (NOT DER);
+ *   - public key     : compressed SEC1 point, exactly 33 bytes.
  *
- * These MUST be confirmed normatively before `ecdsa-p256` is promoted
- * past `recommended`. Until then this provider is usable and tested,
- * but its encoding is an implementation proposal, not settled spec.
- * ────────────────────────────────────────────────────────────────────
+ * The length/structure checks in verify() enforce those constraints so
+ * this provider rejects any encoding Appendix C.2 forbids (e.g. a
+ * 65-byte uncompressed key or a DER signature), fail closed.
  */
 
 import { p256 } from "@noble/curves/p256";
@@ -49,8 +46,14 @@ export const ecdsaP256Algorithm: SignatureAlgorithm = {
   },
 
   verify(message, signature, publicKey) {
-    // Malformed signature/key bytes must fail closed, not throw
-    // (ONP-0005 Section 4.2, rule 3).
+    // ONP-1003 Appendix C.2: raw r‖s is exactly 64 bytes and the
+    // public key is the 33-byte compressed SEC1 point. Reject anything
+    // else (a DER signature, a 65-byte uncompressed key) fail closed
+    // rather than letting @noble accept a forbidden encoding.
+    if (signature.length !== 64 || publicKey.length !== 33) return false;
+    // @noble verifies with lowS enforced by default, so a high-S
+    // signature (also forbidden by Appendix C.2) is rejected too.
+    // Malformed bytes throw; that must fail closed (ONP-0005 Section 4.2).
     try {
       return p256.verify(signature, sha256(message), publicKey);
     } catch {

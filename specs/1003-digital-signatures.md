@@ -1,9 +1,9 @@
 Title: Open News Protocol (ONP): Digital Signatures
 Document Number: ONP-1003
 Status: Working Draft
-Version: 0.1.1
+Version: 0.2.0
 Author: Open News Protocol Working Group
-Last Modified: 2026-07-28
+Last Modified: 2026-07-29
 
 ---
 
@@ -36,6 +36,17 @@ signing time. ONP-1000 has been corrected to version 0.2.0, adding
 `signed_at` as a seventh REQUIRED envelope field, classified MINOR
 under ONP-0007 Section 4.2 with explicit callout there. This
 document consumes that field (Section 4.4) but does not own it.
+
+**Version note (0.2.0):** this revision adds Appendix C, which fixes
+the algorithm-specific wire encodings — the exact signature-output and
+public-key byte formats, and the digest applied before signing — for
+both the `ed25519` required-baseline and the `ecdsa-p256`
+`recommended` algorithm (ONP-0005 Appendix A). The Ed25519 encoding
+was previously implicit; the ECDSA-P256 encoding was undefined, a gap
+a second reference-implementation signature provider surfaced. Fixing
+it is additive and breaks no existing Requirement, classified MINOR
+under ONP-0007 Section 4.2. Section 4.2 gains rule 3, a pointer to the
+new appendix.
 
 ---
 
@@ -134,6 +145,13 @@ Profile**, **Pre-Image** (ONP-1002, this document fills in the
    casing inconsistency between ONP-1001's examples and ONP-0005's
    display table, neither of which was normatively wrong, but which
    this document now fixes explicitly to remove ambiguity.
+3. The raw bytes carried in `<digest>` (the signature output, before
+   base64url) and in the `public_key` of the signer's Publisher Key
+   Record entry (ONP-0004 Section 5.1) are algorithm-specific. Their
+   exact encoding — including any digest applied before signing — is
+   fixed per algorithm-id in Appendix C. A Node MUST reject (fail
+   closed) a signature or public key whose length or structure does
+   not match Appendix C for the declared algorithm-id.
 
 ## 4.3 Required-Baseline Algorithm
 
@@ -411,6 +429,22 @@ consideration beyond what ONP-0006 already covers.
   Requirement Levels", BCP 14, RFC 2119.
 * [RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
   2119 Key Words", BCP 14, RFC 8174.
+* [RFC8032] Josefsson, S. and I. Liusvaara, "Edwards-Curve Digital
+  Signature Algorithm (EdDSA)", RFC 8032 — the Ed25519 signature and
+  public-key byte encodings fixed in Appendix C.1.
+* [FIPS186-5] National Institute of Standards and Technology,
+  "Digital Signature Standard (DSS)", FIPS PUB 186-5 — NIST P-256
+  (secp256r1) and ECDSA, per Appendix C.2.
+* [SEC1] Certicom Research, "SEC 1: Elliptic Curve Cryptography",
+  Version 2.0 — the compressed point encoding used for `ecdsa-p256`
+  public keys in Appendix C.2.
+* [RFC6979] Pornin, T., "Deterministic Usage of the Digital
+  Signature Algorithm (DSA) and Elliptic Curve Digital Signature
+  Algorithm (ECDSA)", RFC 6979 — the deterministic nonce and low-S
+  form referenced in Appendix C.2.
+* [RFC7518] Jones, M., "JSON Web Algorithms (JWA)", RFC 7518 — the
+  `ES256` conventions (P-256, SHA-256, raw r||s) Appendix C.2 aligns
+  with for eIDAS / EUDI interoperability.
 * ONP-0000, Introduction; ONP-0001, Architecture — own the term
   "Signature"; this document supplies its structural definition.
 * ONP-0003, Design Principles — Principle P3 (Ordinary Technology),
@@ -470,6 +504,67 @@ consideration beyond what ONP-0006 already covers.
     proceed to Companion/Extension processing
 [ ] Any failure -> REJECT; do not proceed further
 ```
+
+# Appendix C: Algorithm-Specific Wire Encodings
+
+The Signature String (Section 4.2) and the `public_key` of a Publisher
+Key Record entry (ONP-0004 Section 5.1) both carry raw
+algorithm-output bytes as unpadded base64url. Those raw bytes are
+algorithm-specific. This appendix fixes them normatively for each
+Algorithm Registry entry (ONP-0005 Appendix A) whose
+`purpose = signature`. A Node MUST reject (fail closed) an Object or a
+Publisher Key Record entry whose byte length or structure does not
+match the encoding below for its declared algorithm-id.
+
+## C.1 `ed25519` (required-baseline)
+
+* Digest before signing: none applied by ONP. The input to the
+  algorithm is the signing pre-image bytes (Section 4.1) directly;
+  Ed25519 [RFC8032] performs its own internal hashing (PureEdDSA, not
+  Ed25519ph).
+* Signature output: the 64-byte Ed25519 signature [RFC8032]
+  Section 5.1.6, base64url-unpadded as the `<digest>` of the Signature
+  String.
+* Public key: the 32-byte Ed25519 public key [RFC8032] Section 5.1.5,
+  base64url-unpadded as `public_key`.
+
+This encoding was implicit in v0.1.x and is unchanged; it is stated
+here only so every algorithm's encoding lives in one place.
+
+## C.2 `ecdsa-p256` (recommended)
+
+ECDSA over NIST P-256 (secp256r1) [FIPS186-5]. The encoding follows
+the JOSE `ES256` conventions [RFC7518] so that keys and signatures
+produced by eIDAS and EU Digital Identity Wallet (EUDI) toolchains,
+which use the same curve and encoding, interoperate without
+transcoding.
+
+* Digest before signing: SHA-256 over the signing pre-image bytes
+  (Section 4.1). The resulting 32-byte digest is the input to ECDSA.
+* Signature output: the raw `r || s` concatenation — `r` then `s`,
+  each a 32-byte big-endian unsigned integer, 64 bytes total —
+  base64url-unpadded as the `<digest>` of the Signature String. The
+  ASN.1/DER encoding MUST NOT be used. `s` MUST be in the low-S form
+  (`s <= n/2`, where `n` is the curve order) [RFC6979]; a Node MUST
+  reject a signature that is not exactly 64 bytes or whose `s` is in
+  the high-S form, which closes an ECDSA signature-malleability gap.
+* Public key: the 33-byte compressed SEC1 point [SEC1] — a leading
+  `0x02` or `0x03` parity byte followed by the 32-byte big-endian X
+  coordinate — base64url-unpadded as `public_key`. The 65-byte
+  uncompressed form MUST NOT be used in `public_key`.
+
+Signing SHOULD use the deterministic nonce of [RFC6979]. Determinism
+is a signer-side property only: a verifier MUST NOT treat a
+deterministic and a non-deterministic signature over the same key and
+pre-image as distinguishable, since only the verification equation and
+the encoding constraints above are normative.
+
+> **Status of `ecdsa-p256`.** This algorithm is `recommended`, not
+> `required-baseline` (ONP-0005 Appendix A): a conforming Node MUST
+> still support `ed25519` (Section 4.3) and MAY additionally support
+> `ecdsa-p256`. This appendix ratifies its encoding so the two
+> reference implementations and any third party agree on the bytes; it
+> does not change Ed25519's baseline status.
 
 ---
 *End of Document*
