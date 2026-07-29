@@ -1,0 +1,321 @@
+{
+  "conformance_suite": "onp-core-conformance-v0.1.0",
+  "description": "ONP Core conformance vectors: produce (byte-reproducible VID + signature), verify (offline Core validation outcomes), and verify_trust (full pipeline with an injected Publisher Key Record). See README.md for the outcome vocabulary and how to run.",
+  "generated_by": "@onp/reference-impl conformance generator",
+  "note": "Fixed test keys are NON-PRODUCTION, published for reproducibility (ONP-9000 Section 5.1). ECDSA-P256 signatures are deterministic (RFC 6979); a non-deterministic signer reproduces the VID byte-for-byte but produces a different, still-valid signature — see README.",
+  "test_keys": {
+    "ed25519": {
+      "algorithm": "ed25519",
+      "private_key": "abdEaUfNn6mwZBV3M787PD8QQmqT40PFxENfgaSkS2s",
+      "public_key": "5sxr5c4qf4hfnf1BNCOWMZS0WbuHEsHVX_dxZPNtWbA"
+    },
+    "ecdsa-p256": {
+      "algorithm": "ecdsa-p256",
+      "private_key": "o2XR_f5eqZw-3rw_T2DQ2z4j1oRiCn4xNuwI38Siaqk",
+      "public_key": "A4I8EKSTx2hWOSMHX-ksWWKF44RjszHfJY9j19QEVJGA"
+    }
+  },
+  "produce": [
+    {
+      "id": "produce-ed25519",
+      "description": "Sign a Minimal Viable Object with the fixed ed25519 test key; the VID and signature MUST reproduce byte-for-byte (ONP-1001/1002/1003).",
+      "key": "ed25519",
+      "unsigned": {
+        "oid": "onp:oid:conformance.onp.dev:produce-ed25519",
+        "publisher": {
+          "domain": "conformance.onp.dev",
+          "key_id": "onp:key:conformance-2026"
+        },
+        "signed_at": "2026-07-29T00:00:00Z",
+        "content_type": "onp:companion:article",
+        "content": {
+          "headline": "Conformance Test Object",
+          "body": "Body text."
+        }
+      },
+      "expected_vid": "onp:vid:sha-256:cGHNBH-VbnH2DU7h4Ns3u1dXGBk22njckvxiG84E84c",
+      "expected_signature": "onp:sig:ed25519:frWTshutZesASoFUn1mjfcsWYuJBd6x8quYTCoDmGWZiO7Nyn6vI7_Tc1oyiz6zc8rL90grTjNyGyWjWxVSIDQ"
+    },
+    {
+      "id": "produce-ecdsa-p256",
+      "description": "Sign a Minimal Viable Object with the fixed ecdsa-p256 test key; the VID and signature MUST reproduce byte-for-byte (ONP-1001/1002/1003).",
+      "key": "ecdsa-p256",
+      "unsigned": {
+        "oid": "onp:oid:conformance.onp.dev:produce-ecdsa-p256",
+        "publisher": {
+          "domain": "conformance.onp.dev",
+          "key_id": "onp:key:conformance-2026"
+        },
+        "signed_at": "2026-07-29T00:00:00Z",
+        "content_type": "onp:companion:article",
+        "content": {
+          "headline": "Conformance Test Object",
+          "body": "Body text."
+        }
+      },
+      "expected_vid": "onp:vid:sha-256:mclBvVBfDf_t9RfQf6puqPJSZDzZhThSht0W5tX3e2o",
+      "expected_signature": "onp:sig:ecdsa-p256:qaaMByblSo-kQNnmo-K0pPb6kLuYk_La6t8O8Lz7THj8aidyetSL6R9o7R8ZPCUrO3Tfx1xni8tdKfHMHBObfw"
+    }
+  ],
+  "verify": [
+    {
+      "id": "verify-authenticated",
+      "description": "A correctly signed Object is Core-authenticated.",
+      "public_key": "5sxr5c4qf4hfnf1BNCOWMZS0WbuHEsHVX_dxZPNtWbA",
+      "expected": "authenticated",
+      "envelope": {
+        "oid": "onp:oid:conformance.onp.dev:verify-valid",
+        "publisher": {
+          "domain": "conformance.onp.dev",
+          "key_id": "onp:key:conformance-2026"
+        },
+        "signed_at": "2026-07-29T00:00:00Z",
+        "content_type": "onp:companion:article",
+        "content": {
+          "headline": "Conformance Test Object",
+          "body": "Body text."
+        },
+        "vid": "onp:vid:sha-256:uw1ePsGEf00LTkf_jlC-DJyLrvoVTtHKbioPCX9qGNI",
+        "signature": "onp:sig:ed25519:ZQqZIxCga0IYV8E4-Wlm49AimwxfL7ZDJgNGm6l0pmAIAaER5VbdxTJ-htWAzKLQIjR1Hg0Tt5Hh4nnpiMmnCg"
+      }
+    },
+    {
+      "id": "verify-structural",
+      "description": "Missing REQUIRED signed_at field (ONP-1000).",
+      "public_key": "5sxr5c4qf4hfnf1BNCOWMZS0WbuHEsHVX_dxZPNtWbA",
+      "expected": "structural",
+      "envelope": {
+        "oid": "onp:oid:conformance.onp.dev:verify-valid",
+        "publisher": {
+          "domain": "conformance.onp.dev",
+          "key_id": "onp:key:conformance-2026"
+        },
+        "content_type": "onp:companion:article",
+        "content": {
+          "headline": "Conformance Test Object",
+          "body": "Body text."
+        },
+        "vid": "onp:vid:sha-256:uw1ePsGEf00LTkf_jlC-DJyLrvoVTtHKbioPCX9qGNI",
+        "signature": "onp:sig:ed25519:ZQqZIxCga0IYV8E4-Wlm49AimwxfL7ZDJgNGm6l0pmAIAaER5VbdxTJ-htWAzKLQIjR1Hg0Tt5Hh4nnpiMmnCg"
+      }
+    },
+    {
+      "id": "verify-oid-domain-mismatch",
+      "description": "oid domain does not match publisher.domain (ONP-1001).",
+      "public_key": "5sxr5c4qf4hfnf1BNCOWMZS0WbuHEsHVX_dxZPNtWbA",
+      "expected": "oid-domain-mismatch",
+      "envelope": {
+        "oid": "onp:oid:attacker.example:verify-valid",
+        "publisher": {
+          "domain": "conformance.onp.dev",
+          "key_id": "onp:key:conformance-2026"
+        },
+        "signed_at": "2026-07-29T00:00:00Z",
+        "content_type": "onp:companion:article",
+        "content": {
+          "headline": "Conformance Test Object",
+          "body": "Body text."
+        },
+        "vid": "onp:vid:sha-256:uw1ePsGEf00LTkf_jlC-DJyLrvoVTtHKbioPCX9qGNI",
+        "signature": "onp:sig:ed25519:ZQqZIxCga0IYV8E4-Wlm49AimwxfL7ZDJgNGm6l0pmAIAaER5VbdxTJ-htWAzKLQIjR1Hg0Tt5Hh4nnpiMmnCg"
+      }
+    },
+    {
+      "id": "verify-vid-mismatch",
+      "description": "Content tampered after signing; recomputed VID mismatches (ONP-1001).",
+      "public_key": "5sxr5c4qf4hfnf1BNCOWMZS0WbuHEsHVX_dxZPNtWbA",
+      "expected": "vid-mismatch",
+      "envelope": {
+        "oid": "onp:oid:conformance.onp.dev:verify-valid",
+        "publisher": {
+          "domain": "conformance.onp.dev",
+          "key_id": "onp:key:conformance-2026"
+        },
+        "signed_at": "2026-07-29T00:00:00Z",
+        "content_type": "onp:companion:article",
+        "content": {
+          "headline": "Tampered headline",
+          "body": "Body text."
+        },
+        "vid": "onp:vid:sha-256:uw1ePsGEf00LTkf_jlC-DJyLrvoVTtHKbioPCX9qGNI",
+        "signature": "onp:sig:ed25519:ZQqZIxCga0IYV8E4-Wlm49AimwxfL7ZDJgNGm6l0pmAIAaER5VbdxTJ-htWAzKLQIjR1Hg0Tt5Hh4nnpiMmnCg"
+      }
+    },
+    {
+      "id": "verify-unrecognized-algorithm",
+      "description": "Signature declares an algorithm-id not in the registry (ONP-0005).",
+      "public_key": "5sxr5c4qf4hfnf1BNCOWMZS0WbuHEsHVX_dxZPNtWbA",
+      "expected": "unrecognized-algorithm",
+      "envelope": {
+        "oid": "onp:oid:conformance.onp.dev:verify-valid",
+        "publisher": {
+          "domain": "conformance.onp.dev",
+          "key_id": "onp:key:conformance-2026"
+        },
+        "signed_at": "2026-07-29T00:00:00Z",
+        "content_type": "onp:companion:article",
+        "content": {
+          "headline": "Conformance Test Object",
+          "body": "Body text."
+        },
+        "vid": "onp:vid:sha-256:uw1ePsGEf00LTkf_jlC-DJyLrvoVTtHKbioPCX9qGNI",
+        "signature": "onp:sig:rsa-9999:ZQqZIxCga0IYV8E4-Wlm49AimwxfL7ZDJgNGm6l0pmAIAaER5VbdxTJ-htWAzKLQIjR1Hg0Tt5Hh4nnpiMmnCg"
+      }
+    },
+    {
+      "id": "verify-signature-invalid",
+      "description": "Signature bytes altered; cryptographic verification fails (ONP-1003).",
+      "public_key": "5sxr5c4qf4hfnf1BNCOWMZS0WbuHEsHVX_dxZPNtWbA",
+      "expected": "signature-invalid",
+      "envelope": {
+        "oid": "onp:oid:conformance.onp.dev:verify-valid",
+        "publisher": {
+          "domain": "conformance.onp.dev",
+          "key_id": "onp:key:conformance-2026"
+        },
+        "signed_at": "2026-07-29T00:00:00Z",
+        "content_type": "onp:companion:article",
+        "content": {
+          "headline": "Conformance Test Object",
+          "body": "Body text."
+        },
+        "vid": "onp:vid:sha-256:uw1ePsGEf00LTkf_jlC-DJyLrvoVTtHKbioPCX9qGNI",
+        "signature": "onp:sig:ed25519:mgqZIxCga0IYV8E4-Wlm49AimwxfL7ZDJgNGm6l0pmAIAaER5VbdxTJ-htWAzKLQIjR1Hg0Tt5Hh4nnpiMmnCg"
+      }
+    }
+  ],
+  "verify_trust": [
+    {
+      "id": "trust-authenticated-ed25519",
+      "description": "Valid Object + matching domain-anchored Publisher Key Record (ONP-0004).",
+      "publisher_key_record": {
+        "onp_trust_anchor_type": "domain",
+        "publisher_domain": "conformance.onp.dev",
+        "current_keys": [
+          {
+            "key_id": "onp:key:conformance-2026",
+            "algorithm": "Ed25519",
+            "public_key": "5sxr5c4qf4hfnf1BNCOWMZS0WbuHEsHVX_dxZPNtWbA",
+            "valid_from": "2026-01-01T00:00:00Z"
+          }
+        ],
+        "previous_keys": []
+      },
+      "expected": "authenticated",
+      "envelope": {
+        "oid": "onp:oid:conformance.onp.dev:trust-valid-ed",
+        "publisher": {
+          "domain": "conformance.onp.dev",
+          "key_id": "onp:key:conformance-2026"
+        },
+        "signed_at": "2026-07-29T00:00:00Z",
+        "content_type": "onp:companion:article",
+        "content": {
+          "headline": "Conformance Test Object",
+          "body": "Body text."
+        },
+        "vid": "onp:vid:sha-256:d69_BhJ9lI-zmGNah_CeAnkusxXBdldRSP03K4LPMqc",
+        "signature": "onp:sig:ed25519:aubl3FDF4ZOAP6Y4JqnfiCaS_09bbni-r9FRj54I8u-49ZHj5WGLMH20qSq33RTPFqgg3w-QzklI47uYbpnnBQ"
+      }
+    },
+    {
+      "id": "trust-authenticated-ecdsa-p256",
+      "description": "Valid ECDSA-P256 Object resolves and verifies via the record (ONP-0004 + ONP-1003 Appendix C.2).",
+      "publisher_key_record": {
+        "onp_trust_anchor_type": "domain",
+        "publisher_domain": "conformance.onp.dev",
+        "current_keys": [
+          {
+            "key_id": "onp:key:conformance-2026",
+            "algorithm": "ECDSA-P256",
+            "public_key": "A4I8EKSTx2hWOSMHX-ksWWKF44RjszHfJY9j19QEVJGA",
+            "valid_from": "2026-01-01T00:00:00Z"
+          }
+        ],
+        "previous_keys": []
+      },
+      "expected": "authenticated",
+      "envelope": {
+        "oid": "onp:oid:conformance.onp.dev:trust-valid-p256",
+        "publisher": {
+          "domain": "conformance.onp.dev",
+          "key_id": "onp:key:conformance-2026"
+        },
+        "signed_at": "2026-07-29T00:00:00Z",
+        "content_type": "onp:companion:article",
+        "content": {
+          "headline": "Conformance Test Object",
+          "body": "Body text."
+        },
+        "vid": "onp:vid:sha-256:SYdnYhHBj1I_ghi1fMCCUwxSXAlCgr8KWNLwrIQRUXg",
+        "signature": "onp:sig:ecdsa-p256:ksWBOomigBW42o7W8kVMnplNF_fUCPuT8VlsvyptF8DE599HBWFlaE7cWp3BskECZs9sq7FFAUDKmBsspjAz4A"
+      }
+    },
+    {
+      "id": "trust-resolution-failed-unknown-key",
+      "description": "The Object's key_id is absent from the record; resolution fails (ONP-0004 Section 6.1).",
+      "publisher_key_record": {
+        "onp_trust_anchor_type": "domain",
+        "publisher_domain": "conformance.onp.dev",
+        "current_keys": [
+          {
+            "key_id": "onp:key:some-other-key",
+            "algorithm": "Ed25519",
+            "public_key": "5sxr5c4qf4hfnf1BNCOWMZS0WbuHEsHVX_dxZPNtWbA",
+            "valid_from": "2026-01-01T00:00:00Z"
+          }
+        ],
+        "previous_keys": []
+      },
+      "expected": "trust-anchor-resolution-failed",
+      "envelope": {
+        "oid": "onp:oid:conformance.onp.dev:trust-valid-ed",
+        "publisher": {
+          "domain": "conformance.onp.dev",
+          "key_id": "onp:key:conformance-2026"
+        },
+        "signed_at": "2026-07-29T00:00:00Z",
+        "content_type": "onp:companion:article",
+        "content": {
+          "headline": "Conformance Test Object",
+          "body": "Body text."
+        },
+        "vid": "onp:vid:sha-256:d69_BhJ9lI-zmGNah_CeAnkusxXBdldRSP03K4LPMqc",
+        "signature": "onp:sig:ed25519:aubl3FDF4ZOAP6Y4JqnfiCaS_09bbni-r9FRj54I8u-49ZHj5WGLMH20qSq33RTPFqgg3w-QzklI47uYbpnnBQ"
+      }
+    },
+    {
+      "id": "trust-algorithm-mismatch",
+      "description": "The record declares a different algorithm than the signature (ONP-1003 Section 4.5 step 4).",
+      "publisher_key_record": {
+        "onp_trust_anchor_type": "domain",
+        "publisher_domain": "conformance.onp.dev",
+        "current_keys": [
+          {
+            "key_id": "onp:key:conformance-2026",
+            "algorithm": "ECDSA-P256",
+            "public_key": "5sxr5c4qf4hfnf1BNCOWMZS0WbuHEsHVX_dxZPNtWbA",
+            "valid_from": "2026-01-01T00:00:00Z"
+          }
+        ],
+        "previous_keys": []
+      },
+      "expected": "algorithm-mismatch",
+      "envelope": {
+        "oid": "onp:oid:conformance.onp.dev:trust-valid-ed",
+        "publisher": {
+          "domain": "conformance.onp.dev",
+          "key_id": "onp:key:conformance-2026"
+        },
+        "signed_at": "2026-07-29T00:00:00Z",
+        "content_type": "onp:companion:article",
+        "content": {
+          "headline": "Conformance Test Object",
+          "body": "Body text."
+        },
+        "vid": "onp:vid:sha-256:d69_BhJ9lI-zmGNah_CeAnkusxXBdldRSP03K4LPMqc",
+        "signature": "onp:sig:ed25519:aubl3FDF4ZOAP6Y4JqnfiCaS_09bbni-r9FRj54I8u-49ZHj5WGLMH20qSq33RTPFqgg3w-QzklI47uYbpnnBQ"
+      }
+    }
+  ]
+}

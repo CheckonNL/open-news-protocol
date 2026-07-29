@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opennewsprotocol.org/conformance/vector-schema.json",
+  "title": "ONP Core Conformance Vector Set",
+  "description": "Structure of conformance/vectors.json. Envelopes and Publisher Key Records are intentionally left as free objects because verify vectors deliberately include malformed inputs.",
+  "type": "object",
+  "required": ["conformance_suite", "test_keys", "produce", "verify", "verify_trust"],
+  "additionalProperties": true,
+  "properties": {
+    "conformance_suite": { "type": "string" },
+    "description": { "type": "string" },
+    "generated_by": { "type": "string" },
+    "note": { "type": "string" },
+    "test_keys": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["algorithm", "private_key", "public_key"],
+        "additionalProperties": false,
+        "properties": {
+          "algorithm": { "type": "string" },
+          "private_key": { "type": "string", "description": "base64url-unpadded raw private key (NON-PRODUCTION)" },
+          "public_key": { "type": "string", "description": "base64url-unpadded raw public key" }
+        }
+      }
+    },
+    "produce": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "key", "unsigned", "expected_vid", "expected_signature"],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "type": "string" },
+          "description": { "type": "string" },
+          "key": { "type": "string", "description": "name of a test_keys entry" },
+          "unsigned": { "type": "object", "description": "envelope without vid and signature" },
+          "expected_vid": { "type": "string", "pattern": "^onp:vid:" },
+          "expected_signature": { "type": "string", "pattern": "^onp:sig:" }
+        }
+      }
+    },
+    "verify": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "public_key", "expected", "envelope"],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "type": "string" },
+          "description": { "type": "string" },
+          "public_key": { "type": "string" },
+          "expected": {
+            "type": "string",
+            "enum": ["authenticated", "structural", "oid-domain-mismatch", "vid-mismatch", "unrecognized-algorithm", "signature-invalid"]
+          },
+          "envelope": { "type": "object" }
+        }
+      }
+    },
+    "verify_trust": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "publisher_key_record", "expected", "envelope"],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "type": "string" },
+          "description": { "type": "string" },
+          "publisher_key_record": { "type": "object" },
+          "expected": {
+            "type": "string",
+            "enum": ["authenticated", "structural", "oid-domain-mismatch", "vid-mismatch", "unrecognized-algorithm", "trust-anchor-resolution-failed", "algorithm-mismatch", "signature-invalid"]
+          },
+          "envelope": { "type": "object" }
+        }
+      }
+    }
+  }
+}

@@ -119,3 +119,23 @@ jobs:
       # This fails if a spec was edited without rebuilding the site, so
       # published pages can never drift from the normative sources.
       - run: python3 tools/build-site.py --check
+
+  conformance:
+    name: "Conformance: reference SDK passes conformance/vectors.json"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: sdk/reference-impl/package-lock.json
+      - run: npm ci
+        working-directory: sdk/reference-impl
+      - run: npm run build
+        working-directory: sdk/reference-impl
+      # The conformance suite (conformance/vectors.json) is pure data a
+      # third party can run against their own implementation. This job
+      # dogfoods it: the reference SDK must pass 100% of its own suite,
+      # so vectors and implementation cannot drift apart.
+      - run: node conformance/run.mjs

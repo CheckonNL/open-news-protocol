@@ -98,6 +98,11 @@ implementations/
              implementation, incl. its own RFC 8785/JCS serializer;
              CI cross-verifies it against the TypeScript SDK in both
              directions.
+conformance/ Language-agnostic Core conformance suite: pure-data
+             vectors (produce / verify / verify_trust) plus a
+             reference runner. A third party can certify their own
+             implementation against vectors.json without importing any
+             reference code; CI dogfoods the reference SDK against it.
 ```
 
 `schemas/` now contains JSON Schema (2020-12) definitions for the
