@@ -92,3 +92,4 @@ export function verifySignature(
 }
 
 export { ed25519Algorithm };
+export { ecdsaP256Algorithm } from "./algorithms/ecdsa-p256.js";

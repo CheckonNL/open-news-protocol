@@ -22,6 +22,7 @@
  */
 
 import { ed25519Algorithm } from "./algorithms/ed25519.js";
+import { ecdsaP256Algorithm } from "./algorithms/ecdsa-p256.js";
 
 /** One entry in the registry: sign/verify over raw byte keys. */
 export interface SignatureAlgorithm {
@@ -40,6 +41,7 @@ export interface SignatureAlgorithm {
 
 const REGISTRY = new Map<string, SignatureAlgorithm>([
   [ed25519Algorithm.id, ed25519Algorithm],
+  [ecdsaP256Algorithm.id, ecdsaP256Algorithm],
 ]);
 
 /** Register (or replace) a signature algorithm provider by its id. */

@@ -32,10 +32,11 @@ import type { UnsignedEnvelope, NewsObjectEnvelope } from "./envelope.js";
  */
 export function signObject(
   unsigned: UnsignedEnvelope,
-  privateKey: Uint8Array
+  privateKey: Uint8Array,
+  algorithmId = "ed25519"
 ): NewsObjectEnvelope {
   const vid = computeVid(unsigned);
   const withVid = { ...unsigned, vid };
-  const signature = signEnvelope(withVid, privateKey);
+  const signature = signEnvelope(withVid, privateKey, algorithmId);
   return { ...withVid, signature } as NewsObjectEnvelope;
 }
