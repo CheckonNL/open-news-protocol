@@ -48,11 +48,13 @@ itself uses for illustration.
 
 ## What this deliberately does NOT cover
 
-- **Most Companions and Extensions**: only ONP-2100 (Article) and
-  ONP-3100 (ai-metadata) ship as reference validators; every other
-  Companion/Extension correctly reports `unknown` via the pluggable
-  registry — which is itself conformant behavior (ONP-1004 Section
-  6.3), not a gap.
+- **Some Companions and most Extensions**: reference validators ship
+  for the Article (ONP-2100), Media (ONP-2200), Rights (ONP-2400),
+  Payments (ONP-2500) and Corrections (ONP-2700) Companions, plus the
+  ai-metadata Extension (ONP-3100). The Sources, Comments and Identity
+  Companions and every other Extension correctly report `unknown` via
+  the pluggable registry — itself conformant behavior (ONP-1004
+  Section 6.3), not a gap.
 
 ## Multi-level validation (ONP-1004) — implemented
 
@@ -69,9 +71,10 @@ conflated (Section 4.3 rule 3), Companion invalidity never touches
 reported explicitly and never silently resolved (Section 4.4 rule
 2), silence between two Extensions is not a conflict (Section 6.2),
 and an empty registry still yields a complete well-formed Result
-(Section 6.3). Reference validators for ONP-2100 (Article) and
-ONP-3100 (org.onp.ai-metadata) are included via
-`referenceValidatorRegistry`.
+(Section 6.3). `referenceValidatorRegistry` bundles reference
+validators for the Article (ONP-2100), Media (ONP-2200), Rights
+(ONP-2400), Payments (ONP-2500) and Corrections (ONP-2700) Companions
+and the org.onp.ai-metadata Extension (ONP-3100).
 
 ## Retrieval (ONP-1006) — implemented
 
@@ -105,6 +108,16 @@ point at the signed Object.
 - OPTIONAL DNS corroboration (Section 4.3) as a warning-only
   fingerprint comparison via an injectable lookup — absence never
   fails resolution, exactly as rule 3 requires.
+- OPTIONAL, **PROVISIONAL** EUDI corroboration (Section 4.6): an
+  injectable `EudiAttestationVerifier` can bind the resolved key/domain
+  to a wallet-verified legal identity (SD-JWT VC by default, with the
+  organization's LEI as the recommended identifier). It is **additive
+  and elevation/warning-only** — absence, a failed credential, or a
+  binding mismatch never rejects an Object whose `domain` resolution
+  already succeeded (rule 3: authenticity stays domain-verifiable). The
+  SDK delegates all SD-JWT / mdoc / EU-Trust-List work to the injected
+  verifier and does no credential crypto itself; the `eudi_attestation`
+  shape is an implementation proposal, not yet ratified.
 
 `validateCoreWithTrust()` in `src/validate.ts` runs the complete
 six-step verification procedure of ONP-1003 Section 4.5 in the
@@ -135,7 +148,7 @@ ONP-9000 intends.)
 ```bash
 npm install
 npm run build
-npm test                 # runs the test suite (71 tests)
+npm test                 # runs the test suite (76 tests)
 npm run example          # signs and verifies the running fusie-onderzoek Article
 npm run bridges           # exports the same Article to schema.org JSON-LD and RSS XML
 node dist/examples/generate-test-vectors.js   # regenerates examples/test-vectors.json

@@ -46,8 +46,57 @@ export interface PublisherKeyRecord {
   previous_keys?: PublisherKeyEntry[];
   transparency_log?: { log_url: string; entry_id?: string };
   rotation_continuity_signature?: string;
+  /** PROVISIONAL (not yet normative). ONP-0004 Section 4.6 reserves the
+   *  `eudi` Trust Anchor Type; ONP-2300 defers its definition. This
+   *  additive attestation binds the publisher's key/domain to a
+   *  wallet-verified legal identity, alongside — never replacing — the
+   *  `domain` record (Section 4.6 rule 3). Shape and encoding are an
+   *  implementation proposal pending ratification. */
+  eudi_attestation?: EudiAttestation;
   [key: string]: unknown;
 }
+
+/**
+ * PROVISIONAL EUDI attestation shape (ONP-0004 Section 4.6, reserved
+ * `eudi` Trust Anchor Type — NOT yet ratified). The default `format` is
+ * the JSON-friendly SD-JWT VC; `credential` is the wallet-issued
+ * verifiable credential, opaque to this SDK, whose cryptographic
+ * verification is delegated to an injected EudiAttestationVerifier.
+ */
+export interface EudiAttestation {
+  /** e.g. "sd-jwt-vc" (default) or "mso_mdoc". */
+  format: string;
+  /** The wallet-issued verifiable credential, opaque to this SDK. */
+  credential: string;
+  /** What the attestation binds: the ONP key_id and/or the domain. */
+  binds: { key_id?: string; publisher_domain?: string };
+  /** OPTIONAL pointer to the EU List of Trusted Lists root. */
+  trust_list?: string;
+  [key: string]: unknown;
+}
+
+/** Outcome of verifying an EudiAttestation (from the injected verifier). */
+export interface EudiVerificationResult {
+  verified: boolean;
+  /** The verified legal identity when `verified` — e.g. organization
+   *  `legal_name` and `lei` (the recommended organization identifier). */
+  subject?: { legal_name?: string; lei?: string; [key: string]: unknown };
+  /** Why verification did not succeed, when `verified` is false. */
+  reason?: string;
+}
+
+/**
+ * Injectable EUDI attestation verifier (ONP-0004 Section 4.6). The SDK
+ * never parses SD-JWT / mdoc credentials or resolves EU Trust Lists
+ * itself; a wallet / eIDAS backend supplies this function. It is
+ * corroboration only: absence, failure, or a thrown error MUST NOT
+ * reject an Object whose `domain` resolution already succeeded
+ * (Section 4.6 rule 3 — authenticity stays domain-verifiable).
+ */
+export type EudiAttestationVerifier = (
+  attestation: EudiAttestation,
+  context: { domain: string; keyId: string; record: PublisherKeyRecord }
+) => Promise<EudiVerificationResult>;
 
 export type ResolutionFailureReason =
   | "record-fetch-failed"       // Section 6.1 steps 1-2
@@ -66,6 +115,11 @@ export interface ResolutionSuccess {
   matched_in: "current_keys" | "previous_keys";
   /** Warning-only corroboration signals (Section 6.1 steps 7-8). */
   warnings: string[];
+  /** OPTIONAL EUDI corroboration outcome (ONP-0004 Section 4.6),
+   *  present only when an EudiAttestationVerifier verified an
+   *  attestation that binds this key/domain. Additive elevation —
+   *  carries the verified legal identity; never gates `resolved`. */
+  eudi?: EudiVerificationResult;
 }
 
 export interface ResolutionFailure {
@@ -224,6 +278,8 @@ export interface TrustAnchorResolverOptions {
   cacheTtlMs?: number;
   /** Optional DNS corroboration (Section 4.3). */
   dnsLookup?: DnsFingerprintLookup;
+  /** Optional EUDI corroboration (Section 4.6, PROVISIONAL). */
+  eudiVerifier?: EudiAttestationVerifier;
   /** Injectable clock, for tests. */
   now?: () => number;
 }
@@ -245,6 +301,7 @@ export class TrustAnchorResolver {
   private fetcher: KeyRecordFetcher;
   private cacheTtlMs: number;
   private dnsLookup?: DnsFingerprintLookup;
+  private eudiVerifier?: EudiAttestationVerifier;
   private now: () => number;
   private cache = new Map<string, CacheEntry>();
 
@@ -252,6 +309,7 @@ export class TrustAnchorResolver {
     this.fetcher = options.fetcher ?? httpsKeyRecordFetcher;
     this.cacheTtlMs = options.cacheTtlMs ?? 5 * 60 * 1000;
     this.dnsLookup = options.dnsLookup;
+    this.eudiVerifier = options.eudiVerifier;
     this.now = options.now ?? Date.now;
   }
 
@@ -309,6 +367,48 @@ export class TrustAnchorResolver {
         }
       } catch {
         // Section 4.3 rule 3: DNS absence/failure never fails resolution.
+      }
+    }
+
+    // Step 8 (OPTIONAL, PROVISIONAL, additive): EUDI corroboration
+    // (Section 4.6). Only on a successful `domain` resolution — EUDI
+    // strengthens a domain-valid result and never rescues a failed one
+    // (rule 3: authenticity stays domain-verifiable). The verifier does
+    // all credential/trust-list work; this SDK only wires the outcome
+    // in and enforces that it is warning/elevation-only.
+    if (result.resolved && this.eudiVerifier && entry.record.eudi_attestation) {
+      const attestation = entry.record.eudi_attestation;
+      try {
+        const outcome = await this.eudiVerifier(attestation, {
+          domain,
+          keyId,
+          record: entry.record,
+        });
+        if (outcome.verified) {
+          const b = attestation.binds ?? {};
+          const keyOk = b.key_id === undefined || b.key_id === keyId;
+          const domainOk =
+            b.publisher_domain === undefined ||
+            b.publisher_domain.toLowerCase() === domain.toLowerCase();
+          if (keyOk && domainOk) {
+            result.eudi = outcome; // elevation: verified legal identity
+          } else {
+            result.warnings.push(
+              "eudi-binding-mismatch: attestation verified but does not bind " +
+                "the resolved key/domain (ONP-0004 Section 4.6: warning, not failure)"
+            );
+          }
+        } else {
+          result.warnings.push(
+            `eudi-attestation-unverified: ${outcome.reason ?? "verification failed"} ` +
+              "(ONP-0004 Section 4.6: warning, not failure)"
+          );
+        }
+      } catch {
+        // Rule 3: an EUDI verifier error never fails resolution.
+        result.warnings.push(
+          "eudi-verification-error (ONP-0004 Section 4.6: warning, not failure)"
+        );
       }
     }
 

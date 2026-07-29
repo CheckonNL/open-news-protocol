@@ -208,6 +208,103 @@ export const articleCompanionValidator: CompanionValidator = (content) => {
   return true;
 };
 
+// Shared type predicates for the Companion validators below. Each
+// validator mirrors its spec's Object Model (Section 5): REQUIRED
+// fields must be present and correctly typed, OPTIONAL fields are
+// type-checked only when present, and non-conformance is the `false`
+// outcome — never a thrown error (ONP-1004 Section 4.3, rule 1).
+const isString = (x: unknown): x is string => typeof x === "string";
+const isBoolean = (x: unknown) => typeof x === "boolean";
+const isInteger = (x: unknown) => typeof x === "number" && Number.isInteger(x);
+const isNumber = (x: unknown) => typeof x === "number";
+const isStringArray = (x: unknown) => Array.isArray(x) && x.every(isString);
+
+/**
+ * ONP-2200 Section 5: the Media Companion's Object Model. media_type
+ * (enum), asset_url, asset_hash, mime_type are REQUIRED.
+ */
+export const mediaCompanionValidator: CompanionValidator = (content) => {
+  const MEDIA_TYPES = new Set(["image", "video", "audio"]);
+  if (!isString(content.media_type) || !MEDIA_TYPES.has(content.media_type)) return false;
+  for (const f of ["asset_url", "asset_hash", "mime_type"]) {
+    if (!isString(content[f])) return false;
+  }
+  const optStr = ["alt_text", "caption", "credit", "creator_ref", "rights_ref", "payment_ref"];
+  for (const f of optStr) {
+    if (f in content && !isString(content[f])) return false;
+  }
+  for (const f of ["width", "height"]) {
+    if (f in content && !isInteger(content[f])) return false;
+  }
+  if ("duration_seconds" in content && !isNumber(content.duration_seconds)) return false;
+  return true;
+};
+
+/**
+ * ONP-2400 Section 5: the Rights Companion's Object Model. At least one
+ * of license_identifier / license_url is REQUIRED.
+ */
+export const rightsCompanionValidator: CompanionValidator = (content) => {
+  const hasId = "license_identifier" in content;
+  const hasUrl = "license_url" in content;
+  if (!hasId && !hasUrl) return false;
+  if (hasId && !isString(content.license_identifier)) return false;
+  if (hasUrl && !isString(content.license_url)) return false;
+  for (const f of ["copyright_holder", "attribution_text", "embargo_until"]) {
+    if (f in content && !isString(content[f])) return false;
+  }
+  if ("copyright_year" in content && !isString(content.copyright_year) && !isInteger(content.copyright_year)) {
+    return false;
+  }
+  const optBool = ["redistribution_permitted", "attribution_required", "derivative_works_permitted", "commercial_use_permitted"];
+  for (const f of optBool) {
+    if (f in content && !isBoolean(content[f])) return false;
+  }
+  if ("territory_restrictions" in content && !isStringArray(content.territory_restrictions)) return false;
+  return true;
+};
+
+/**
+ * ONP-2500 Section 5: the Payments Companion's Object Model.
+ * payment_model (enum) is REQUIRED; currency is REQUIRED when price is
+ * present; price MUST be a string, never a JSON number (Section 4.4).
+ */
+export const paymentsCompanionValidator: CompanionValidator = (content) => {
+  const MODELS = new Set(["free", "one-time", "subscription", "donation", "micropayment"]);
+  if (!isString(content.payment_model) || !MODELS.has(content.payment_model)) return false;
+  if ("price" in content) {
+    if (!isString(content.price)) return false;
+    if (!("currency" in content)) return false; // REQUIRED if price present
+  }
+  if ("currency" in content && !isString(content.currency)) return false;
+  for (const f of ["recipient_ref", "subscription_period"]) {
+    if (f in content && !isString(content[f])) return false;
+  }
+  if ("payment_provider_hint" in content && !isStringArray(content.payment_provider_hint)) return false;
+  if ("revenue_shares" in content) {
+    if (!Array.isArray(content.revenue_shares)) return false;
+    for (const share of content.revenue_shares) {
+      if (typeof share !== "object" || share === null) return false;
+      const s = share as Record<string, unknown>;
+      if (!isString(s.recipient_ref) || !isString(s.percentage)) return false;
+    }
+  }
+  return true;
+};
+
+/**
+ * ONP-2700 Section 5: the Corrections Companion's Object Model. Every
+ * field is REQUIRED; correction_type is an enum.
+ */
+export const correctionsCompanionValidator: CompanionValidator = (content) => {
+  const TYPES = new Set(["factual", "clarification", "typographical", "retraction", "update"]);
+  for (const f of ["subject_oid", "corrected_vid", "correcting_vid", "explanation", "corrected_at"]) {
+    if (!isString(content[f])) return false;
+  }
+  if (!isString(content.correction_type) || !TYPES.has(content.correction_type)) return false;
+  return true;
+};
+
 /**
  * ONP-3100 Section 5: org.onp.ai-metadata. Every field OPTIONAL,
  * but type- and enum-checked when present; unknown members within
@@ -242,6 +339,12 @@ export const aiMetadataExtensionValidator: ExtensionValidator = {
 
 /** A registry preloaded with the reference validators above. */
 export const referenceValidatorRegistry: ValidatorRegistry = {
-  companions: { "onp:companion:article": articleCompanionValidator },
+  companions: {
+    "onp:companion:article": articleCompanionValidator,
+    "onp:companion:media": mediaCompanionValidator,
+    "onp:companion:rights": rightsCompanionValidator,
+    "onp:companion:payments": paymentsCompanionValidator,
+    "onp:companion:corrections": correctionsCompanionValidator,
+  },
   extensions: { "org.onp.ai-metadata": aiMetadataExtensionValidator },
 };
