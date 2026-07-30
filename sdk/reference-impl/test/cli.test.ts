@@ -10,7 +10,18 @@ import { fileURLToPath } from "node:url";
 const CLI = fileURLToPath(new URL("../src/cli.js", import.meta.url));
 
 function run(args: string[]) {
-  return spawnSync(process.execPath, [CLI, ...args], { encoding: "utf8" });
+  const opts = { encoding: "utf8" as const, maxBuffer: 10 * 1024 * 1024 };
+  let r = spawnSync(process.execPath, [CLI, ...args], opts);
+  // `r.error` is set only when the process could not be *started* (e.g.
+  // EAGAIN/ENOMEM when the machine is under load), never for a real CLI
+  // exit — a non-zero exit code has `r.error` undefined. Retry only the
+  // transient start failures, so the suite does not flake under load
+  // while a genuine non-zero exit is still surfaced to the assertions.
+  for (let attempt = 0; attempt < 4 && r.error; attempt++) {
+    r = spawnSync(process.execPath, [CLI, ...args], opts);
+  }
+  if (r.error) throw r.error;
+  return r;
 }
 
 function unsignedFixture(dir: string): string {
