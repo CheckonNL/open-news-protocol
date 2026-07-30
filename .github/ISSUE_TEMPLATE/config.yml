@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability (report privately)
+    url: https://github.com/CheckonNL/open-news-protocol/blob/main/SECURITY.md
+    about: Do NOT open a public issue for a security vulnerability. Report it privately — see SECURITY.md (email info@checkon.nl or use private vulnerability reporting).
