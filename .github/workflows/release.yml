@@ -1,0 +1,53 @@
+name: Release
+
+# Publishes the SDK to npm when a version tag (vX.Y.Z) is pushed.
+# One-time setup by the maintainer: create an npm account, generate an
+# automation/granular access token with publish rights for
+# `open-news-protocol`, and add it as the repository secret NPM_TOKEN.
+# Then: bump sdk/reference-impl/package.json, commit, and push a tag
+# whose version matches, e.g. `git tag v0.3.0 && git push origin v0.3.0`.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  id-token: write # required for npm provenance (verifiable build origin)
+
+jobs:
+  publish:
+    name: "Publish open-news-protocol to npm"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/reference-impl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: sdk/reference-impl/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      # Never publish a broken build: the full suite must pass first.
+      - run: npm test
+      # Guard: the pushed tag (vX.Y.Z) must match package.json's version,
+      # so a tag can never publish a mismatched version.
+      - name: Verify tag matches package version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "Tag $GITHUB_REF_NAME (=$TAG) does not match package version $PKG"
+            exit 1
+          fi
+          echo "Publishing version $PKG"
+      # --provenance records a verifiable link from the npm package back
+      # to this workflow run and commit — fitting for a provenance protocol.
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

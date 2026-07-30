@@ -1,7 +1,7 @@
 {
-  "name": "@onp/reference-impl",
+  "name": "open-news-protocol",
   "version": "0.3.0",
-  "description": "ONP Reference Implementation: ONP-1000 through ONP-1004 (envelope, identifiers, serialization, signatures, multi-level validation), ONP-0004 Trust Anchor resolution, and ONP-1006 Retrieval, per ONP-9000.",
+  "description": "Open News Protocol (ONP) reference implementation: sign, verify, retrieve, and aggregate cryptographically provenanced News Objects. Envelope, identifiers, JCS (RFC 8785) canonicalization, Ed25519 + ECDSA-P256 signatures, multi-level validation, domain Trust Anchor resolution (with a provisional EUDI hook), and a consumer-Node aggregator.",
   "type": "module",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -33,10 +33,26 @@
     "onp",
     "open-news-protocol",
     "news",
-    "provenance"
+    "provenance",
+    "digital-signatures",
+    "ed25519",
+    "ecdsa-p256",
+    "eidas",
+    "eudi",
+    "json-canonicalization",
+    "rfc8785",
+    "content-authenticity",
+    "sdk"
   ],
   "author": "Open News Protocol Working Group",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CheckonNL/open-news-protocol.git",
+    "directory": "sdk/reference-impl"
+  },
+  "homepage": "https://github.com/CheckonNL/open-news-protocol#readme",
+  "bugs": "https://github.com/CheckonNL/open-news-protocol/issues",
   "dependencies": {
     "@noble/curves": "^1.6.0",
     "@noble/hashes": "^1.5.0",

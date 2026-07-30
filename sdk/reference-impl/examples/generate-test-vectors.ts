@@ -128,7 +128,7 @@ function main() {
 
   const output = {
     test_vector_set: "onp-core-v0.1.0",
-    generated_by: "@onp/reference-impl example generator",
+    generated_by: "open-news-protocol example generator",
     note: "Real, computed values — not placeholders. Public test key is safe to publish; private key material above is for vector regeneration only and MUST NOT be used for anything else.",
     vectors,
   };

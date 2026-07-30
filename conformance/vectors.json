@@ -1,7 +1,7 @@
 {
   "conformance_suite": "onp-core-conformance-v0.1.0",
   "description": "ONP Core conformance vectors: produce (byte-reproducible VID + signature), verify (offline Core validation outcomes), and verify_trust (full pipeline with an injected Publisher Key Record). See README.md for the outcome vocabulary and how to run.",
-  "generated_by": "@onp/reference-impl conformance generator",
+  "generated_by": "open-news-protocol conformance generator",
   "note": "Fixed test keys are NON-PRODUCTION, published for reproducibility (ONP-9000 Section 5.1). ECDSA-P256 signatures are deterministic (RFC 6979); a non-deterministic signer reproduces the VID byte-for-byte but produces a different, still-valid signature — see README.",
   "test_keys": {
     "ed25519": {
