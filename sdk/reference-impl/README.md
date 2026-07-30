@@ -119,6 +119,22 @@ for exactly that). Feed and Object fetching are injectable, so it is a
 pure, offline-testable function; the `onp aggregate <feed-url>...` CLI
 command runs it over live HTTPS.
 
+## Relay — an untrusted intermediary (ONP-0001 Section 6.3)
+
+`src/relay.ts` is the last Node role: an intermediary that caches,
+mirrors, and indexes Objects across publishers — the cross-publisher
+discovery no single publisher can offer — without ever conferring
+trust. `Relay.ingest()` verifies an Object and keeps the newest Version
+per OID; `get()` mirrors it by OID; `query()` returns a newest-first,
+publisher-filterable index; and `feed()` emits a combined `<onp:object>`
+feed an aggregator consumes exactly like any other, closing the loop
+`publisher -> relay (index) -> aggregator (verify)`. Verifying on ingest
+only keeps the index clean — the guarantee is that consumers re-verify,
+so a relay can be run by anyone, even an adversary, and cannot smuggle
+in a forgery (a test drives its feed straight into `aggregate`). With
+this, every role in the network model — publisher, verifier, aggregator,
+relay — has a reference implementation.
+
 ## Trust Anchor resolution (ONP-0004) — implemented
 
 `src/trust.ts` implements the domain-anchored Trust Anchor baseline:
@@ -175,7 +191,7 @@ ONP-9000 intends.)
 ```bash
 npm install
 npm run build
-npm test                 # runs the test suite (88 tests)
+npm test                 # runs the test suite (94 tests)
 npm run example          # signs and verifies the running fusie-onderzoek Article
 npm run bridges           # exports the same Article to schema.org JSON-LD and RSS XML
 npm run capstone         # the whole loop: sign -> RSS feed -> aggregate -> verified timeline (with a rejected forgery)
