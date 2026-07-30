@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>&lt;onp-badge&gt; demo</title>
+  <style>
+    body { font: 16px/1.6 system-ui, sans-serif; max-width: 44rem; margin: 3rem auto; padding: 0 1.2rem; color: #1a1a1a; }
+    h1 { font-size: 1.5rem; } h2 { font-size: 1.05rem; margin-top: 2.2rem; }
+    article { border: 1px solid #eee; border-radius: 10px; padding: 1.2rem 1.4rem; margin: .8rem 0; }
+    article h3 { margin: 0 0 .3rem; } .byline { color: #777; font-size: .85rem; margin: 0 0 .8rem; }
+    .note { color: #666; font-size: .9rem; }
+    code { background: #f5f5f5; padding: .1em .35em; border-radius: 4px; }
+  </style>
+  <!-- Offline demo: mock the network so the badge verifies inline example
+       data — a genuine signed Object and a tampered copy — without a server. -->
+  <script>
+    const DEMO = {"domain":"regiopurmerend.nl","publisherJson":{"onp_trust_anchor_type":"domain","publisher_domain":"regiopurmerend.nl","current_keys":[{"key_id":"onp:key:2026","algorithm":"Ed25519","public_key":"d447CU2TKTxL3vFQk3ThvTQMuj0MTWG7IDCFOk2mRr0","valid_from":"2026-01-01T00:00:00Z"}],"previous_keys":[]},"objectUrl":"https://regiopurmerend.nl/.well-known/onp/objects/fusie-onderzoek","verified":{"oid":"onp:oid:regiopurmerend.nl:fusie-onderzoek","publisher":{"domain":"regiopurmerend.nl","key_id":"onp:key:2026"},"signed_at":"2026-07-30T10:00:00Z","content_type":"onp:companion:article","content":{"headline":"Fusie-onderzoek Purmerend gepubliceerd","body":"…","canonical_url":"https://regiopurmerend.nl/artikel/fusie-onderzoek"},"vid":"onp:vid:sha-256:u3RP2GYOk8cS5Pc8TmCTJK5Clexl-ig9lfaVSt4Lr8s","signature":"onp:sig:ed25519:PD3GWv3x_JLJtL3DfFQmrzUlsyECAUmmxPNAvWGO_XTHwM2ZdGM5quAqQkdJDk_SUZYXoLyeujyC4Am_4ebKAA"},"tamperedUrl":"https://regiopurmerend.nl/.well-known/onp/objects/tampered","tampered":{"oid":"onp:oid:regiopurmerend.nl:fusie-onderzoek","publisher":{"domain":"regiopurmerend.nl","key_id":"onp:key:2026"},"signed_at":"2026-07-30T10:00:00Z","content_type":"onp:companion:article","content":{"headline":"NEP: Purmerend stapt uit de EU","body":"…","canonical_url":"https://regiopurmerend.nl/artikel/fusie-onderzoek"},"vid":"onp:vid:sha-256:u3RP2GYOk8cS5Pc8TmCTJK5Clexl-ig9lfaVSt4Lr8s","signature":"onp:sig:ed25519:PD3GWv3x_JLJtL3DfFQmrzUlsyECAUmmxPNAvWGO_XTHwM2ZdGM5quAqQkdJDk_SUZYXoLyeujyC4Am_4ebKAA"}};
+    const RESP = (data) => ({ ok: true, status: 200, headers: { get: () => null }, json: async () => data });
+    window.fetch = async (url) => {
+      const u = String(url);
+      if (u.endsWith("/.well-known/onp/publisher.json")) return RESP(DEMO.publisherJson);
+      if (u === DEMO.objectUrl) return RESP(DEMO.verified);
+      if (u === DEMO.tamperedUrl) return RESP(DEMO.tampered);
+      return { ok: false, status: 404, headers: { get: () => null }, json: async () => ({}) };
+    };
+  </script>
+  <script type="module" src="dist/onp-badge.js"></script>
+</head>
+<body>
+  <h1>The reader's view: <code>&lt;onp-badge&gt;</code></h1>
+  <p class="note">
+    Each article below carries a badge. It verifies the signed News Object
+    in your own browser and shows the verdict — click a badge to expand its
+    provenance. Nothing is trusted on the page's say-so; only the signature.
+  </p>
+
+  <h2>A genuine, signed article</h2>
+  <article>
+    <h3>Fusie-onderzoek Purmerend gepubliceerd</h3>
+    <p class="byline">RegioPurmerend · 30 July 2026</p>
+    <onp-badge object="https://regiopurmerend.nl/.well-known/onp/objects/fusie-onderzoek"></onp-badge>
+  </article>
+
+  <h2>The same article, altered after signing</h2>
+  <article>
+    <h3>NEP: Purmerend stapt uit de EU</h3>
+    <p class="byline">RegioPurmerend · 30 July 2026</p>
+    <onp-badge object="https://regiopurmerend.nl/.well-known/onp/objects/tampered"></onp-badge>
+  </article>
+
+  <p class="note">
+    The two Objects share a key and a claimed VID, but one character of the
+    headline changed — so the recomputed fingerprint no longer matches, and
+    the badge says so.
+  </p>
+</body>
+</html>
