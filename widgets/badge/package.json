@@ -1,20 +1,50 @@
 {
-  "name": "@onp/badge",
+  "name": "onp-badge",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
-  "description": "Embeddable <onp-badge> web component: verifies an ONP News Object in the reader's browser and shows a provenance badge. Consumes the published open-news-protocol SDK.",
+  "description": "Embeddable <onp-badge> web component: verifies an Open News Protocol (ONP) News Object in the reader's browser and shows a provenance badge. Self-contained, no dependencies at runtime.",
+  "main": "./dist/onp-badge.js",
+  "module": "./dist/onp-badge.js",
+  "exports": {
+    ".": "./dist/onp-badge.js"
+  },
+  "unpkg": "./dist/onp-badge.js",
+  "jsdelivr": "./dist/onp-badge.js",
+  "files": [
+    "dist/onp-badge.js"
+  ],
+  "sideEffects": true,
   "scripts": {
     "build": "tsc",
     "test": "node --test dist/test/*.test.js",
-    "bundle": "esbuild src/onp-badge.ts --bundle --format=esm --minify --outfile=dist/onp-badge.js --platform=browser"
+    "bundle": "esbuild src/onp-badge.ts --bundle --format=esm --minify --outfile=dist/onp-badge.js --platform=browser",
+    "prepublishOnly": "npm run bundle"
   },
-  "dependencies": {
-    "open-news-protocol": "^0.3.0"
+  "keywords": [
+    "onp",
+    "open-news-protocol",
+    "web-component",
+    "verification",
+    "badge",
+    "provenance",
+    "content-authenticity"
+  ],
+  "author": "Open News Protocol Working Group",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CheckonNL/open-news-protocol.git",
+    "directory": "widgets/badge"
+  },
+  "homepage": "https://github.com/CheckonNL/open-news-protocol/tree/main/widgets/badge#readme",
+  "bugs": "https://github.com/CheckonNL/open-news-protocol/issues",
+  "publishConfig": {
+    "access": "public"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "esbuild": "^0.24.0",
+    "open-news-protocol": "^0.3.0",
     "typescript": "^5.6.0"
   }
 }

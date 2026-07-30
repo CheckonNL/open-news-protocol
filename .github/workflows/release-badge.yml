@@ -1,0 +1,50 @@
+name: Release badge widget
+
+# Publishes the onp-badge widget to npm when a tag `badge-vX.Y.Z` is
+# pushed, using npm Trusted Publishing (OIDC) — no token or secret.
+# One-time setup: on npmjs.com, open the onp-badge package -> Settings
+# -> Trusted Publisher, and add this repository
+# (CheckonNL/open-news-protocol) with the workflow `release-badge.yml`.
+# Then release with, e.g., `git tag badge-v0.1.1 && git push origin badge-v0.1.1`.
+# (The SDK's own releases use the separate `v*` tag pattern.)
+
+on:
+  push:
+    tags:
+      - "badge-v*"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: "Publish onp-badge to npm"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: widgets/badge
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: widgets/badge/package-lock.json
+      # Trusted Publishing (OIDC) requires npm >= 11.5.1.
+      - run: npm install -g npm@latest
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - run: npm run bundle
+      - name: Verify tag matches package version
+        run: |
+          TAG="${GITHUB_REF_NAME#badge-v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "Tag $GITHUB_REF_NAME (=$TAG) does not match package version $PKG"
+            exit 1
+          fi
+          echo "Publishing onp-badge $PKG"
+      - run: npm publish --access public
