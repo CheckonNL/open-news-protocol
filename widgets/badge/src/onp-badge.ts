@@ -18,16 +18,15 @@ import { evaluateBadge, type BadgeResult, type BadgeStatus } from "./badge-core.
 
 const STYLE = `
   :host { display: inline-block; font: 13px/1.4 system-ui, sans-serif; color: #1a1a1a; }
-  .badge { display: inline-flex; align-items: center; gap: .45em; padding: .3em .6em;
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px;
            border-radius: 999px; border: 1px solid #d9d9d9; background: #fff; cursor: pointer;
            user-select: none; }
-  .badge .dot { width: .7em; height: .7em; border-radius: 50%; background: #bbb; flex: none; }
+  .badge .ic { width: 16px; height: 16px; flex: none; }
+  .badge .chev { width: 13px; height: 13px; flex: none; opacity: .55; }
   .badge.verified { border-color: #b7e0c0; background: #f0faf2; color: #14622b; }
-  .badge.verified .dot { background: #1f9d4d; }
   .badge.rejected { border-color: #f0c2c2; background: #fdf1f1; color: #9a1c1c; }
-  .badge.rejected .dot { background: #d33; }
-  .badge.unavailable { border-color: #e2e2e2; background: #f7f7f7; color: #666; }
-  .label { font-weight: 600; }
+  .badge.unavailable { border-color: #e2e2e2; background: #f7f7f7; color: #5f5f5f; }
+  .label { font-weight: 500; }
   .panel { margin-top: .5em; max-width: 34em; padding: .7em .8em; border: 1px solid #e6e6e6;
            border-radius: 8px; background: #fff; }
   .panel[hidden] { display: none; }
@@ -37,9 +36,17 @@ const STYLE = `
   .foot { margin-top: .5em; color: #888; font-size: 11px; }
 `;
 
-function icon(status: BadgeStatus): string {
-  return status === "verified" ? "✓" : status === "rejected" ? "✗" : "–";
+function iconSvg(status: BadgeStatus, loading: boolean): string {
+  const svg = (paths: string) =>
+    `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+  if (loading) return svg('<circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" opacity="0.5"/>');
+  if (status === "verified") return svg('<path d="M20 6 9 17l-5-5"/>'); // check
+  if (status === "rejected") return svg('<path d="M18 6 6 18M6 6l12 12"/>'); // cross
+  return svg('<path d="M5 12h14"/>'); // dash — unavailable
 }
+
+const CHEVRON =
+  '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
 
 function label(status: BadgeStatus): string {
   return status === "verified"
@@ -93,8 +100,9 @@ class OnpBadge extends HTMLElement {
       <style>${STYLE}</style>
       <span class="badge ${result.status}" part="badge" role="button" tabindex="0"
             aria-expanded="false" title="${loading ? "Checking" : result.detail.replace(/"/g, "&quot;")}">
-        <span class="dot"></span>
-        <span class="label">${loading ? "Checking…" : icon(result.status) + " " + label(result.status)}</span>
+        ${iconSvg(result.status, loading)}
+        <span class="label">${loading ? "Checking…" : label(result.status)}</span>
+        ${loading ? "" : CHEVRON}
       </span>
       <div class="panel" hidden>
         ${rows.join("")}
