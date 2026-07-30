@@ -28,6 +28,7 @@ import {
   base64url,
   base64urlDecode,
   TrustAnchorResolver,
+  aggregate,
   type UnsignedEnvelope,
   type NewsObjectEnvelope,
   type PublisherKeyRecord,
@@ -39,7 +40,13 @@ Usage:
   onp keygen [--algorithm ed25519|ecdsa-p256]
   onp sign <unsigned.json> --key <b64url-private> [--algorithm <id>] [--out <file>]
   onp verify <file|url> [--key <b64url-public>] [--anchor <publisher.json>]
+  onp aggregate <feed-url> [<feed-url> ...]
   onp publisher-json --domain <d> --key-id <id> --public-key <b64url> [--algorithm <name>]
+
+aggregate follows the <onp:object> pointers in ordinary RSS/Atom feeds,
+verifies every referenced Object (Trust Anchor resolution included), and
+prints a newest-first timeline of only the authentic ones — a consumer
+Node that trusts the Object, never the feed.
 
 verify runs the full pipeline (Trust Anchor resolution over HTTPS) by
 default; --key does offline crypto-only verification, --anchor uses a
@@ -176,6 +183,24 @@ async function cmdVerify(argv: string[]): Promise<void> {
   return report(result.core_authenticated, result.failure_step, result);
 }
 
+async function cmdAggregate(argv: string[]): Promise<void> {
+  const { positionals } = parse(argv, {}, true);
+  if (positionals.length === 0) return die("usage: onp aggregate <feed-url> [<feed-url> ...]");
+
+  const result = await aggregate(positionals, new TrustAnchorResolver());
+  for (const item of result.items) {
+    const content = item.envelope.content as Record<string, unknown>;
+    const headline = typeof content.headline === "string" ? content.headline : "(no headline)";
+    const tr = item.validation.trust_resolution;
+    const eudi = tr && tr.resolved && tr.eudi?.verified
+      ? `  [EUDI: ${tr.eudi.subject?.legal_name ?? "verified"}]`
+      : "";
+    process.stdout.write(`${item.envelope.signed_at}  ${item.envelope.publisher.domain}  ${headline}${eudi}\n`);
+  }
+  process.stderr.write(`\n${result.items.length} verified, ${result.rejected.length} rejected\n`);
+  process.exit(0);
+}
+
 function cmdPublisherJson(argv: string[]): void {
   const { values } = parse(argv, {
     domain: { type: "string" },
@@ -222,6 +247,8 @@ async function main(): Promise<void> {
       return cmdSign(rest);
     case "verify":
       return await cmdVerify(rest);
+    case "aggregate":
+      return await cmdAggregate(rest);
     case "publisher-json":
       return cmdPublisherJson(rest);
     case "help":

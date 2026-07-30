@@ -10,3 +10,4 @@ export * from "./export-rss.js";
 export * from "./trust.js";
 export * from "./retrieval.js";
 export * from "./multilevel.js";
+export * from "./aggregator.js";

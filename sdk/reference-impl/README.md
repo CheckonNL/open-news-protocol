@@ -92,6 +92,22 @@ export bridge now carries `<onp:object>` per item (Section 4.4,
 namespace `https://opennewsprotocol.org/ns/feed`), so existing feeds
 point at the signed Object.
 
+## Aggregation — a consumer Node (ONP-0001 Section 6.3)
+
+`src/aggregator.ts` is the Node role that closes the network model's
+`Publisher Node -> Signed Object -> Other Nodes -> Applications` loop.
+`aggregate(feedUrls, resolver)` follows the `<onp:object>` pointers in
+ordinary RSS/Atom feeds, retrieves every referenced Object, runs full
+Core validation (Trust Anchor resolution included) on each, and returns
+a newest-first, per-OID-deduplicated timeline of **only the authentic
+ones**, with a separate list of what was rejected and why. This is
+"trust the Object, not the Messenger" made concrete: discovery is
+untrusted, so a hostile or broken feed can only waste a fetch — it
+cannot inject an unauthentic Object into the timeline (there is a test
+for exactly that). Feed and Object fetching are injectable, so it is a
+pure, offline-testable function; the `onp aggregate <feed-url>...` CLI
+command runs it over live HTTPS.
+
 ## Trust Anchor resolution (ONP-0004) — implemented
 
 `src/trust.ts` implements the domain-anchored Trust Anchor baseline:
@@ -148,7 +164,7 @@ ONP-9000 intends.)
 ```bash
 npm install
 npm run build
-npm test                 # runs the test suite (76 tests)
+npm test                 # runs the test suite (88 tests)
 npm run example          # signs and verifies the running fusie-onderzoek Article
 npm run bridges           # exports the same Article to schema.org JSON-LD and RSS XML
 node dist/examples/generate-test-vectors.js   # regenerates examples/test-vectors.json
@@ -165,6 +181,7 @@ rejected, so it drops straight into CI and pipelines.
 onp keygen [--algorithm ed25519|ecdsa-p256]
 onp sign <unsigned.json> --key <b64url-private> [--algorithm <id>] [--out <file>]
 onp verify <file|url> [--key <b64url-public>] [--anchor <publisher.json>]
+onp aggregate <feed-url> [<feed-url> ...]
 onp publisher-json --domain <d> --key-id <id> --public-key <b64url> [--algorithm <name>]
 ```
 
