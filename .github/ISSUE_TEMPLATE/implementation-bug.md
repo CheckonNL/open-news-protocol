@@ -1,8 +1,10 @@
 ---
 name: Implementation bug (SDK or WordPress plugin)
 about: A bug in the TypeScript reference SDK or the WordPress plugin
-title: ""
+title: ''
 labels: bug
+assignees: ''
+
 ---
 
 <!-- Not a security vulnerability — those go to SECURITY.md, privately. -->

@@ -2,7 +2,9 @@
 name: Specification issue or change
 about: Report a problem, ambiguity, or gap in a specification (ONP-NNNN)
 title: "[ONP-NNNN] "
-labels: specification
+labels: ''
+assignees: ''
+
 ---
 
 <!-- Per CONTRIBUTING.md: describe the PROBLEM first, not (yet) the exact
