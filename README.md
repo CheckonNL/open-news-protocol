@@ -35,23 +35,32 @@ extending Core document (ONP-1006, Retrieval) added via a recorded
 roadmap extension in ONP-0000 v0.4.0.** What
 that does, and does not, mean in practice is stated plainly in
 [`specs/9004-migration.md`](specs/9004-migration.md) Appendix B — the
-specification text is done. A minimal, real, working, tested
-implementation now exists (`sdk/reference-impl/`), covering ONP-1000
-through ONP-1004 plus Trust Anchor resolution (ONP-0004) and Retrieval
-(ONP-1006), with genuine computed Test Vectors, not placeholders, and
-working export bridges to schema.org/NewsArticle and RSS 2.0
-(ONP-9005). A second, independent implementation in PHP ships as a
-WordPress plugin (`implementations/wordpress/`), and continuous
-integration verifies that both produce identical bytes from the same
-document and accept each other's signatures. What has *not* happened
-yet: no specification has been through external review, no third party
-has implemented against the text alone, and the human governance
-process described in `CHARTER.md` has not been exercised by a real
-Working Group. Several acknowledged gaps
-(`eudi` Trust Anchor Type, cross-publisher identity, a true Analytics
-Attestation Companion, and deep C2PA integration — reserved as
-ONP-3600, not yet written) remain open by design rather than
-glossed over.
+specification text is done. A real, working, tested TypeScript
+implementation is **published on npm as
+[`open-news-protocol`](https://www.npmjs.com/package/open-news-protocol)**
+(`sdk/reference-impl/`): it covers ONP-1000 through ONP-1004, Trust
+Anchor resolution (ONP-0004), and Retrieval (ONP-1006); signs and
+verifies with both Ed25519 and ECDSA-P256 (the eIDAS curve, ratified in
+ONP-1003 Appendix C); carries a provisional, additive `eudi`
+corroboration hook (ONP-0004 Section 4.6); and adds a consumer-Node
+aggregator that assembles a verified multi-publisher timeline, an `onp`
+CLI, export bridges to schema.org/NewsArticle and RSS 2.0 (ONP-9005),
+and genuine computed Test Vectors. A separate, language-agnostic
+conformance suite (`conformance/`) lets a third party certify their own
+implementation against the spec without importing any reference code. A
+second, independent implementation in PHP ships as a WordPress plugin
+(`implementations/wordpress/`), and continuous integration verifies
+that both produce identical bytes from the same document and accept
+each other's signatures. What has *not* happened yet: no specification
+has been through external review, no third party has implemented
+against the text alone, and the human governance process described in
+`CHARTER.md` has not been exercised by a real Working Group. Several
+acknowledged gaps remain open by design rather than glossed over: the
+`eudi` Trust Anchor Type (an additive, warning-only corroboration hook
+exists in the SDK, but its binding is not yet ratified and there is no
+real wallet verifier), cross-publisher identity, a true Analytics
+Attestation Companion, and deep C2PA integration (reserved as ONP-3600,
+not yet written).
 
 | Series | Range | Status |
 |---|---|---|

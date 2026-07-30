@@ -2,7 +2,7 @@
 
 **Type:** Positioning document (non-normative)
 **Status:** Working Draft
-**Last Modified:** 2026-07-28
+**Last Modified:** 2026-07-30
 **Related specifications:** ONP-0000 (Introduction), ONP-0003 (Design Principles)
 
 This document is not part of the ONP specification series and
@@ -97,15 +97,23 @@ a maintenance and marketing plan for the full project lifecycle, and
 demonstrated ties to "Support for Scale" integration efforts
 [EU-Funding-2026a]. A parallel effort is underway to build a single
 hub that catalogues, validates, and promotes solutions across the
-whole Stack [EU-Funding-2026b]. ONP, at four Foundation
-specifications and no reference implementation, is not yet at the
-maturity such a call would expect. The practical takeaway is
-architectural, not financial: write the identity, rights, and
-payments Companions with these hooks in mind now, so that if and
-when ONP has a working reference implementation, applying for OIS
-funding — likely alongside an established open-source or research
-partner, as most funded consortia include one — is a matter of
-packaging existing work rather than retrofitting it.
+whole Stack [EU-Funding-2026b]. ONP now has thirty-six published
+specifications, a TypeScript reference implementation on npm
+(`open-news-protocol`) covering the full Node lifecycle — signing,
+verification, Trust Anchor resolution (with a provisional `eudi`
+corroboration hook), and a consumer-Node aggregator — a second,
+independent PHP implementation cross-verified in CI, and a
+language-agnostic conformance suite. It signs with both Ed25519 and
+ECDSA-P256, the eIDAS curve. What it still lacks is what such a call
+would weigh most heavily: external review, a third party that has
+implemented against the specification text alone, and a real Working
+Group exercising the governance in `CHARTER.md`. The practical takeaway
+is architectural, not financial: the identity, rights, and payments
+Companions are written with these hooks in mind (Section 3), so
+applying for OIS funding — likely alongside an established open-source
+or research partner, as most funded consortia include one — becomes a
+matter of packaging existing work and earning external validation
+rather than retrofitting it.
 
 ## 5. References
 
