@@ -145,3 +145,24 @@ jobs:
       # dogfoods it: the reference SDK must pass 100% of its own suite,
       # so vectors and implementation cannot drift apart.
       - run: node conformance/run.mjs
+
+  badge:
+    name: "Badge widget: build + core tests + bundle"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: widgets/badge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: widgets/badge/package-lock.json
+      # The <onp-badge> widget consumes the published open-news-protocol
+      # SDK. Type-check, run the DOM-free core tests, and confirm the
+      # browser bundle still builds so the embeddable file can't rot.
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - run: npm run bundle
