@@ -167,6 +167,7 @@ npm run build
 npm test                 # runs the test suite (88 tests)
 npm run example          # signs and verifies the running fusie-onderzoek Article
 npm run bridges           # exports the same Article to schema.org JSON-LD and RSS XML
+npm run capstone         # the whole loop: sign -> RSS feed -> aggregate -> verified timeline (with a rejected forgery)
 node dist/examples/generate-test-vectors.js   # regenerates examples/test-vectors.json
 ```
 

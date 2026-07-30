@@ -23,6 +23,7 @@
     "test": "node --test dist/test/*.test.js",
     "example": "npm run build && node dist/examples/fusie-onderzoek.js",
     "bridges": "npm run build && node dist/examples/export-bridges.js",
+    "capstone": "npm run build && node dist/examples/end-to-end.js",
     "prepublishOnly": "npm run build"
   },
   "publishConfig": {
