@@ -12,7 +12,7 @@
     }
   },
   "bin": {
-    "onp": "./dist/src/cli.js"
+    "onp": "dist/src/cli.js"
   },
   "files": [
     "dist/src"

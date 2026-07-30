@@ -17,6 +17,17 @@ and signature values; nothing here uses the placeholder
 `AbC123-example-digest-bytes`-style values the specification text
 itself uses for illustration.
 
+## Install
+
+```bash
+npm install open-news-protocol
+```
+
+This installs the library and the `onp` CLI. The crypto is pure-JS (no
+`node:` built-ins), so it runs unchanged on Node, browsers, Deno, and
+edge runtimes. Published as `0.x`: still a Working Draft, so the API may
+change between minor versions (SemVer's initial-development phase).
+
 ## What this covers
 
 - `src/preimage.ts` — Pre-Image construction (ONP-1002 Section 4.2),

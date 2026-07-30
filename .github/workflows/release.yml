@@ -1,11 +1,13 @@
 name: Release
 
-# Publishes the SDK to npm when a version tag (vX.Y.Z) is pushed.
-# One-time setup by the maintainer: create an npm account, generate an
-# automation/granular access token with publish rights for
-# `open-news-protocol`, and add it as the repository secret NPM_TOKEN.
-# Then: bump sdk/reference-impl/package.json, commit, and push a tag
-# whose version matches, e.g. `git tag v0.3.0 && git push origin v0.3.0`.
+# Publishes the SDK to npm when a version tag (vX.Y.Z) is pushed, using
+# npm Trusted Publishing (OIDC) — no token or secret required.
+# One-time setup by the maintainer: on npmjs.com, open the
+# open-news-protocol package -> Settings -> Trusted Publisher, and add
+# this repository (CheckonNL/open-news-protocol) with the workflow
+# `release.yml`. Then, to release: bump sdk/reference-impl/package.json,
+# commit, and push a matching tag, e.g.
+# `git tag v0.3.1 && git push origin v0.3.1`.
 
 on:
   push:
@@ -31,6 +33,9 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: npm
           cache-dependency-path: sdk/reference-impl/package-lock.json
+      # Trusted Publishing (OIDC) requires npm >= 11.5.1; Node 22 ships
+      # an older npm, so upgrade before publishing.
+      - run: npm install -g npm@latest
       - run: npm ci
       - run: npm run build
       # Never publish a broken build: the full suite must pass first.
@@ -46,8 +51,7 @@ jobs:
             exit 1
           fi
           echo "Publishing version $PKG"
-      # --provenance records a verifiable link from the npm package back
-      # to this workflow run and commit — fitting for a provenance protocol.
-      - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # Trusted Publishing: npm authenticates via OIDC (no token/secret)
+      # and generates provenance automatically — a verifiable link from
+      # the published package back to this workflow run and commit.
+      - run: npm publish --access public
