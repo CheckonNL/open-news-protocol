@@ -220,6 +220,30 @@ export function resolveAgainstRecord(
         return { resolved: false, reason: "key-revoked", warnings };
       }
     }
+    // Rotation posture (warning-only; ONP-0004 Section 4.4 rule 5,
+    // Section 4.5 rule 4, Section 8.2). Trusting a PREVIOUS key means a
+    // rotation is being relied on; surface the strength of its
+    // corroborating evidence, but never require any of it (rule 5:
+    // continuity is RECOMMENDED, not REQUIRED).
+    if (record.rotation_continuity_signature == null) {
+      warnings.push(
+        "rotation-continuity-signature-absent: this rotation carries no " +
+          "rotation_continuity_signature (ONP-0004 Section 4.4 rule 5: " +
+          "RECOMMENDED, not REQUIRED)"
+      );
+    } else {
+      warnings.push(
+        "rotation-continuity-signature-present-but-unverified: ONP-0004 " +
+          "Section 4.4 rule 5 does not yet define this signature's " +
+          "verification pre-image, so it cannot be cryptographically checked"
+      );
+    }
+    if (record.transparency_log == null) {
+      warnings.push(
+        "transparency-log-absent: no transparency_log for a rotated key " +
+          "(ONP-0004 Section 4.5 rule 4: MAY be treated as elevated risk)"
+      );
+    }
     return { resolved: true, key: previous, matched_in: "previous_keys", warnings };
   }
 

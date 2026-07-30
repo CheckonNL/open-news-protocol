@@ -101,6 +101,24 @@ test("ONP-0004 Section 7.2: rotated key within window resolves", async () => {
   assert.equal(result.resolved && result.matched_in, "previous_keys");
 });
 
+test("ONP-0004 Section 4.4 rule 5 / 4.5 rule 4: rotating onto a previous key warns (absent) but never fails", () => {
+  const { record } = makeWorld(); // record has neither continuity sig nor transparency log
+  const result = resolveAgainstRecord(record, DOMAIN, PREVIOUS_KEY_ID, "2025-11-01T10:00:00Z");
+  assert.equal(result.resolved, true);
+  assert.ok(result.warnings.some((w) => w.includes("rotation-continuity-signature-absent")));
+  assert.ok(result.warnings.some((w) => w.includes("transparency-log-absent")));
+});
+
+test("ONP-0004 Section 4.4 rule 5: a present continuity signature warns present-but-unverified", () => {
+  const { record } = makeWorld();
+  record.rotation_continuity_signature = "onp:sig:ed25519:not-verified-here";
+  record.transparency_log = { log_url: "https://transparency.example-onp-log.org" };
+  const result = resolveAgainstRecord(record, DOMAIN, PREVIOUS_KEY_ID, "2025-11-01T10:00:00Z");
+  assert.equal(result.resolved, true);
+  assert.ok(result.warnings.some((w) => w.includes("rotation-continuity-signature-present-but-unverified")));
+  assert.ok(!result.warnings.some((w) => w.includes("transparency-log-absent")));
+});
+
 test("ONP-0004 Section 6.1 step 5: previous key outside window fails", async () => {
   const { record } = makeWorld();
   const result = resolveAgainstRecord(
