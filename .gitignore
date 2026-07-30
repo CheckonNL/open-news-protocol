@@ -1,1 +1,4 @@
 .DS_Store
+
+# Local go-live working area (regiopurmerend etc.) — not committed until ready.
+deploy/
