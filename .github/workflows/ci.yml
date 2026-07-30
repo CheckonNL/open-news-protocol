@@ -5,6 +5,12 @@ on:
     branches: [main]
   pull_request:
 
+# Least privilege: every job here only reads the repo (build, test,
+# lint). No job writes contents, issues, or PRs, so the workflow-wide
+# default is read-only (CodeQL actions/missing-workflow-permissions).
+permissions:
+  contents: read
+
 jobs:
   sdk:
     name: "SDK: build + tests (incl. schema coherence)"
