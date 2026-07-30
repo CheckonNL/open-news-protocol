@@ -68,6 +68,17 @@ test("extractObjectUrls reads the <onp:object> pointers (ONP-1006 Section 4.4)",
   assert.deepEqual(urls, ["https://x/o/1", "https://y/o/2"]);
 });
 
+test("extractObjectUrls stays linear on adversarial input (ReDoS regression)", () => {
+  // An opening tag followed by many spaces and no closing tag made the
+  // earlier ambiguous regex backtrack polynomially (CodeQL
+  // js/polynomial-redos). The linear form returns immediately.
+  const evil = "<onp:object>" + " ".repeat(50000);
+  const started = Date.now();
+  const urls = extractObjectUrls(evil);
+  assert.deepEqual(urls, []);
+  assert.ok(Date.now() - started < 2000, "extractObjectUrls must run in linear time");
+});
+
 test("aggregate builds a verified, newest-first, multi-publisher timeline", async () => {
   const { a, b, resolver } = world();
   const oA = makeObject(DOMAIN_A, KEY, "older", "2026-07-28T10:00:00Z", a.kp.privateKey, "A older");

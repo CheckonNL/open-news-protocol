@@ -34,10 +34,16 @@ import type { TrustAnchorResolver } from "./trust.js";
  */
 export function extractObjectUrls(feedXml: string): string[] {
   const urls: string[] = [];
-  const re = /<onp:object>\s*([^<\s][^<]*?)\s*<\/onp:object>/g;
+  // Capture everything up to the next '<', then trim in code. A single
+  // `[^<]*` quantifier bounded by literals matches in linear time —
+  // unlike the earlier `\s*(...)\s*` form, whose overlapping whitespace
+  // matching allowed polynomial backtracking (ReDoS, CodeQL
+  // js/polynomial-redos) on adversarial feed input.
+  const re = /<onp:object>([^<]*)<\/onp:object>/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(feedXml)) !== null) {
-    urls.push(m[1].trim());
+    const url = m[1].trim();
+    if (url) urls.push(url);
   }
   return urls;
 }
