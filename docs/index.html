@@ -14,6 +14,21 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
+<script>
+  (function () {
+    var DEMO = {"record":{"onp_trust_anchor_type":"domain","publisher_domain":"checkon.nl","current_keys":[{"key_id":"onp:key:2026","algorithm":"Ed25519","public_key":"xu15DVWx5_wKj7LFXGxlCr6aG_6kH7HA_SX2K_u1JTg","valid_from":"2026-01-01T00:00:00Z"}],"previous_keys":[]},"objectUrl":"https://checkon.nl/.well-known/onp/objects/fusie-onderzoek","verified":{"oid":"onp:oid:checkon.nl:fusie-onderzoek","publisher":{"domain":"checkon.nl","key_id":"onp:key:2026"},"signed_at":"2026-07-30T10:00:00Z","content_type":"onp:companion:article","content":{"headline":"Fusie-onderzoek Purmerend gepubliceerd","dek":"Necker van Naem publiceert de budgetanalyse.","body":"…","byline":["Redactie"],"section":"Politiek","canonical_url":"https://checkon.nl/artikel/fusie-onderzoek"},"vid":"onp:vid:sha-256:PU90GUz1Q4NuDi1sGvLL3dMolXsk92iiPFdNV4WYs1U","signature":"onp:sig:ed25519:n820lPomH6q4Tk1hc4wxwu6vbXGcNEvD16vxxqZ2JdPUm-xGsrzyld9_d8Eqml4ak5JxbczK3NqPtCYSag5ODg"},"tamperedUrl":"https://checkon.nl/.well-known/onp/objects/tampered","tampered":{"oid":"onp:oid:checkon.nl:fusie-onderzoek","publisher":{"domain":"checkon.nl","key_id":"onp:key:2026"},"signed_at":"2026-07-30T10:00:00Z","content_type":"onp:companion:article","content":{"headline":"NEP: Purmerend stapt uit de EU","dek":"Necker van Naem publiceert de budgetanalyse.","body":"…","byline":["Redactie"],"section":"Politiek","canonical_url":"https://checkon.nl/artikel/fusie-onderzoek"},"vid":"onp:vid:sha-256:PU90GUz1Q4NuDi1sGvLL3dMolXsk92iiPFdNV4WYs1U","signature":"onp:sig:ed25519:n820lPomH6q4Tk1hc4wxwu6vbXGcNEvD16vxxqZ2JdPUm-xGsrzyld9_d8Eqml4ak5JxbczK3NqPtCYSag5ODg"}};
+    var res = function (data) { return Promise.resolve({ ok: true, status: 200, headers: { get: function () { return null; } }, json: function () { return Promise.resolve(data); } }); };
+    var real = window.fetch && window.fetch.bind(window);
+    window.fetch = function (url, opts) {
+      var u = String(url);
+      if (u === DEMO.objectUrl) return res(DEMO.verified);
+      if (u === DEMO.tamperedUrl) return res(DEMO.tampered);
+      if (u.indexOf("checkon.nl/.well-known/onp/publisher.json") !== -1) return res(DEMO.record);
+      return real ? real(url, opts) : Promise.reject(new Error("network blocked in demo"));
+    };
+  })();
+</script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/onp-badge@0.1.0/dist/onp-badge.js"></script>
 </head>
 <body>
 
@@ -94,6 +109,36 @@
     <p class="verifier-foot">
       <span>Ed25519 · SHA-256 · <code>RFC 8785</code> canonical JSON, computed locally.</span>
       <span>Demo keypair, published on purpose.</span>
+    </p>
+  </div>
+</section>
+
+<section class="band" id="badge">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">The reader's view</p>
+      <h2>A badge on the article itself.</h2>
+      <p>
+        This is what a reader sees. The badge below verifies the signed object live, in your own
+        browser, and says whether it is authentic. Two copies of the same article — one genuine,
+        one altered after signing. Click a badge for who signed it and when.
+      </p>
+    </div>
+    <div class="cards">
+      <div class="card">
+        <h3>Fusie-onderzoek Purmerend gepubliceerd</h3>
+        <p style="color:#7c7c7c; font-size:.85rem; margin:.2rem 0 1rem;">Checkon · 30 July 2026</p>
+        <onp-badge object="https://checkon.nl/.well-known/onp/objects/fusie-onderzoek"></onp-badge>
+      </div>
+      <div class="card">
+        <h3>NEP: Purmerend stapt uit de EU</h3>
+        <p style="color:#7c7c7c; font-size:.85rem; margin:.2rem 0 1rem;">Checkon · 30 July 2026 · altered after signing</p>
+        <onp-badge object="https://checkon.nl/.well-known/onp/objects/tampered"></onp-badge>
+      </div>
+    </div>
+    <p class="note" style="margin-top:2rem">
+      Powered by the published <code>onp-badge</code> web component, loaded from a CDN — a publisher
+      drops in one line and the reader's browser does the checking. The example uses a demo key.
     </p>
   </div>
 </section>
