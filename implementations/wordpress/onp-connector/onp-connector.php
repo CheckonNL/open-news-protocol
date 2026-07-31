@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Open News Protocol Connector
  * Plugin URI:  https://github.com/open-news-protocol/open-news-protocol
- * Description: Turns this WordPress site into an ONP publisher: signs posts as News Objects (ONP-1000–1003), serves the Publisher Key Record (ONP-0004) and Object/Version URLs with VID-as-ETag (ONP-1006), and carries Object URLs in the RSS feed and article pages.
- * Version:     0.2.0
+ * Description: Turns this WordPress site into an ONP publisher: signs posts as News Objects (ONP-1000–1003), serves the Publisher Key Record (ONP-0004) and Object/Version URLs with VID-as-ETag (ONP-1006), and carries Object URLs in the RSS feed and article pages. Signs Companions too: photos with photographer credit/rights/payment (ONP-2200/2400/2500), source documents (ONP-2600), and corrections (ONP-2700).
+ * Version:     0.3.0
  * Requires PHP: 7.4
  * Author:      Open News Protocol Working Group
  * License:     Apache-2.0
@@ -16,9 +16,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once __DIR__ . '/includes/class-onp-jcs.php';
 require_once __DIR__ . '/includes/class-onp-crypto.php';
 require_once __DIR__ . '/includes/class-onp-keys.php';
+require_once __DIR__ . '/includes/class-onp-registry.php';
+require_once __DIR__ . '/includes/class-onp-companions.php';
+require_once __DIR__ . '/includes/class-onp-profiles.php';
 require_once __DIR__ . '/includes/class-onp-object.php';
+require_once __DIR__ . '/includes/class-onp-media.php';
+require_once __DIR__ . '/includes/class-onp-sources.php';
+require_once __DIR__ . '/includes/class-onp-corrections.php';
 require_once __DIR__ . '/includes/class-onp-endpoints.php';
 require_once __DIR__ . '/includes/class-onp-feed-admin.php';
+require_once __DIR__ . '/includes/class-onp-media-admin.php';
 
 register_activation_hook( __FILE__, static function () {
 	if ( ! function_exists( 'sodium_crypto_sign_keypair' ) ) {
@@ -26,11 +33,21 @@ register_activation_hook( __FILE__, static function () {
 		wp_die( 'Open News Protocol Connector requires the sodium extension (bundled with PHP 7.2+).' );
 	}
 	ONP_Keys::ensure_keypair();
+	ONP_Registry::install();
+} );
+
+// Create/upgrade the Companion registry table for sites that update the
+// plugin without re-activating.
+add_action( 'plugins_loaded', static function () {
+	if ( get_option( 'onp_registry_version' ) !== ONP_Registry::VERSION ) {
+		ONP_Registry::install();
+	}
 } );
 
 ONP_Endpoints::register();
 ONP_Feed::register();
 ONP_Admin::register();
+ONP_Media_Admin::register();
 
 /**
  * Sign on publish and on updates to published posts; sign a

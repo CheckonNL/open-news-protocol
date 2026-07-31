@@ -23,6 +23,20 @@ if ( ! defined( 'ABSPATH' ) && php_sapi_name() !== 'cli' ) {
 	exit;
 }
 
+// Polyfill for PHP < 8.1 (the plugin targets 7.4): array_is_list
+// distinguishes JSON arrays from objects during canonicalization.
+if ( ! function_exists( 'array_is_list' ) ) {
+	function array_is_list( array $arr ): bool {
+		$i = 0;
+		foreach ( $arr as $k => $_ ) {
+			if ( $k !== $i++ ) {
+				return false;
+			}
+		}
+		return true;
+	}
+}
+
 final class ONP_JCS {
 
 	/**

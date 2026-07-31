@@ -88,8 +88,33 @@ and CI runs both:
   signed Versions; the SDK verifies each one plus the supersedes
   chain.
 
+## Companions (v0.3)
+
+Beyond the Article, a published post now also signs:
+
+- **Photos → Media Objects (ONP-2200)** — the featured image and
+  attached images, each bound to its file bytes (`asset_hash`), listed
+  in the Article's `media_refs`. In the media modal, a **Photographer**
+  dropdown sets the credit and links the photographer's Rights/Payment
+  profile.
+- **Photographer profiles (Settings → ONP Photographers)** — credit,
+  licence (ONP-2400) and revenue split (ONP-2500), signed once into
+  Rights and Payment Objects that every photo references by OID (set
+  once, never re-typed).
+- **Source documents (ONP-2600)** — tick "source document" on a
+  non-image attachment (PDF, Word, Excel, text); it is signed as a
+  `media_type: "document"` Object (ONP-2200 v0.5.0) plus a Source Object,
+  listed in the Article's `source_refs`.
+- **Corrections (ONP-2700)** — the "ONP correction" box on the post
+  editor records a type + note on your next update, signing a public
+  record that links the old and new VIDs (`corrections_ref`).
+
+All Companion Objects live in a custom table (`{prefix}onp_objects`) and
+are served at their own `/.well-known/onp/objects/{local-id}` URLs, with
+the same VID-as-ETag/Version semantics as Articles. Cross-verified with
+the TypeScript SDK by `bin/onp-companions-test.php` (CI).
+
 ## Not yet implemented
 
-Key rotation automation; Companions beyond Article; serving
-`onp:extensions` (e.g. ai-metadata from post meta); pages and custom
-post types (posts only, deliberately, for v0.2).
+Key rotation automation; serving `onp:extensions` (e.g. ai-metadata from
+post meta); pages and custom post types (posts only, deliberately).

@@ -50,6 +50,11 @@ final class ONP_Endpoints {
 	private static function serve_current( string $local_id ): void {
 		$post = ONP_Object::find_by_local_id( $local_id );
 		$json = $post ? ONP_Object::current_version_json( $post ) : null;
+		// Companions (media, rights, payment, sources, documents,
+		// corrections) live in the registry, not on a post.
+		if ( $json === null && class_exists( 'ONP_Registry' ) ) {
+			$json = ONP_Registry::current_json( $local_id );
+		}
 		if ( $json === null ) {
 			self::not_found();
 		}
@@ -70,12 +75,18 @@ final class ONP_Endpoints {
 	}
 
 	private static function serve_version( string $local_id, string $vid ): void {
+		$json = null;
 		$post = $local_id !== '' ? ONP_Object::find_by_local_id( $local_id ) : null;
-		if ( ! $post ) {
-			self::not_found();
+		if ( $post ) {
+			$versions = get_post_meta( $post->ID, ONP_Object::META_VERSIONS, true );
+			if ( is_array( $versions ) && isset( $versions[ $vid ] ) ) {
+				$json = $versions[ $vid ];
+			}
 		}
-		$versions = get_post_meta( $post->ID, ONP_Object::META_VERSIONS, true );
-		if ( ! is_array( $versions ) || ! isset( $versions[ $vid ] ) ) {
+		if ( $json === null && class_exists( 'ONP_Registry' ) ) {
+			$json = ONP_Registry::version_json( $local_id, $vid );
+		}
+		if ( $json === null ) {
 			self::not_found();
 		}
 		// A Version is immutable; a long-lived cache is safe — the VID
@@ -83,7 +94,7 @@ final class ONP_Endpoints {
 		// (ONP-1006 Section 4.3 rule 2).
 		header( 'Cache-Control: public, max-age=31536000, immutable' );
 		header( 'ETag: "' . $vid . '"' );
-		self::serve_json( $versions[ $vid ] );
+		self::serve_json( $json );
 	}
 
 	private static function serve_json( string $body, string $content_type = 'application/onp+json' ): void {

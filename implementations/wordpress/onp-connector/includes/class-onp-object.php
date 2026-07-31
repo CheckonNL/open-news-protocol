@@ -94,6 +94,33 @@ final class ONP_Object {
 			return null;
 		}
 
+		$previous_vid = get_post_meta( $post->ID, self::META_CURRENT_VID, true );
+
+		// Companion linkage (guarded so the Core-only test harness, which
+		// does not load these classes, keeps working). Each helper signs
+		// its own Objects into the registry and returns OIDs to reference.
+		$content = self::build_content( $post );
+		$pending = null;
+		if ( class_exists( 'ONP_Media' ) ) {
+			$media = ONP_Media::refs_for_post( $post );
+			if ( $media ) {
+				$content['media_refs'] = $media;
+			}
+		}
+		if ( class_exists( 'ONP_Sources' ) ) {
+			$sources = ONP_Sources::refs_for_post( $post );
+			if ( $sources ) {
+				$content['source_refs'] = $sources;
+			}
+		}
+		if ( ! $retracted && class_exists( 'ONP_Corrections' ) ) {
+			$pending = ONP_Corrections::pending( $post );
+			$corr    = ONP_Corrections::refs( $post );
+			if ( $corr ) {
+				$content['corrections_ref'] = $corr;
+			}
+		}
+
 		$unsigned = array(
 			'oid'          => self::oid( $post ),
 			'publisher'    => array(
@@ -102,13 +129,11 @@ final class ONP_Object {
 			),
 			'signed_at'    => gmdate( 'Y-m-d\TH:i:s\Z' ),
 			'content_type' => 'onp:companion:article',
-			'content'      => self::build_content( $post ),
+			'content'      => $content,
 		);
 		if ( $retracted ) {
 			$unsigned['lifecycle_state'] = 'retracted';
 		}
-
-		$previous_vid = get_post_meta( $post->ID, self::META_CURRENT_VID, true );
 		if ( $previous_vid ) {
 			$unsigned['supersedes'] = $previous_vid;
 		}
@@ -134,6 +159,12 @@ final class ONP_Object {
 		update_post_meta( $post->ID, self::META_VERSIONS, $versions );
 		update_post_meta( $post->ID, self::META_CURRENT_VID, $vid );
 		update_post_meta( $post->ID, self::META_CONTENT_HASH, $content_hash );
+
+		// Now that the new Version's VID exists, record the editor's
+		// correction (corrected_vid -> correcting_vid), if any.
+		if ( $pending && class_exists( 'ONP_Corrections' ) ) {
+			ONP_Corrections::commit( $post, $pending, (string) $previous_vid, $vid, $secret );
+		}
 		return $vid;
 	}
 

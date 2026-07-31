@@ -100,6 +100,12 @@ jobs:
         working-directory: sdk/reference-impl
       - run: npm run build
         working-directory: sdk/reference-impl
+      # Syntax-lint every plugin file (the harnesses only execute a
+      # subset, so this catches parse errors in the WP-integration
+      # classes the interop run never loads).
+      - run: |
+          find implementations/wordpress/onp-connector -name '*.php' -print0 \
+            | xargs -0 -n1 php -l
       # TS -> PHP: PHP re-verifies the SDK's published test vectors.
       # PHP -> TS: the SDK validates a PHP-signed envelope AND the full
       # publish/edit/retract lifecycle output of the WordPress code
@@ -111,6 +117,8 @@ jobs:
             sdk/reference-impl/examples/test-vectors.json > /tmp/php-signed.json
           php implementations/wordpress/onp-connector/bin/onp-wp-simulation.php > /tmp/wp-sim.json
           node tools/verify-interop.mjs /tmp/php-signed.json /tmp/wp-sim.json
+          php implementations/wordpress/onp-connector/bin/onp-companions-test.php > /tmp/companions.json
+          node tools/verify-companions.mjs /tmp/companions.json
 
   site:
     name: "Site: spec pages match specs/"
