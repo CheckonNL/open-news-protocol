@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Open News Protocol — an open standard for verifiable news</title>
-<meta name="description" content="ONP makes a news article prove its own origin. Anyone can check who published it and whether a single character has changed since — without asking a platform, a gatekeeper, or the site it came from.">
+<title>Open News Protocol - an open standard for verifiable news</title>
+<meta name="description" content="ONP makes a news article prove its own origin. Anyone can check who published it and whether a single character has changed since - without asking a platform, a gatekeeper, or the site it came from.">
 <meta property="og:title" content="Open News Protocol">
 <meta property="og:description" content="An open standard for news that proves its own origin. Trust the object, not the messenger.">
 <meta property="og:type" content="website">
@@ -56,7 +56,7 @@
     <h1>News that proves <em>its own</em> origin.</h1>
     <p class="lede">
       An article published under ONP carries its own evidence. Anyone can check who
-      published it and whether a single character has changed since — without asking a
+      published it and whether a single character has changed since - without asking a
       platform, a gatekeeper, or even the website it came from.
     </p>
     <div class="actions">
@@ -70,11 +70,11 @@
   <div class="wrap">
     <div class="verifier-head">
       <div>
-        <p class="eyebrow">Try it — nothing leaves your browser</p>
+        <p class="eyebrow">Try it - nothing leaves your browser</p>
         <h2>Break this article and watch it say so.</h2>
         <p>
           A real signed news object. Change one letter in the headline, alter the date,
-          swap the publisher — the checks below run again as you type.
+          swap the publisher - the checks below run again as you type.
         </p>
       </div>
       <button class="reset" id="reset" type="button">Restore original</button>
@@ -120,7 +120,7 @@
       <h2>A badge on the article itself.</h2>
       <p>
         This is what a reader sees. The badge below verifies the signed object live, in your own
-        browser, and says whether it is authentic. Two copies of the same article — one genuine,
+        browser, and says whether it is authentic. Two copies of the same article - one genuine,
         one altered after signing. Click a badge for who signed it and when.
       </p>
     </div>
@@ -137,8 +137,16 @@
       </div>
     </div>
     <p class="note" style="margin-top:2rem">
-      Powered by the published <code>onp-badge</code> web component, loaded from a CDN — a publisher
+      Powered by the published <code>onp-badge</code> web component, loaded from a CDN - a publisher
       drops in one line and the reader's browser does the checking. The example uses a demo key.
+    </p>
+    <div class="actions" style="margin-top:1.5rem">
+      <a class="btn btn-primary" href="showcase.html">Open the full example →</a>
+    </div>
+    <p class="note" style="margin-top:1rem">
+      A complete article whose badge verifies the text, three photos and their photographer credit,
+      reuse rights and revenue split, its correction history, and an attached source document - all in
+      your browser. Edit the headline or swap a photo and watch the seal react.
     </p>
   </div>
 </section>
@@ -149,8 +157,8 @@
       <p class="eyebrow">The idea</p>
       <h2>Trust the object, not the messenger.</h2>
       <p>
-        Today, an article is trusted because of where you found it. Move it — a screenshot,
-        a forward, a scrape, an AI summary — and the evidence stays behind. ONP moves the
+        Today, an article is trusted because of where you found it. Move it - a screenshot,
+        a forward, a scrape, an AI summary - and the evidence stays behind. ONP moves the
         evidence into the article itself, so it survives the journey.
       </p>
     </div>
@@ -158,7 +166,7 @@
       <div class="card">
         <span class="tag">Trusted news</span>
         <h3>Origin travels with the text</h3>
-        <p>Every version carries its own signature. Checking one takes the bytes and the publisher's public key file — no login, no API, no permission.</p>
+        <p>Every version carries its own signature. Checking one takes the bytes and the publisher's public key file - no login, no API, no permission.</p>
       </div>
       <div class="card">
         <span class="tag">Open distribution</span>
@@ -195,7 +203,7 @@
         <div>
           <h3>The identifier contains the publisher</h3>
           <p>
-            <code>onp:oid:regiopurmerend.nl:wheermolen-bommenonderzoek</code> — the domain is
+            <code>onp:oid:regiopurmerend.nl:wheermolen-bommenonderzoek</code> - the domain is
             part of the name, so nothing has to be looked up in a registry.
           </p>
         </div>
@@ -226,14 +234,14 @@
           <h3>The bytes answer for themselves</h3>
           <p>
             Recompute the fingerprint, check the signature against the authorised key. The
-            article is authentic or it is not — and the reader never had to trust whoever handed it over.
+            article is authentic or it is not - and the reader never had to trust whoever handed it over.
           </p>
         </div>
       </div>
     </div>
     <figure class="diagram">
       <div class="frame">
-        <img src="assets/verification-pipeline.svg" alt="From identifier to validation result: derive the object URL, retrieve the bytes, then run four checks — structure, fingerprint, publisher key, signature.">
+        <img src="assets/verification-pipeline.svg" alt="From identifier to validation result: derive the object URL, retrieve the bytes, then run four checks - structure, fingerprint, publisher key, signature.">
       </div>
       <figcaption>The same four checks the panel above runs as you type.</figcaption>
     </figure>
@@ -250,8 +258,8 @@
       <p class="eyebrow">The standard</p>
       <h2>Thirty-six documents, layered on purpose.</h2>
       <p>
-        Core answers what an article is and whether it verifies. Everything else — article
-        structure, rights, payments, AI metadata — is layered on top and can never change
+        Core answers what an article is and whether it verifies. Everything else - article
+        structure, rights, payments, AI metadata - is layered on top and can never change
         that answer.
       </p>
     </div>
@@ -260,11 +268,11 @@
         <tr><th>Series</th><th>Layer</th><th>What it settles</th></tr>
       </thead>
       <tbody>
-        <tr><td class="range">0000–0007</td><td>Foundation</td><td class="what">Mission, architecture, terminology, trust and security models, lifecycle, versioning policy</td></tr>
-        <tr><td class="range">1000–1006</td><td>Core</td><td class="what">The envelope, identifiers, canonical bytes, signatures, validation, retrieval</td></tr>
-        <tr><td class="range">2000–2800</td><td>Companion</td><td class="what">Article, media, identity, rights, payments, sources, corrections, comments</td></tr>
-        <tr><td class="range">3000–3500</td><td>Extension</td><td class="what">AI metadata, search, analytics, geolocation, accessibility</td></tr>
-        <tr><td class="range">9000–9005</td><td>Reference</td><td class="what">Reference implementation, best practices, security checklist, performance, migration, external standards</td></tr>
+        <tr><td class="range">0000-0007</td><td>Foundation</td><td class="what">Mission, architecture, terminology, trust and security models, lifecycle, versioning policy</td></tr>
+        <tr><td class="range">1000-1006</td><td>Core</td><td class="what">The envelope, identifiers, canonical bytes, signatures, validation, retrieval</td></tr>
+        <tr><td class="range">2000-2800</td><td>Companion</td><td class="what">Article, media, identity, rights, payments, sources, corrections, comments</td></tr>
+        <tr><td class="range">3000-3500</td><td>Extension</td><td class="what">AI metadata, search, analytics, geolocation, accessibility</td></tr>
+        <tr><td class="range">9000-9005</td><td>Reference</td><td class="what">Reference implementation, best practices, security checklist, performance, migration, external standards</td></tr>
       </tbody>
     </table>
     <figure class="diagram">
@@ -317,7 +325,7 @@
     </div>
     <p class="note" style="margin-top:2.4rem">
       Status: every document is a Working Draft and nothing has been through external review
-      yet. The specifications, the reference code and the known gaps are all public — that is
+      yet. The specifications, the reference code and the known gaps are all public - that is
       the point of publishing this early.
     </p>
   </div>
@@ -364,7 +372,7 @@
       </div>
     </div>
     <p class="colophon">
-      Specifications and code licensed under Apache 2.0. Working Drafts — expect changes.
+      Specifications and code licensed under Apache 2.0. Working Drafts - expect changes.
     </p>
   </div>
 </footer>
