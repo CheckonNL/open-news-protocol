@@ -138,9 +138,18 @@ final class ONP_Admin {
 				'onp-connector',
 				array( self::class, 'render' )
 			);
+			add_submenu_page(
+				'options-general.php',
+				__( 'ONP Overview', 'onp' ),
+				__( 'ONP Overview', 'onp' ),
+				'manage_options',
+				'onp-overview',
+				array( self::class, 'render_overview' )
+			);
 		} );
 		add_action( 'admin_post_onp_sign_archive', array( self::class, 'sign_archive' ) );
 		add_action( 'admin_post_onp_save_badge_placement', array( self::class, 'save_badge_placement' ) );
+		add_action( 'admin_post_onp_resign_post', array( self::class, 'resign_post' ) );
 	}
 
 	public static function render(): void {
@@ -203,6 +212,55 @@ final class ONP_Admin {
 		}
 		update_option( ONP_Feed::OPT_PLACEMENT, $value );
 		wp_safe_redirect( admin_url( 'options-general.php?page=onp-connector&badge_saved=1' ) );
+		exit;
+	}
+
+	/**
+	 * Per-post ONP status: signed or not, how many photos/source
+	 * documents/corrections are attached, a link to the live Object, and
+	 * a "Re-sign now" action. Bulk "Re-sign selected" is handled here,
+	 * before the table renders, exactly like sign_archive()'s pattern.
+	 */
+	public static function render_overview(): void {
+		if ( ! class_exists( 'ONP_Overview_Table' ) ) {
+			require_once __DIR__ . '/class-onp-overview-table.php';
+		}
+		$table  = new ONP_Overview_Table();
+		$action = $table->current_action();
+		if ( $action === 'onp_resign' && ! empty( $_REQUEST['post'] ) && current_user_can( 'manage_options' ) ) {
+			check_admin_referer( 'bulk-onp_posts' );
+			foreach ( (array) wp_unslash( $_REQUEST['post'] ) as $id ) {
+				$post = get_post( (int) $id );
+				if ( $post ) {
+					ONP_Object::sign_post( $post );
+				}
+			}
+			echo '<div class="notice notice-success"><p>' . esc_html__( 'Re-signed the selected posts.', 'onp' ) . '</p></div>';
+		}
+		$table->prepare_items();
+		?>
+		<div class="wrap">
+			<h1><?php esc_html_e( 'ONP Overview', 'onp' ); ?></h1>
+			<p><?php esc_html_e( 'Signing status for published posts: whether each is signed, how many photos, source documents and corrections it carries, and a link to its live Object. Re-signing re-checks everything and updates the live Object.', 'onp' ); ?></p>
+			<form method="post">
+				<?php $table->display(); ?>
+			</form>
+		</div>
+		<?php
+	}
+
+	/** Re-sign a single post on demand. */
+	public static function resign_post(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'forbidden' );
+		}
+		$id = isset( $_GET['post'] ) ? (int) $_GET['post'] : 0;
+		check_admin_referer( 'onp_resign_post_' . $id );
+		$post = get_post( $id );
+		if ( $post ) {
+			ONP_Object::sign_post( $post );
+		}
+		wp_safe_redirect( admin_url( 'options-general.php?page=onp-overview&resigned=1' ) );
 		exit;
 	}
 
