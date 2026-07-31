@@ -14,6 +14,21 @@ The RSS feed carries `<onp:object>` per item (namespace
 `https://opennewsprotocol.org/ns/feed`) and article pages get
 `<link rel="alternate" type="application/onp+json">` — ONP-1006 §4.4.
 
+**The `<onp-badge>` reader widget is auto-embedded** on every signed
+article, pinned to a specific `onp-badge` version on jsDelivr (no theme
+edit needed). It re-verifies everything client-side — text, photos,
+source documents, corrections — against the Object it fetches; the
+plugin's role ends at serving that Object correctly. To place the tag
+yourself instead (e.g. inside a template rather than prepended to
+`the_content`), disable the auto-injection:
+
+```php
+add_filter( 'onp_badge_auto_inject', '__return_false' );
+```
+
+The script tag itself can be swapped (e.g. to self-host the widget)
+with the `onp_badge_script_url` filter.
+
 ## Behavior
 
 - **Identity is frozen.** The Local Identifier is fixed at first
