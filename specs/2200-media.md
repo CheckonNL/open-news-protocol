@@ -1,9 +1,9 @@
 Title: Open News Protocol (ONP): Media
 Document Number: ONP-2200
 Status: Working Draft
-Version: 0.4.1
+Version: 0.5.0
 Author: Open News Protocol Working Group
-Last Modified: 2026-07-28
+Last Modified: 2026-07-31
 
 ---
 
@@ -136,7 +136,12 @@ lifecycle, separable from any Object that references it?
 
 ## 4.3 Content Schema
 
-1. `media_type` is REQUIRED: one of `"image"`, `"video"`, `"audio"`.
+1. `media_type` is REQUIRED: one of `"image"`, `"video"`, `"audio"`,
+   `"document"`. `media_type` names the coarse modality only; the
+   specific format of a `"document"` (PDF, Word, Excel, plain text,
+   etc.) is carried by `mime_type` (rule 4), not by further
+   `media_type` values. `"document"` is the modality ONP-2600 relies on
+   when a Source Object's `document_ref` points at a source file.
 2. `asset_url` is REQUIRED: a well-formed URI locating the actual
    media file.
 3. `asset_hash` is REQUIRED: the Verified Asset Reference hash
@@ -242,7 +247,7 @@ lifecycle, separable from any Object that references it?
 
 | Field | Required | Notes |
 |---|---|---|
-| `media_type` | REQUIRED | `"image"` \| `"video"` \| `"audio"` |
+| `media_type` | REQUIRED | `"image"` \| `"video"` \| `"audio"` \| `"document"` |
 | `asset_url` | REQUIRED | External location; not embedded |
 | `asset_hash` | REQUIRED | Verified Asset Reference (Section 4.4) |
 | `mime_type` | REQUIRED | |
@@ -444,7 +449,7 @@ actual asset bytes at specification-writing time.
 {
   "content_type": "onp:companion:media",
   "content": {
-    "media_type": "'image' | 'video' | 'audio', REQUIRED",
+    "media_type": "'image' | 'video' | 'audio' | 'document', REQUIRED",
     "asset_url": "string (URI), REQUIRED",
     "asset_hash": "string '<algorithm-id>:<digest>', REQUIRED",
     "mime_type": "string, REQUIRED",
@@ -464,7 +469,7 @@ actual asset bytes at specification-writing time.
 # Appendix B: Verified Asset Reference Checklist
 
 ```
-[ ] media_type is one of image/video/audio
+[ ] media_type is one of image/video/audio/document
 [ ] asset_url is a well-formed URI
 [ ] asset_hash matches <algorithm-id>:<digest>, algorithm from the
     Algorithm Registry with purpose=hash

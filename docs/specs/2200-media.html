@@ -34,8 +34,8 @@
     <h1 id="top">Open News Protocol (ONP): Media</h1>
     <div class="doc-meta">
       <span class="status">Working Draft</span>
-      <span>Version 0.4.1</span>
-      <span>Updated 2026-07-28</span>
+      <span>Version 0.5.0</span>
+      <span>Updated 2026-07-31</span>
     </div>
     <h1 id="abstract">Abstract</h1>
 <p>This document defines the Media Companion:
@@ -138,7 +138,12 @@ lifecycle, separable from any Object that references it?
 </code></pre>
 <h2 id="4-3-content-schema">4.3 Content Schema</h2>
 <ol>
-<li><code>media_type</code> is REQUIRED: one of <code>"image"</code>, <code>"video"</code>, <code>"audio"</code>.</li>
+<li><code>media_type</code> is REQUIRED: one of <code>"image"</code>, <code>"video"</code>, <code>"audio"</code>,
+   <code>"document"</code>. <code>media_type</code> names the coarse modality only; the
+   specific format of a <code>"document"</code> (PDF, Word, Excel, plain text,
+   etc.) is carried by <code>mime_type</code> (rule 4), not by further
+   <code>media_type</code> values. <code>"document"</code> is the modality ONP-2600 relies on
+   when a Source Object's <code>document_ref</code> points at a source file.</li>
 <li><code>asset_url</code> is REQUIRED: a well-formed URI locating the actual
    media file.</li>
 <li><code>asset_hash</code> is REQUIRED: the Verified Asset Reference hash
@@ -250,7 +255,7 @@ lifecycle, separable from any Object that references it?
 <tr>
 <td><code>media_type</code></td>
 <td>REQUIRED</td>
-<td><code>"image"</code> | <code>"video"</code> | <code>"audio"</code></td>
+<td><code>"image"</code> | <code>"video"</code> | <code>"audio"</code> | <code>"document"</code></td>
 </tr>
 <tr>
 <td><code>asset_url</code></td>
@@ -469,7 +474,7 @@ actual asset bytes at specification-writing time.</p>
 <pre><code class="language-json">{
   &quot;content_type&quot;: &quot;onp:companion:media&quot;,
   &quot;content&quot;: {
-    &quot;media_type&quot;: &quot;'image' | 'video' | 'audio', REQUIRED&quot;,
+    &quot;media_type&quot;: &quot;'image' | 'video' | 'audio' | 'document', REQUIRED&quot;,
     &quot;asset_url&quot;: &quot;string (URI), REQUIRED&quot;,
     &quot;asset_hash&quot;: &quot;string '&lt;algorithm-id&gt;:&lt;digest&gt;', REQUIRED&quot;,
     &quot;mime_type&quot;: &quot;string, REQUIRED&quot;,
@@ -486,7 +491,7 @@ actual asset bytes at specification-writing time.</p>
 }
 </code></pre>
 <h1 id="appendix-b-verified-asset-reference-checklist">Appendix B: Verified Asset Reference Checklist</h1>
-<pre><code>[ ] media_type is one of image/video/audio
+<pre><code>[ ] media_type is one of image/video/audio/document
 [ ] asset_url is a well-formed URI
 [ ] asset_hash matches &lt;algorithm-id&gt;:&lt;digest&gt;, algorithm from the
     Algorithm Registry with purpose=hash

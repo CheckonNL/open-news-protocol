@@ -224,7 +224,7 @@ const isStringArray = (x: unknown) => Array.isArray(x) && x.every(isString);
  * (enum), asset_url, asset_hash, mime_type are REQUIRED.
  */
 export const mediaCompanionValidator: CompanionValidator = (content) => {
-  const MEDIA_TYPES = new Set(["image", "video", "audio"]);
+  const MEDIA_TYPES = new Set(["image", "video", "audio", "document"]);
   if (!isString(content.media_type) || !MEDIA_TYPES.has(content.media_type)) return false;
   for (const f of ["asset_url", "asset_hash", "mime_type"]) {
     if (!isString(content[f])) return false;

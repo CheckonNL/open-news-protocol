@@ -26,6 +26,17 @@ test("Media (ONP-2200): valid content passes; missing/ill-typed fails", () => {
     }),
     true
   );
+  // "document" is a valid modality (ONP-2200 §4.3, rule 1); the format
+  // lives in mime_type (here a PDF).
+  assert.equal(
+    ok(mediaCompanionValidator, {
+      media_type: "document",
+      asset_url: "https://x/report.pdf",
+      asset_hash: "sha-256:abc",
+      mime_type: "application/pdf",
+    }),
+    true
+  );
   // media_type not in the enum
   assert.equal(ok(mediaCompanionValidator, { media_type: "hologram", asset_url: "u", asset_hash: "h", mime_type: "m" }), false);
   // missing REQUIRED asset_hash
