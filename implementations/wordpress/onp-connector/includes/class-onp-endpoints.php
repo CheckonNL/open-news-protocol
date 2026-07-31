@@ -31,6 +31,9 @@ final class ONP_Endpoints {
 		$rest = substr( $path, strlen( '/.well-known/onp/' ) );
 
 		if ( $rest === 'publisher.json' ) {
+			// The Key Record can change (rotation) at any time; forbid
+			// stale copies from CDNs/edge caches sitting in front of PHP.
+			header( 'Cache-Control: no-cache, must-revalidate' );
 			self::serve_json( ONP_JCS::canonicalize( ONP_Keys::publisher_key_record() ), 'application/json' );
 		}
 
@@ -63,8 +66,11 @@ final class ONP_Endpoints {
 		$vid      = $envelope['vid'] ?? '';
 
 		// ONP-1006 Section 4.2 rules 3-4: VID as ETag, honor
-		// If-None-Match with 304.
+		// If-None-Match with 304. The pointer itself changes on every
+		// re-sign, so a CDN/edge cache in front of PHP must always
+		// revalidate rather than serve a stale VID.
 		$etag = '"' . $vid . '"';
+		header( 'Cache-Control: no-cache, must-revalidate' );
 		header( 'ETag: ' . $etag );
 		$inm = trim( $_SERVER['HTTP_IF_NONE_MATCH'] ?? '' );
 		if ( $inm !== '' && ( $inm === $etag || $inm === 'W/' . $etag || $inm === '*' ) ) {
