@@ -1,9 +1,9 @@
 Title: Open News Protocol (ONP): Sources
 Document Number: ONP-2600
 Status: Working Draft
-Version: 0.1.0
+Version: 0.2.0
 Author: Open News Protocol Working Group
-Last Modified: 2026-07-28
+Last Modified: 2026-07-31
 
 ---
 
@@ -133,9 +133,9 @@ lifecycle, separable from any Article that cites it?
    `"organization"`, `"event"`.
 2. `visibility` is REQUIRED: one of `"named"`, `"anonymous"`,
    `"protected"` (Section 4.4).
-3. `source_ref`, `description`, `document_ref`, `credibility_note`,
-   and `access_date` are OPTIONAL, subject to the constraints in
-   Sections 4.4 and 4.5.
+3. `source_ref`, `description`, `document_ref`, `origin_url`,
+   `credibility_note`, and `access_date` are OPTIONAL, subject to
+   the constraints in Sections 4.4 and 4.5.
 
 ## 4.4 Visibility Model
 
@@ -170,10 +170,22 @@ lifecycle, separable from any Article that cites it?
 1. `document_ref`, if present, MUST be a single Object Reference to
    a Media Object (ONP-2200) representing the source document itself
    (e.g. a leaked report), reusing that Companion's Verified Asset
-   Reference pattern for the document's own integrity.
-2. `access_date`, if present, MUST be an ISO 8601 timestamp: when
+   Reference pattern for the document's own integrity. The Media
+   Object's `asset_url` is the address a verifier fetches and
+   re-hashes; it commonly points to a copy the publisher itself
+   hosts (self-hosting keeps the bytes at that address stable, so
+   the Verified Asset Reference stays checkable for as long as the
+   publisher serves it).
+2. `origin_url`, if present, MUST be a well-formed URI: where the
+   document was originally published or obtained, when that differs
+   from `document_ref`'s `asset_url` (e.g. the government portal a
+   leaked or since-removed report was retrieved from). It is a
+   citation, not a Verified Asset Reference — nothing requires the
+   bytes at `origin_url` to still exist or still match, and a Node
+   MUST NOT treat `origin_url` as checkable the way `asset_hash` is.
+3. `access_date`, if present, MUST be an ISO 8601 timestamp: when
    the information was obtained or accessed.
-3. `credibility_note`, if present, MUST be a string: an editorial
+4. `credibility_note`, if present, MUST be a string: an editorial
    note on how this source's reliability was assessed.
 
 ## 4.6 Guidance: When Not to Create a Structured Source Object
@@ -211,6 +223,7 @@ string itself becoming an inadvertent identifying clue.
     "source_ref": "onp:oid:..., OPTIONAL, ONLY when visibility='named'",
     "description": "string, OPTIONAL",
     "document_ref": "onp:oid:..., OPTIONAL",
+    "origin_url": "string (URI), OPTIONAL",
     "credibility_note": "string, OPTIONAL",
     "access_date": "string (ISO 8601), OPTIONAL"
   }
@@ -224,6 +237,7 @@ string itself becoming an inadvertent identifying clue.
 | `source_ref` | OPTIONAL | MUST NOT appear unless `visibility: "named"` |
 | `description` | OPTIONAL | Non-identifying when not named (Section 4.4, rule 4) |
 | `document_ref` | OPTIONAL | Object Reference to a Media Object |
+| `origin_url` | OPTIONAL | Citation only — not a Verified Asset Reference (Section 4.5, rule 2) |
 | `credibility_note` | OPTIONAL | |
 | `access_date` | OPTIONAL | |
 
@@ -400,6 +414,7 @@ Classified MINOR (additive) under ONP-0007 Section 4.1.
     "source_ref": "string (OID), OPTIONAL, ONLY if visibility='named'",
     "description": "string, OPTIONAL, non-identifying if not named",
     "document_ref": "string (OID), OPTIONAL",
+    "origin_url": "string (URI), OPTIONAL",
     "credibility_note": "string, OPTIONAL",
     "access_date": "string (ISO 8601), OPTIONAL"
   }
