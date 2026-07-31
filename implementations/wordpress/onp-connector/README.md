@@ -119,7 +119,13 @@ Beyond the Article, a published post now also signs:
 - **Source documents (ONP-2600)** — tick "source document" on a
   non-image attachment (PDF, Word, Excel, text); it is signed as a
   `media_type: "document"` Object (ONP-2200 v0.5.0) plus a Source Object,
-  listed in the Article's `source_refs`.
+  listed in the Article's `source_refs`. The Verified Asset Reference
+  (the hash a reader re-checks) always points at the copy this site
+  hosts. If the document was originally published elsewhere (e.g. a
+  government portal), record that in the optional "original URL" field
+  next to the checkbox (ONP-2600 `origin_url`, v0.2.0) — it's a
+  citation the badge displays, not something re-verified, since a
+  third-party page can change or disappear after signing.
 - **Corrections (ONP-2700)** — the "ONP correction" box on the post
   editor records a type + note on your next update, signing a public
   record that links the old and new VIDs (`corrections_ref`).

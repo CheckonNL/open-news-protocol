@@ -49,11 +49,14 @@ final class ONP_Media_Admin {
 				'helps' => __( 'Signs this photo with the chosen credit, licence and revenue split.', 'onp' ),
 			);
 		} else {
-			$checked = get_post_meta( $post->ID, ONP_Sources::META_IS_SOURCE, true ) === '1' ? ' checked' : '';
+			$checked    = get_post_meta( $post->ID, ONP_Sources::META_IS_SOURCE, true ) === '1' ? ' checked' : '';
+			$origin_url = (string) get_post_meta( $post->ID, ONP_Sources::META_ORIGIN_URL, true );
 			$fields['onp_source_document'] = array(
 				'label' => __( 'ONP source document', 'onp' ),
 				'input' => 'html',
-				'html'  => '<label><input type="checkbox" name="attachments[' . $post->ID . '][onp_source_document]" value="1"' . $checked . '> ' . esc_html__( 'Bind this file as a verifiable source document', 'onp' ) . '</label>',
+				'html'  => '<label><input type="checkbox" name="attachments[' . $post->ID . '][onp_source_document]" value="1"' . $checked . '> ' . esc_html__( 'Bind this file as a verifiable source document', 'onp' ) . '</label>'
+					. '<p><input type="url" style="width:100%" name="attachments[' . $post->ID . '][onp_origin_url]" value="' . esc_attr( $origin_url ) . '" placeholder="' . esc_attr__( 'https://… (optional — where this document was originally published)', 'onp' ) . '"></p>',
+				'helps' => __( 'The file itself is hashed and verified from where this site hosts it. The URL above is only a citation of its original source and is not itself checked.', 'onp' ),
 			);
 		}
 		return $fields;
@@ -70,6 +73,14 @@ final class ONP_Media_Admin {
 		}
 		if ( array_key_exists( 'onp_source_document', $attachment ) ) {
 			update_post_meta( $post['ID'], ONP_Sources::META_IS_SOURCE, $attachment['onp_source_document'] === '1' ? '1' : '' );
+		}
+		if ( array_key_exists( 'onp_origin_url', $attachment ) ) {
+			$url = esc_url_raw( (string) $attachment['onp_origin_url'] );
+			if ( $url === '' ) {
+				delete_post_meta( $post['ID'], ONP_Sources::META_ORIGIN_URL );
+			} else {
+				update_post_meta( $post['ID'], ONP_Sources::META_ORIGIN_URL, $url );
+			}
 		}
 		return $post;
 	}

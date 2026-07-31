@@ -57,13 +57,27 @@ final class ONP_Feed {
 		return str_replace( ' src=', ' type="module" src=', $tag );
 	}
 
+	const OPT_PLACEMENT = 'onp_badge_placement';
+
 	/**
-	 * Prepend the badge to a signed article's content. A publisher can
-	 * disable this (to place the tag manually in a template instead) with
-	 * `add_filter( 'onp_badge_auto_inject', '__return_false' )`.
+	 * Where the badge is placed: 'before' the article, 'after' it, or
+	 * 'manual' (the theme places <onp-badge> itself — see object_url()).
+	 * Set on Settings -> Open News Protocol; `onp_badge_auto_inject`
+	 * remains as a developer override on top of that choice.
+	 */
+	public static function placement(): string {
+		$v = get_option( self::OPT_PLACEMENT, 'before' );
+		return in_array( $v, array( 'before', 'after', 'manual' ), true ) ? $v : 'before';
+	}
+
+	/**
+	 * Place the badge relative to a signed article's content per the
+	 * admin setting (Settings -> Open News Protocol -> Reader badge).
 	 */
 	public static function inject_badge( string $content ): string {
-		if ( ! apply_filters( 'onp_badge_auto_inject', true ) || ! is_singular( 'post' ) || ! in_the_loop() || ! is_main_query() ) {
+		$placement = self::placement();
+		$enabled   = apply_filters( 'onp_badge_auto_inject', $placement !== 'manual' );
+		if ( ! $enabled || ! is_singular( 'post' ) || ! in_the_loop() || ! is_main_query() ) {
 			return $content;
 		}
 		$post = get_post();
@@ -72,7 +86,7 @@ final class ONP_Feed {
 			return $content;
 		}
 		$badge = '<p class="onp-badge-wrap"><onp-badge object="' . esc_url( $url ) . '"></onp-badge></p>';
-		return $badge . $content;
+		return $placement === 'after' ? $content . $badge : $badge . $content;
 	}
 
 	public static function object_url( WP_Post $post ): ?string {
@@ -126,6 +140,7 @@ final class ONP_Admin {
 			);
 		} );
 		add_action( 'admin_post_onp_sign_archive', array( self::class, 'sign_archive' ) );
+		add_action( 'admin_post_onp_save_badge_placement', array( self::class, 'save_badge_placement' ) );
 	}
 
 	public static function render(): void {
@@ -157,8 +172,38 @@ final class ONP_Admin {
 				<?php submit_button( 'Sign up to 100 unsigned posts' ); ?>
 			</form>
 			<p style="max-width:900px"><em>Key storage: the signing key currently lives in the options table. For stronger isolation, move it to <code>wp-config.php</code> as <code>define( 'ONP_SECRET_KEY', '&lt;base64&gt;' );</code> — it then takes precedence and can be removed from the database.</em></p>
+
+			<h2>Reader badge</h2>
+			<p>The <code>&lt;onp-badge&gt;</code> widget re-verifies the article (and its photos, source documents and corrections) in the reader's own browser. Choose where it appears on signed articles.</p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<?php wp_nonce_field( 'onp_save_badge_placement' ); ?>
+				<input type="hidden" name="action" value="onp_save_badge_placement">
+				<?php $placement = ONP_Feed::placement(); ?>
+				<p>
+					<label style="display:block;margin:.3em 0"><input type="radio" name="onp_badge_placement" value="before" <?php checked( $placement, 'before' ); ?>> Before the article text (default)</label>
+					<label style="display:block;margin:.3em 0"><input type="radio" name="onp_badge_placement" value="after" <?php checked( $placement, 'after' ); ?>> After the article text</label>
+					<label style="display:block;margin:.3em 0"><input type="radio" name="onp_badge_placement" value="manual" <?php checked( $placement, 'manual' ); ?>> Not automatically — I'll place <code>&lt;onp-badge&gt;</code> in my theme myself</label>
+				</p>
+				<?php submit_button( 'Save badge placement' ); ?>
+			</form>
+			<p style="max-width:900px"><em>For "manual", the widget script is still loaded on signed articles; get the Object URL for a post with <code>ONP_Feed::object_url( $post )</code> to build your own <code>&lt;onp-badge object="..."&gt;</code> tag.</em></p>
 		</div>
 		<?php
+	}
+
+	/** Save the Reader badge placement setting. */
+	public static function save_badge_placement(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'forbidden' );
+		}
+		check_admin_referer( 'onp_save_badge_placement' );
+		$value = isset( $_POST['onp_badge_placement'] ) ? sanitize_text_field( wp_unslash( $_POST['onp_badge_placement'] ) ) : 'before';
+		if ( ! in_array( $value, array( 'before', 'after', 'manual' ), true ) ) {
+			$value = 'before';
+		}
+		update_option( ONP_Feed::OPT_PLACEMENT, $value );
+		wp_safe_redirect( admin_url( 'options-general.php?page=onp-connector&badge_saved=1' ) );
+		exit;
 	}
 
 	/** Batched archive signing: 100 per invocation, oldest first. */

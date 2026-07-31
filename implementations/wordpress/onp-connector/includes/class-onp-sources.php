@@ -15,6 +15,7 @@ final class ONP_Sources {
 
 	const META_LOCAL_ID = '_onp_local_id';
 	const META_IS_SOURCE = '_onp_source_document';
+	const META_ORIGIN_URL = '_onp_source_origin_url';
 
 	private static function local_id( int $att_id ): string {
 		$existing = get_post_meta( $att_id, self::META_LOCAL_ID, true );
@@ -80,7 +81,11 @@ final class ONP_Sources {
 		$doc_env = ONP_Companions::sign( $doc_oid, 'onp:companion:media', $doc_content, $secret );
 		ONP_Registry::put( $doc_local, $doc_oid, 'document', $doc_env, ONP_Companions::content_hash( 'onp:companion:media', $doc_content ) );
 
-		$src_content = ONP_Companions::source_content( $doc_oid, $title, gmdate( 'Y-m-d' ) );
+		// origin_url (ONP-2600 §4.5 rule 2): a citation of where the
+		// document was originally published, distinct from document_ref's
+		// self-hosted, hash-verified copy above.
+		$origin_url  = (string) get_post_meta( $att_id, self::META_ORIGIN_URL, true );
+		$src_content = ONP_Companions::source_content( $doc_oid, $title, gmdate( 'Y-m-d' ), $origin_url );
 		$src_env     = ONP_Companions::sign( $src_oid, 'onp:companion:sources', $src_content, $secret );
 		ONP_Registry::put( $src_local, $src_oid, 'source', $src_env, ONP_Companions::content_hash( 'onp:companion:sources', $src_content ) );
 
