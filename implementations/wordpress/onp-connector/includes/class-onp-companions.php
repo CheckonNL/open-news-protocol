@@ -134,9 +134,14 @@ final class ONP_Companions {
 
 	/**
 	 * ONP-2600 Sources content. source_type REQUIRED (here "document");
-	 * visibility REQUIRED; document_ref points at a Media Object.
+	 * visibility REQUIRED; document_ref points at the self-hosted, hashed
+	 * Media Object (the Verified Asset Reference a reader re-checks).
+	 * origin_url, when given, is a CITATION of where the document was
+	 * originally published or obtained — not a Verified Asset Reference,
+	 * and not required to still resolve or still match (ONP-2600 §4.5
+	 * rule 2).
 	 */
-	public static function source_content( string $document_ref, string $description = '', string $access_date = '' ): array {
+	public static function source_content( string $document_ref, string $description = '', string $access_date = '', string $origin_url = '' ): array {
 		$content = array(
 			'source_type' => 'document',
 			'visibility'  => 'named',
@@ -144,6 +149,9 @@ final class ONP_Companions {
 		);
 		if ( $description !== '' ) {
 			$content['description'] = $description;
+		}
+		if ( $origin_url !== '' ) {
+			$content['origin_url'] = $origin_url;
 		}
 		if ( $access_date !== '' ) {
 			$content['access_date'] = $access_date;

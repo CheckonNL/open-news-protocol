@@ -96,7 +96,7 @@ $objects['payments'] = ONP_Companions::sign( $payment_oid, 'onp:companion:paymen
 $objects['source'] = ONP_Companions::sign(
 	$oid( 'begrotingswijziging-bron' ),
 	'onp:companion:sources',
-	ONP_Companions::source_content( $oid( 'begrotingswijziging-bestand' ), 'Begrotingswijziging Purmerend', '2026-07-30' ),
+	ONP_Companions::source_content( $oid( 'begrotingswijziging-bestand' ), 'Begrotingswijziging Purmerend', '2026-07-30', 'https://gemeente.purmerend.nl/besluit-2026' ),
 	$secret
 );
 
