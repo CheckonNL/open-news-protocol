@@ -62,7 +62,7 @@ final class ONP_Registry {
 		$json = ONP_JCS::canonicalize( $envelope );
 
 		$row = self::row( $local_id );
-		if ( $row && $row['content_hash'] === $content_hash ) {
+		if ( $row && hash_equals( $row['content_hash'], $content_hash ) ) {
 			return $row['current_vid']; // content unchanged — keep the current Version
 		}
 		$versions         = $row ? json_decode( $row['versions'], true ) : array();

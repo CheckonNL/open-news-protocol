@@ -119,6 +119,7 @@ jobs:
           node tools/verify-interop.mjs /tmp/php-signed.json /tmp/wp-sim.json
           php implementations/wordpress/onp-connector/bin/onp-companions-test.php > /tmp/companions.json
           node tools/verify-companions.mjs /tmp/companions.json
+          php implementations/wordpress/onp-connector/bin/onp-jcs-edge-cases-test.php
 
   site:
     name: "Site: spec pages match specs/"

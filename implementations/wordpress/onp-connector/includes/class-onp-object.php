@@ -142,8 +142,9 @@ final class ONP_Object {
 		// and supersedes.
 		$gate = $unsigned;
 		unset( $gate['signed_at'], $gate['supersedes'] );
-		$content_hash = hash( 'sha256', ONP_JCS::canonicalize( $gate ) );
-		if ( $previous_vid && $content_hash === get_post_meta( $post->ID, self::META_CONTENT_HASH, true ) ) {
+		$content_hash  = hash( 'sha256', ONP_JCS::canonicalize( $gate ) );
+		$previous_hash = (string) get_post_meta( $post->ID, self::META_CONTENT_HASH, true );
+		if ( $previous_vid && $previous_hash !== '' && hash_equals( $previous_hash, $content_hash ) ) {
 			return null;
 		}
 

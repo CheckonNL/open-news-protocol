@@ -36,18 +36,26 @@ final class ONP_Keys {
 		add_option( self::OPT_CREATED, gmdate( 'Y-m-d\TH:i:s\Z' ), '', false );
 	}
 
-	/** The 64-byte sodium secret key, or null when not provisioned. */
+	/**
+	 * The 64-byte sodium secret key, or null when not provisioned or
+	 * malformed. Length is checked right after decoding — passing a
+	 * wrong-length key straight to sodium_crypto_sign_detached() throws
+	 * an uncaught SodiumException instead of failing cleanly.
+	 */
 	public static function secret_key(): ?string {
 		if ( defined( 'ONP_SECRET_KEY' ) && ONP_SECRET_KEY ) {
-			$decoded = base64_decode( ONP_SECRET_KEY, true );
-			return $decoded !== false ? $decoded : null;
+			return self::decode_secret( ONP_SECRET_KEY );
 		}
 		$opt = get_option( self::OPT_SECRET );
-		if ( ! $opt ) {
+		return $opt ? self::decode_secret( $opt ) : null;
+	}
+
+	private static function decode_secret( string $base64 ): ?string {
+		$decoded = base64_decode( $base64, true );
+		if ( $decoded === false || strlen( $decoded ) !== SODIUM_CRYPTO_SIGN_SECRETKEYBYTES ) {
 			return null;
 		}
-		$decoded = base64_decode( $opt, true );
-		return $decoded !== false ? $decoded : null;
+		return $decoded;
 	}
 
 	/** base64url raw 32-byte public key. */

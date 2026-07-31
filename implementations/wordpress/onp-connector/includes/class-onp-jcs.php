@@ -58,6 +58,14 @@ final class ONP_JCS {
 			return (string) $value;
 		}
 		if ( is_float( $value ) ) {
+			// Reject INF/-INF/NaN explicitly rather than relying on
+			// floor()/comparison edge cases (e.g. NAN === NAN is false,
+			// which happens to also reject it, but not obviously so).
+			if ( ! is_finite( $value ) ) {
+				throw new InvalidArgumentException(
+					'ONP_JCS: non-finite float (INF/-INF/NaN) encountered; ONP envelopes cannot represent this'
+				);
+			}
 			// Integral floats (e.g. 3.0 from json_decode of "3" is int,
 			// but arithmetic may yield 3.0) serialize as integers per
 			// ECMAScript; genuine fractions are refused (see header).

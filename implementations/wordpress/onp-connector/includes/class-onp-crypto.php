@@ -52,14 +52,22 @@ final class ONP_Crypto {
 		if ( $m[1] !== 'ed25519' ) {
 			return false; // fail closed, ONP-0005 Section 4.2 rule 3
 		}
-		$sig      = self::base64url_decode( $m[2] );
+		$sig = self::base64url_decode( $m[2] );
+		// sodium_crypto_sign_verify_detached() throws a SodiumException
+		// for a wrong-length signature or key instead of returning
+		// false — check lengths explicitly so malformed input fails
+		// closed rather than crashing.
+		if ( strlen( $sig ) !== SODIUM_CRYPTO_SIGN_BYTES || strlen( $public_key_raw ) !== SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES ) {
+			return false;
+		}
 		$preimage = self::build_preimage( $envelope, 'signing-preimage' );
 		return sodium_crypto_sign_verify_detached( $sig, $preimage, $public_key_raw );
 	}
 
 	/** ONP-1001 Section 6.1 steps 3-4: recompute and compare the VID. */
 	public static function verify_vid( array $envelope ): bool {
-		return isset( $envelope['vid'] ) && self::compute_vid( $envelope ) === $envelope['vid'];
+		return isset( $envelope['vid'] ) && is_string( $envelope['vid'] )
+			&& hash_equals( self::compute_vid( $envelope ), $envelope['vid'] );
 	}
 
 	public static function base64url( string $bytes ): string {

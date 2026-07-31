@@ -43,10 +43,21 @@ final class ONP_Companions {
 		return 'sha-256:' . ONP_Crypto::base64url( hash( 'sha256', $bytes, true ) );
 	}
 
-	/** Stable hash of a content region (excludes signed_at, which lives
-	 *  on the envelope) — the substantive-change gate for the registry. */
+	/**
+	 * Stable hash of a content region plus the current publisher scope
+	 * (domain, key_id) — the substantive-change gate for the registry.
+	 * signed_at is excluded, as it lives on the envelope and changes on
+	 * every re-sign regardless. key_id IS included: a key rotation must
+	 * force a new Version even when content is byte-identical, or
+	 * "Re-sign selected" would silently leave Companions signed under
+	 * the retired key.
+	 */
 	public static function content_hash( string $content_type, array $content ): string {
-		return hash( 'sha256', $content_type . "\0" . ONP_JCS::canonicalize( $content ) );
+		$scope = array(
+			'domain' => ONP_Keys::domain(),
+			'key_id' => ONP_Keys::key_id(),
+		);
+		return hash( 'sha256', $content_type . "\0" . ONP_JCS::canonicalize( $scope ) . "\0" . ONP_JCS::canonicalize( $content ) );
 	}
 
 	/**
