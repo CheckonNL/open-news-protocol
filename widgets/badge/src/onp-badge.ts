@@ -5,16 +5,22 @@
  *   <onp-badge object="https://example.nl/.well-known/onp/objects/story"></onp-badge>
  *
  * On connection it retrieves the Object, verifies it locally (signature
- * + Trust Anchor resolution, via badge-core), and renders a badge the
- * reader can expand for the provenance details. All the cryptography
- * happens in the reader's own browser; the badge trusts the signature,
- * never the page it sits on.
+ * + Trust Anchor resolution), and — v0.2 — follows the Object's
+ * Companion references to also verify its photos (and photographer
+ * credit, rights and revenue split), source documents, and corrections.
+ * It renders a badge the reader can expand for the full provenance. All
+ * the cryptography happens in the reader's own browser; the badge trusts
+ * the signature, never the page it sits on.
  *
  * The DOM lives here; the verification logic is in badge-core, which is
  * what the tests exercise.
  */
 
-import { evaluateBadge, type BadgeResult, type BadgeStatus } from "./badge-core.js";
+import {
+  evaluateBadge,
+  type BadgeResult,
+  type BadgeStatus,
+} from "./badge-core.js";
 
 const STYLE = `
   :host { display: inline-block; font: 13px/1.4 system-ui, sans-serif; color: #1a1a1a; }
@@ -24,6 +30,7 @@ const STYLE = `
   .badge .ic { width: 16px; height: 16px; flex: none; }
   .badge .chev { width: 13px; height: 13px; flex: none; opacity: .55; }
   .badge.verified { border-color: #b7e0c0; background: #f0faf2; color: #14622b; }
+  .badge.attention { border-color: #ead9a6; background: #fdf7e6; color: #8a6100; }
   .badge.rejected { border-color: #f0c2c2; background: #fdf1f1; color: #9a1c1c; }
   .badge.unavailable { border-color: #e2e2e2; background: #f7f7f7; color: #5f5f5f; }
   .label { font-weight: 500; }
@@ -33,6 +40,7 @@ const STYLE = `
   .row { display: flex; gap: .6em; padding: .15em 0; }
   .row .k { color: #777; min-width: 8.5em; flex: none; }
   .row .v { color: #1a1a1a; word-break: break-word; }
+  .v .ok { color: #14622b; } .v .bad { color: #9a1c1c; } .v .dim { color: #888; }
   .foot { margin-top: .5em; color: #888; font-size: 11px; }
 `;
 
@@ -42,6 +50,8 @@ function iconSvg(status: BadgeStatus, loading: boolean): string {
   if (loading) return svg('<circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" opacity="0.5"/>');
   if (status === "verified") return svg('<path d="M20 6 9 17l-5-5"/>'); // check
   if (status === "rejected") return svg('<path d="M18 6 6 18M6 6l12 12"/>'); // cross
+  if (status === "attention")
+    return svg('<path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 2 18a1.7 1.7 0 0 0 1.5 2.6h17A1.7 1.7 0 0 0 22 18L13.7 3.9a1.7 1.7 0 0 0-3 0z"/>'); // triangle
   return svg('<path d="M5 12h14"/>'); // dash — unavailable
 }
 
@@ -49,12 +59,22 @@ const CHEVRON =
   '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
 
 function label(status: BadgeStatus): string {
-  return status === "verified"
-    ? "Verified"
-    : status === "rejected"
-      ? "Not authentic"
-      : "Unverified";
+  switch (status) {
+    case "verified":
+      return "Verified";
+    case "attention":
+      return "Check needed";
+    case "rejected":
+      return "Not authentic";
+    default:
+      return "Unverified";
+  }
 }
+
+const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const ok = (t: string) => `<span class="ok">✓ ${esc(t)}</span>`;
+const bad = (t: string) => `<span class="bad">✗ ${esc(t)}</span>`;
+const dim = (t: string) => `<span class="dim">${esc(t)}</span>`;
 
 class OnpBadge extends HTMLElement {
   static get observedAttributes() {
@@ -87,15 +107,48 @@ class OnpBadge extends HTMLElement {
     this.paint(result);
   }
 
-  private paint(result: BadgeResult, loading = false) {
+  /** Build the rows of the provenance panel. */
+  private rows(r: BadgeResult): string {
     const rows: string[] = [];
-    if (result.headline) rows.push(this.row("Article", result.headline));
-    if (result.publisherDomain) rows.push(this.row("Publisher", result.publisherDomain));
-    if (result.eudiName) rows.push(this.row("Verified identity", result.eudiName));
-    if (result.signedAt) rows.push(this.row("Signed at", result.signedAt));
-    if (result.failureStep) rows.push(this.row("Failure", result.failureStep));
-    rows.push(this.row("Verdict", result.detail));
+    const row = (k: string, v: string) => `<div class="row"><span class="k">${esc(k)}</span><span class="v">${v}</span></div>`;
 
+    if (r.headline) rows.push(row("Article", esc(r.headline)));
+    if (r.publisherDomain) rows.push(row("Publisher", esc(r.publisherDomain)));
+    if (r.eudiName) rows.push(row("Verified identity", esc(r.eudiName)));
+    if (r.signedAt) rows.push(row("Signed at", esc(r.signedAt)));
+
+    if (r.status !== "rejected") rows.push(row("Text", ok("unchanged")));
+
+    r.photos?.forEach((p, i) => {
+      const v = p.ok === true ? ok(p.credit ?? "verified") : p.ok === false ? bad(`altered${p.credit ? " — " + p.credit : ""}`) : dim("could not check");
+      rows.push(row(`Photo ${i + 1}`, v));
+    });
+
+    if (r.rights) {
+      const reuse = r.rights.reusePermitted === undefined ? "" : ` · ${r.rights.reusePermitted ? "reuse allowed" : "no reuse"}`;
+      rows.push(row("Rights", r.rights.ok ? ok(`${r.rights.license ?? "licensed"}${reuse}`) : bad("unverified")));
+    }
+    if (r.payment && r.payment.shares.length) {
+      const split = r.payment.shares.map((s) => `${s.recipient} ${s.percentage}%`).join(" · ");
+      rows.push(row("Revenue", r.payment.ok ? ok(split) : bad("unverified")));
+    }
+    r.documents?.forEach((d, i) => {
+      const key = r.documents!.length > 1 ? `Document ${i + 1}` : "Document";
+      const v = d.ok === true ? ok(d.title ?? "verified") : d.ok === false ? bad(`altered${d.title ? " — " + d.title : ""}`) : dim(d.title ?? "could not check");
+      rows.push(row(key, v));
+    });
+    if (r.correction) {
+      const v = r.correction.ok
+        ? ok(`updated (${r.correction.type ?? "correction"})${r.correction.currentVersion ? " — you are reading the latest version" : ""}`)
+        : bad("correction unverified");
+      rows.push(row("Correction", v));
+    }
+
+    rows.push(row("Verdict", esc(r.detail)));
+    return rows.join("");
+  }
+
+  private paint(result: BadgeResult, loading = false) {
     this.root.innerHTML = `
       <style>${STYLE}</style>
       <span class="badge ${result.status}" part="badge" role="button" tabindex="0"
@@ -105,8 +158,8 @@ class OnpBadge extends HTMLElement {
         ${loading ? "" : CHEVRON}
       </span>
       <div class="panel" hidden>
-        ${rows.join("")}
-        <div class="foot">Verified in your browser with the Open News Protocol — the signature is checked locally, not taken on trust.</div>
+        ${loading ? "" : this.rows(result)}
+        <div class="foot">Verified in your browser with the Open News Protocol — text, photos and documents checked locally, not taken on trust.</div>
       </div>`;
 
     const badge = this.root.querySelector(".badge") as HTMLElement | null;
@@ -126,11 +179,6 @@ class OnpBadge extends HTMLElement {
         }
       });
     }
-  }
-
-  private row(k: string, v: string): string {
-    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    return `<div class="row"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`;
   }
 }
 

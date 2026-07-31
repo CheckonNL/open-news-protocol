@@ -8,6 +8,13 @@ provenance — who published it, when, whether a single character has
 changed since, and the publisher's EUDI-verified legal identity when
 present.
 
+Since **v0.2** it verifies the whole story, not just the text: it follows
+the Object's Companion references to re-check every referenced **photo**
+against its file bytes (with the photographer's credit, licence and
+revenue split), **source documents**, and **corrections** — all locally.
+If the text is authentic but a photo or document was altered, the badge
+says exactly that ("Check needed") rather than a blanket pass or fail.
+
 It trusts the signature, never the page it is embedded in: the badge
 fetches the publisher's key from the publisher's own domain and checks
 the signature locally, using the published
@@ -31,7 +38,8 @@ resolution included), and render.
 
 | Badge | Meaning |
 |---|---|
-| ✓ **Verified** | the signature checks out and the content is unchanged since it was signed |
+| ✓ **Verified** | the signature checks out, the content is unchanged, and every referenced photo/document verified |
+| ⚠ **Check needed** | the article text is authentic, but a referenced photo or document was altered — the panel points to which |
 | ✗ **Not authentic** | verification failed — the panel explains why (altered content, wrong key, unknown publisher, …) |
 | – **Unverified** | the Object could not be retrieved (a network/availability problem, not a verdict on authenticity) |
 
