@@ -64,6 +64,47 @@ function mediaObject(priv: Uint8Array, localId: string, bytes: Uint8Array) {
 
 const objectUrl = (localId: string) => `https://${DOMAIN}/.well-known/onp/objects/${localId}`;
 
+const PDF_BYTES = new TextEncoder().encode("the-real-pdf-bytes");
+
+function documentObject(priv: Uint8Array, localId: string, bytes: Uint8Array) {
+  return signObject(
+    {
+      oid: buildOid(DOMAIN, localId),
+      publisher: { domain: DOMAIN, key_id: KEY },
+      signed_at: "2026-07-30T10:00:00Z",
+      content_type: "onp:companion:media",
+      content: {
+        media_type: "document",
+        asset_url: "https://cdn.example/report.pdf",
+        asset_hash: "sha-256:" + base64url(sha256(bytes)),
+        mime_type: "application/pdf",
+      },
+    },
+    priv,
+    "ed25519"
+  );
+}
+
+function sourceObject(priv: Uint8Array, localId: string, documentOid: string, originUrl?: string) {
+  return signObject(
+    {
+      oid: buildOid(DOMAIN, localId),
+      publisher: { domain: DOMAIN, key_id: KEY },
+      signed_at: "2026-07-30T10:00:00Z",
+      content_type: "onp:companion:sources",
+      content: {
+        source_type: "document",
+        visibility: "named",
+        document_ref: documentOid,
+        description: "Budget report",
+        ...(originUrl ? { origin_url: originUrl } : {}),
+      },
+    },
+    priv,
+    "ed25519"
+  );
+}
+
 test("badge: a genuine Object verifies and surfaces its provenance", async () => {
   const kp = generateKeypair();
   const resolver = new TrustAnchorResolver({ fetcher: async () => keyRecord(kp.publicKey), cacheTtlMs: 0 });
@@ -143,4 +184,46 @@ test("badge: a swapped photo turns the badge to 'attention', text still ok", asy
   });
   assert.equal(r.status, "attention");
   assert.equal(r.photos?.[0].ok, false);
+});
+
+test("badge: a source document verifies, and surfaces its origin_url as a citation", async () => {
+  const kp = generateKeypair();
+  const resolver = new TrustAnchorResolver({ fetcher: async () => keyRecord(kp.publicKey), cacheTtlMs: 0 });
+  const doc = documentObject(kp.privateKey, "doc-1", PDF_BYTES);
+  const src = sourceObject(kp.privateKey, "source-1", doc.oid, "https://gemeente.example/besluit-2026");
+  const art = article(kp.privateKey, "With source", { source_refs: [src.oid] });
+
+  const r = await evaluateBadge("https://x/o", {
+    objectFetcher: async (u) => {
+      if (u === objectUrl("doc-1")) return doc;
+      if (u === objectUrl("source-1")) return src;
+      return art;
+    },
+    assetFetcher: async () => PDF_BYTES,
+    resolver,
+  });
+  assert.equal(r.status, "verified");
+  assert.equal(r.documents?.[0].ok, true);
+  assert.equal(r.documents?.[0].originUrl, "https://gemeente.example/besluit-2026");
+});
+
+test("badge: a document whose bytes no longer match is 'attention', origin_url still shown", async () => {
+  const kp = generateKeypair();
+  const resolver = new TrustAnchorResolver({ fetcher: async () => keyRecord(kp.publicKey), cacheTtlMs: 0 });
+  const doc = documentObject(kp.privateKey, "doc-1", PDF_BYTES);
+  const src = sourceObject(kp.privateKey, "source-1", doc.oid, "https://gemeente.example/besluit-2026");
+  const art = article(kp.privateKey, "With source", { source_refs: [src.oid] });
+
+  const r = await evaluateBadge("https://x/o", {
+    objectFetcher: async (u) => {
+      if (u === objectUrl("doc-1")) return doc;
+      if (u === objectUrl("source-1")) return src;
+      return art;
+    },
+    assetFetcher: async () => new TextEncoder().encode("altered-pdf-bytes"),
+    resolver,
+  });
+  assert.equal(r.status, "attention");
+  assert.equal(r.documents?.[0].ok, false);
+  assert.equal(r.documents?.[0].originUrl, "https://gemeente.example/besluit-2026");
 });

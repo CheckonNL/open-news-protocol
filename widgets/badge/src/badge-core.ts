@@ -61,6 +61,9 @@ export interface DocumentResult {
   ok: boolean | null;
   title?: string;
   url?: string;
+  /** Where the document was originally published, per the Source
+   *  Object's `origin_url` — a citation, not itself re-checked. */
+  originUrl?: string;
 }
 
 export interface BadgeResult {
@@ -237,14 +240,15 @@ export async function evaluateBadge(
         continue;
       }
       const title = str(src.content.description);
+      const originUrl = str(src.content.origin_url);
       const docOid = str(src.content.document_ref);
       if (!src.ok || !docOid) {
-        documents.push({ ok: src.ok ? null : false, title });
+        documents.push({ ok: src.ok ? null : false, title, originUrl });
         continue;
       }
       const doc = await verifyByOid(docOid);
       if (!doc) {
-        documents.push({ ok: null, title });
+        documents.push({ ok: null, title, originUrl });
         continue;
       }
       const url = str(doc.content.asset_url);
@@ -257,7 +261,7 @@ export async function evaluateBadge(
           ok = null;
         }
       }
-      documents.push({ ok, title, url });
+      documents.push({ ok, title, url, originUrl });
     }
   }
 

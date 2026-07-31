@@ -34,8 +34,8 @@
     <h1 id="top">Open News Protocol (ONP): Sources</h1>
     <div class="doc-meta">
       <span class="status">Working Draft</span>
-      <span>Version 0.1.0</span>
-      <span>Updated 2026-07-28</span>
+      <span>Version 0.2.0</span>
+      <span>Updated 2026-07-31</span>
     </div>
     <h1 id="abstract">Abstract</h1>
 <p>This document defines the Sources Companion:
@@ -136,9 +136,9 @@ lifecycle, separable from any Article that cites it?
    <code>"organization"</code>, <code>"event"</code>.</li>
 <li><code>visibility</code> is REQUIRED: one of <code>"named"</code>, <code>"anonymous"</code>,
    <code>"protected"</code> (Section 4.4).</li>
-<li><code>source_ref</code>, <code>description</code>, <code>document_ref</code>, <code>credibility_note</code>,
-   and <code>access_date</code> are OPTIONAL, subject to the constraints in
-   Sections 4.4 and 4.5.</li>
+<li><code>source_ref</code>, <code>description</code>, <code>document_ref</code>, <code>origin_url</code>,
+   <code>credibility_note</code>, and <code>access_date</code> are OPTIONAL, subject to
+   the constraints in Sections 4.4 and 4.5.</li>
 </ol>
 <h2 id="4-4-visibility-model">4.4 Visibility Model</h2>
 <ol>
@@ -173,7 +173,19 @@ lifecycle, separable from any Article that cites it?
 <li><code>document_ref</code>, if present, MUST be a single Object Reference to
    a Media Object (ONP-2200) representing the source document itself
    (e.g. a leaked report), reusing that Companion's Verified Asset
-   Reference pattern for the document's own integrity.</li>
+   Reference pattern for the document's own integrity. The Media
+   Object's <code>asset_url</code> is the address a verifier fetches and
+   re-hashes; it commonly points to a copy the publisher itself
+   hosts (self-hosting keeps the bytes at that address stable, so
+   the Verified Asset Reference stays checkable for as long as the
+   publisher serves it).</li>
+<li><code>origin_url</code>, if present, MUST be a well-formed URI: where the
+   document was originally published or obtained, when that differs
+   from <code>document_ref</code>'s <code>asset_url</code> (e.g. the government portal a
+   leaked or since-removed report was retrieved from). It is a
+   citation, not a Verified Asset Reference — nothing requires the
+   bytes at <code>origin_url</code> to still exist or still match, and a Node
+   MUST NOT treat <code>origin_url</code> as checkable the way <code>asset_hash</code> is.</li>
 <li><code>access_date</code>, if present, MUST be an ISO 8601 timestamp: when
    the information was obtained or accessed.</li>
 <li><code>credibility_note</code>, if present, MUST be a string: an editorial
@@ -207,6 +219,7 @@ string itself becoming an inadvertent identifying clue.</p>
     &quot;source_ref&quot;: &quot;onp:oid:..., OPTIONAL, ONLY when visibility='named'&quot;,
     &quot;description&quot;: &quot;string, OPTIONAL&quot;,
     &quot;document_ref&quot;: &quot;onp:oid:..., OPTIONAL&quot;,
+    &quot;origin_url&quot;: &quot;string (URI), OPTIONAL&quot;,
     &quot;credibility_note&quot;: &quot;string, OPTIONAL&quot;,
     &quot;access_date&quot;: &quot;string (ISO 8601), OPTIONAL&quot;
   }
@@ -245,6 +258,11 @@ string itself becoming an inadvertent identifying clue.</p>
 <td><code>document_ref</code></td>
 <td>OPTIONAL</td>
 <td>Object Reference to a Media Object</td>
+</tr>
+<tr>
+<td><code>origin_url</code></td>
+<td>OPTIONAL</td>
+<td>Citation only — not a Verified Asset Reference (Section 4.5, rule 2)</td>
 </tr>
 <tr>
 <td><code>credibility_note</code></td>
@@ -393,6 +411,7 @@ Classified MINOR (additive) under ONP-0007 Section 4.1.</p>
     &quot;source_ref&quot;: &quot;string (OID), OPTIONAL, ONLY if visibility='named'&quot;,
     &quot;description&quot;: &quot;string, OPTIONAL, non-identifying if not named&quot;,
     &quot;document_ref&quot;: &quot;string (OID), OPTIONAL&quot;,
+    &quot;origin_url&quot;: &quot;string (URI), OPTIONAL&quot;,
     &quot;credibility_note&quot;: &quot;string, OPTIONAL&quot;,
     &quot;access_date&quot;: &quot;string (ISO 8601), OPTIONAL&quot;
   }

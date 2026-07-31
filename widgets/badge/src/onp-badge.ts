@@ -136,6 +136,7 @@ class OnpBadge extends HTMLElement {
       const key = r.documents!.length > 1 ? `Document ${i + 1}` : "Document";
       const v = d.ok === true ? ok(d.title ?? "verified") : d.ok === false ? bad(`altered${d.title ? " — " + d.title : ""}`) : dim(d.title ?? "could not check");
       rows.push(row(key, v));
+      if (d.originUrl) rows.push(row("Original source", dim(d.originUrl) + ` <span style="opacity:.65">(citation, not verified)</span>`));
     });
     if (r.correction) {
       const v = r.correction.ok
