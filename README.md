@@ -29,10 +29,11 @@ If you read nothing else, read these two documents in order:
 ## What's published so far
 
 **The original roadmap ONP-0000 laid out is complete: 34 specifications
-across all five series, plus one extending Reference document
-(ONP-9005) addressing external-standards interoperability, and one
-extending Core document (ONP-1006, Retrieval) added via a recorded
-roadmap extension in ONP-0000 v0.4.0.** What
+across all five series, plus three documents published beyond that
+roadmap — ONP-1006 (Retrieval, an extending Core document added via a
+recorded roadmap extension in ONP-0000 v0.4.0), ONP-9005 (External
+Standards Interoperability), and ONP-2900 (Endorsement, a
+cross-publisher Companion) — 37 in total.** What
 that does, and does not, mean in practice is stated plainly in
 [`specs/9004-migration.md`](specs/9004-migration.md) Appendix B — the
 specification text is done. A real, working, tested TypeScript
@@ -66,7 +67,7 @@ not yet written).
 |---|---|---|
 | Foundation | `0000`-`0007` | Complete — principles, terminology, trust, security, lifecycle, versioning |
 | Core | `1000`-`1006` | Complete — the News Object envelope, identifiers, serialization, signatures, validation, metadata, plus Retrieval (ONP-1006, added via ONP-0000 v0.4.0's roadmap extension) |
-| Companion | `2000`-`2800` | Complete — framework plus Article, Media, Identity, Rights, Payments, Sources, Corrections, Comments |
+| Companion | `2000`-`2800` (+ `2900`) | Complete — framework plus Article, Media, Identity, Rights, Payments, Sources, Corrections, Comments, plus Endorsement (ONP-2900, cross-publisher, added beyond the original roadmap) |
 | Extension | `3000`-`3500` | Complete — framework plus AI Metadata, Search, Analytics, Geolocation, Accessibility |
 | Reference | `9000`-`9004` (+ `9005`) | Complete — Reference Implementation, Best Practices, Security Checklist, Performance, Migration, plus External Standards Interoperability |
 

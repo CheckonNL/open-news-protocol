@@ -1,9 +1,9 @@
 Title: Open News Protocol (ONP): Article
 Document Number: ONP-2100
 Status: Working Draft
-Version: 0.6.0
+Version: 0.6.1
 Author: Open News Protocol Working Group
-Last Modified: 2026-07-28
+Last Modified: 2026-08-01
 
 ---
 
@@ -30,6 +30,10 @@ This document is part of the ONP Companion series (ONP-2000-2999).
 It is directly implementable and follows every mandatory addition
 ONP-2000 Section 4.2 requires of a Companion specification. It is a
 Working Draft.
+
+**Change note (v0.6.1):** Section 4.7 described ONP-2200 (Media) as
+not yet published; ONP-2200 has since been published. Corrected.
+Classified PATCH under ONP-0007 Section 4.2, rule 3: editorial only.
 
 ---
 
@@ -181,7 +185,7 @@ that do not implement this Companion (ONP-1005 Section 6.1).
 
 1. `media_refs`, if present, MUST be an array of Object References
    (ONP-2000 Section 4.3), each an OID string identifying a Media
-   Companion Object (ONP-2200, not yet published).
+   Companion Object (ONP-2200).
 2. Order within `media_refs` MAY be semantically significant (for
    example, a publisher's own convention that the first entry is a
    lead image); this document does not mandate any such convention.

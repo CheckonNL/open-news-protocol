@@ -1,9 +1,9 @@
 Title: Open News Protocol (ONP): Terminology
 Document Number: ONP-0002
 Status: Working Draft
-Version: 0.34.0
+Version: 0.35.1
 Author: Open News Protocol Working Group
-Last Modified: 2026-07-28
+Last Modified: 2026-08-01
 
 ---
 
@@ -225,14 +225,18 @@ ONP-1003, or introduce a differently-named term (e.g.
 ## 7.3 Reserved Term Example
 
 ```
-Term: "Correction"
-Owning document: ONP-2700 (not yet published)
+Term: "eudi (Trust Anchor Type)"
+Owning document: ONP-2300 (published; term not yet defined)
 Status: reserved
-Effect: ONP-0000 and other Foundation documents MAY use the word
-"correction" descriptively (as in "corrections and retractions
-linked to the original"), but MUST NOT assign it a specific
-structural meaning until ONP-2700 is published and the entry's
-status changes to active.
+Effect: ONP-0004 Section 4.6 MAY reserve and reference the term
+"eudi" as a future Trust Anchor Type identifier, but MUST NOT
+assign it a specific structural meaning until a document
+normatively defines it and the entry's status changes to active.
+ONP-2300 Section 2.2 explicitly declines to be that document, so
+this term remains reserved even though its currently-named owning
+document is itself published — a Reserved Term's status tracks
+whether the TERM has been defined, not merely whether a document
+naming it exists.
 ```
 
 ---
@@ -631,6 +635,8 @@ corrections, e.g. the Tombstone state and VID Pre-Image entries).
 | 0.32.0 | MINOR | Registry entry for Record Fingerprint (ONP-0004 v0.2.0) |
 | 0.33.0 | MINOR | Registered this document's own five meta-terms (Term, Gloss, Owning Document, Registry Entry, Reserved Term) — Appendix A previously did not practice its own Section 4.2 rule on itself. Also set the self-described placeholder rows 'Rights Declaration' and 'Payment Terms' to `deprecated`: their glosses already stated they were superseded by ONP-2400/2500's actual terms, but their status was never updated. Both caught by `tools/check-specs.py` |
 | 0.34.0 | MINOR | Registry entries for ONP-1006 (Object URL, Version URL) |
+| 0.35.0 | MINOR | Registry entries for ONP-2900 (Endorsement Object, Stance, Cross-Publisher Reference). **Bookkeeping gap:** this bump was not applied when the terms were added alongside ONP-2900's initial publication; applied retroactively here, same category of gap as 0.31.0 above. |
+| 0.35.1 | PATCH | Section 7.3's Reserved Term Example replaced: it illustrated "Correction" (ONP-2700), which has since been published and is no longer a useful reserved-term example; replaced with the still-genuinely-reserved `eudi` Trust Anchor Type (ONP-2300) |
 | (various PATCH bumps interleaved) | PATCH | Gloss corrections: Tombstone state (ONP-1000), VID Pre-Image precision (ONP-1002) |
 
 This table summarizes rather than itemizes every single bump; the

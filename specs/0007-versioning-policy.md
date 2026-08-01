@@ -1,9 +1,9 @@
 Title: Open News Protocol (ONP): Versioning Policy
 Document Number: ONP-0007
 Status: Working Draft
-Version: 0.1.1
+Version: 0.1.2
 Author: Open News Protocol Working Group
-Last Modified: 2026-07-28
+Last Modified: 2026-08-01
 
 ---
 
@@ -33,6 +33,11 @@ retains only a pointer to this document (see Section 10 of this
 document for the corresponding update made to ONP-0000). It is a
 Working Draft — notably, it is itself subject to the pre-1.0
 semantics it defines in Section 4.2.
+
+**Change note (v0.1.2):** Section 2.2 described `CHARTER.md` as a
+future document, not yet published; `CHARTER.md` has since been
+published. Corrected. Classified PATCH under this document's own
+Section 4.2, rule 3: editorial only.
 
 ---
 
@@ -85,10 +90,10 @@ each author reasoning about semantic versioning independently.
 This document does NOT define:
 
 * the human governance process behind a Status transition decision
-  (voting, WG membership, quorum) — that belongs to a future
-  `CHARTER.md`, not yet published, and is explicitly out of scope
-  here: this document defines what must be TRUE for a transition
-  (Section 4.5), not WHO decides it is true;
+  (voting, WG membership, quorum) — that belongs to `CHARTER.md`,
+  now published, and is explicitly out of scope here: this document
+  defines what must be TRUE for a transition (Section 4.5), not WHO
+  decides it is true;
 * retroactive changelog backfilling for ONP-0000 through ONP-0006
   (Section 5.2 addresses this as a SHOULD, not a mandate);
 * Migration guidance for a specific breaking change (see ONP-9004,

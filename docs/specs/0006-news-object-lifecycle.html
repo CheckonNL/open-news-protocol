@@ -34,8 +34,8 @@
     <h1 id="top">Open News Protocol (ONP): News Object Lifecycle</h1>
     <div class="doc-meta">
       <span class="status">Working Draft</span>
-      <span>Version 0.1.0</span>
-      <span>Updated 2026-07-28</span>
+      <span>Version 0.1.1</span>
+      <span>Updated 2026-08-01</span>
     </div>
     <h1 id="abstract">Abstract</h1>
 <p>This document defines the lifecycle of a News Object: how a
@@ -48,7 +48,7 @@ Superseded one, so that a validly signed but outdated Version cannot
 be replayed as though it were still authoritative. It defines a
 lightweight, Core-level Revision Reason field, explicitly not a
 substitute for the richer, structured explanation-of-change that the
-future Corrections Companion (ONP-2700) will define.</p>
+Corrections Companion (ONP-2700) defines.</p>
 <hr />
 <h1 id="status-of-this-document">Status of This Document</h1>
 <p>This document is part of the ONP Foundation series (ONP-0000-0999).
@@ -57,6 +57,10 @@ ONP-1000 and ONP-1001, which will finalize the wire-level structure
 this document specifies illustratively (Section 5), consistent with
 how ONP-0004 and ONP-0001 treated their own illustrative structures.
 It is a Working Draft.</p>
+<p><strong>Change note (v0.1.1):</strong> the Abstract, Section 2.2, and Section 10.2
+described ONP-2700 (Corrections) in future tense as not yet
+published; ONP-2700 has since been published. Corrected throughout.
+Classified PATCH under ONP-0007 Section 4.2, rule 3: editorial only.</p>
 <p><strong>Terminology note:</strong> this document's use of "Version" refers
 exclusively to a News Object Version within a lineage. It is
 unrelated to a Specification's own <code>Version</code> field (semantic
@@ -100,8 +104,8 @@ current.</p>
 <li>the wire-level byte format of a Version, OID, or VID (see
   ONP-1000, ONP-1001);</li>
 <li>the structured, publisher-facing explanation of what changed and
-  why (see ONP-2700, Corrections — not yet published; this document
-  provides the Core-level plumbing that Companion will build on);</li>
+  why (see ONP-2700, Corrections, now published; this document
+  provides the Core-level plumbing that Companion builds on);</li>
 <li>any pre-publication workflow state (draft, in review, scheduled)
   internal to a publisher's own CMS — per Principle P1 (Adjacent
   Publishing, ONP-0003), that remains entirely the CMS's own concern
@@ -449,9 +453,9 @@ to attach to a given Version.</p>
 <ul>
 <li>ONP-1000, News Object; ONP-1001, Identifiers (forward references —
   authoritative wire-level OID/VID/Version schema).</li>
-<li>ONP-2700, Corrections (forward reference, not yet published — the
-  structured, human-readable Companion this document's lightweight
-  Revision Reason field defers to).</li>
+<li>ONP-2700, Corrections (now published) — the structured,
+  human-readable Companion this document's lightweight Revision
+  Reason field defers to.</li>
 <li>ONP-0007, Versioning Policy — governs Specification versioning, a
   distinct concept from News Object Versioning; see the Terminology
   Note in this document's Status section.</li>

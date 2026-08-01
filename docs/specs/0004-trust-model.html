@@ -34,8 +34,8 @@
     <h1 id="top">Open News Protocol (ONP): Trust Model</h1>
     <div class="doc-meta">
       <span class="status">Working Draft</span>
-      <span>Version 0.2.0</span>
-      <span>Updated 2026-07-28</span>
+      <span>Version 0.2.1</span>
+      <span>Updated 2026-08-01</span>
     </div>
     <h1 id="abstract">Abstract</h1>
 <p>A digital signature proves that a specific key signed a specific
@@ -75,6 +75,11 @@ ONP-1001 already use. Classified MINOR under ONP-0007 Section 4.2:
 it adds normative content to an existing OPTIONAL mechanism and
 invalidates no previously conforming implementation of any REQUIRED
 behavior.</p>
+<p><strong>Change note (v0.2.1):</strong> Section 2.2 called ONP-2300 "not yet
+published"; ONP-2300 has since been published (its <code>eudi</code> binding
+remains open work there, per its own Section 2.2, which this
+document's Section 4.6 already anticipated). Corrected. Classified
+PATCH under ONP-0007 Section 4.2, rule 3: editorial only.</p>
 <hr />
 <h1 id="normative-language">Normative Language</h1>
 <p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
@@ -142,7 +147,9 @@ alignment recorded in <code>EU-ALIGNMENT.md</code>.</p>
 <li>the full security analysis of rejected alternatives, including
   the complete blockchain rejection rationale (see ONP-0005);</li>
 <li>the field-level structure of an EUDI-issued credential or the
-  Identity Companion's data model (see ONP-2300, not yet published);</li>
+  Identity Companion's data model (see ONP-2300, published; its
+  Section 2.2 explicitly declines to define the <code>eudi</code> binding this
+  document reserves, so that remains open work there, not here);</li>
 <li>legal recognition of a "publisher" as an entity — this document
   establishes technical key-to-domain binding only, not corporate or
   legal identity verification.</li>

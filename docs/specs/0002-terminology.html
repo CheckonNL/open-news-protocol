@@ -34,8 +34,8 @@
     <h1 id="top">Open News Protocol (ONP): Terminology</h1>
     <div class="doc-meta">
       <span class="status">Working Draft</span>
-      <span>Version 0.34.0</span>
-      <span>Updated 2026-07-28</span>
+      <span>Version 0.35.1</span>
+      <span>Updated 2026-08-01</span>
     </div>
     <h1 id="abstract">Abstract</h1>
 <p>This document is the canonical terminology registry for the Open
@@ -234,14 +234,18 @@ ONP-1003, or introduce a differently-named term (e.g.
 &quot;Analytics Attestation&quot;) if the concept is genuinely distinct.
 </code></pre>
 <h2 id="7-3-reserved-term-example">7.3 Reserved Term Example</h2>
-<pre><code>Term: &quot;Correction&quot;
-Owning document: ONP-2700 (not yet published)
+<pre><code>Term: &quot;eudi (Trust Anchor Type)&quot;
+Owning document: ONP-2300 (published; term not yet defined)
 Status: reserved
-Effect: ONP-0000 and other Foundation documents MAY use the word
-&quot;correction&quot; descriptively (as in &quot;corrections and retractions
-linked to the original&quot;), but MUST NOT assign it a specific
-structural meaning until ONP-2700 is published and the entry's
-status changes to active.
+Effect: ONP-0004 Section 4.6 MAY reserve and reference the term
+&quot;eudi&quot; as a future Trust Anchor Type identifier, but MUST NOT
+assign it a specific structural meaning until a document
+normatively defines it and the entry's status changes to active.
+ONP-2300 Section 2.2 explicitly declines to be that document, so
+this term remains reserved even though its currently-named owning
+document is itself published — a Reserved Term's status tracks
+whether the TERM has been defined, not merely whether a document
+naming it exists.
 </code></pre>
 <hr />
 <h1 id="8-security-considerations">8. Security Considerations</h1>
@@ -1614,6 +1618,16 @@ corrections, e.g. the Tombstone state and VID Pre-Image entries).</p>
 <td>0.34.0</td>
 <td>MINOR</td>
 <td>Registry entries for ONP-1006 (Object URL, Version URL)</td>
+</tr>
+<tr>
+<td>0.35.0</td>
+<td>MINOR</td>
+<td>Registry entries for ONP-2900 (Endorsement Object, Stance, Cross-Publisher Reference). <strong>Bookkeeping gap:</strong> this bump was not applied when the terms were added alongside ONP-2900's initial publication; applied retroactively here, same category of gap as 0.31.0 above.</td>
+</tr>
+<tr>
+<td>0.35.1</td>
+<td>PATCH</td>
+<td>Section 7.3's Reserved Term Example replaced: it illustrated "Correction" (ONP-2700), which has since been published and is no longer a useful reserved-term example; replaced with the still-genuinely-reserved <code>eudi</code> Trust Anchor Type (ONP-2300)</td>
 </tr>
 <tr>
 <td>(various PATCH bumps interleaved)</td>

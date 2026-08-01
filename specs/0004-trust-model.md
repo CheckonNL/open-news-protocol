@@ -1,9 +1,9 @@
 Title: Open News Protocol (ONP): Trust Model
 Document Number: ONP-0004
 Status: Working Draft
-Version: 0.2.0
+Version: 0.2.1
 Author: Open News Protocol Working Group
-Last Modified: 2026-07-28
+Last Modified: 2026-08-01
 
 ---
 
@@ -50,6 +50,12 @@ ONP-1001 already use. Classified MINOR under ONP-0007 Section 4.2:
 it adds normative content to an existing OPTIONAL mechanism and
 invalidates no previously conforming implementation of any REQUIRED
 behavior.
+
+**Change note (v0.2.1):** Section 2.2 called ONP-2300 "not yet
+published"; ONP-2300 has since been published (its `eudi` binding
+remains open work there, per its own Section 2.2, which this
+document's Section 4.6 already anticipated). Corrected. Classified
+PATCH under ONP-0007 Section 4.2, rule 3: editorial only.
 
 ---
 
@@ -128,7 +134,9 @@ This document does NOT define:
 * the full security analysis of rejected alternatives, including
   the complete blockchain rejection rationale (see ONP-0005);
 * the field-level structure of an EUDI-issued credential or the
-  Identity Companion's data model (see ONP-2300, not yet published);
+  Identity Companion's data model (see ONP-2300, published; its
+  Section 2.2 explicitly declines to define the `eudi` binding this
+  document reserves, so that remains open work there, not here);
 * legal recognition of a "publisher" as an entity — this document
   establishes technical key-to-domain binding only, not corporate or
   legal identity verification.

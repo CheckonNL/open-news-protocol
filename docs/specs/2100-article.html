@@ -34,8 +34,8 @@
     <h1 id="top">Open News Protocol (ONP): Article</h1>
     <div class="doc-meta">
       <span class="status">Working Draft</span>
-      <span>Version 0.6.0</span>
-      <span>Updated 2026-07-28</span>
+      <span>Version 0.6.1</span>
+      <span>Updated 2026-08-01</span>
     </div>
     <h1 id="abstract">Abstract</h1>
 <p>This document defines the Article Companion:
@@ -56,6 +56,9 @@ article bodies.</p>
 It is directly implementable and follows every mandatory addition
 ONP-2000 Section 4.2 requires of a Companion specification. It is a
 Working Draft.</p>
+<p><strong>Change note (v0.6.1):</strong> Section 4.7 described ONP-2200 (Media) as
+not yet published; ONP-2200 has since been published. Corrected.
+Classified PATCH under ONP-0007 Section 4.2, rule 3: editorial only.</p>
 <hr />
 <h1 id="normative-language">Normative Language</h1>
 <p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
@@ -181,7 +184,7 @@ that do not implement this Companion (ONP-1005 Section 6.1).</p>
 <ol>
 <li><code>media_refs</code>, if present, MUST be an array of Object References
    (ONP-2000 Section 4.3), each an OID string identifying a Media
-   Companion Object (ONP-2200, not yet published).</li>
+   Companion Object (ONP-2200).</li>
 <li>Order within <code>media_refs</code> MAY be semantically significant (for
    example, a publisher's own convention that the first entry is a
    lead image); this document does not mandate any such convention.

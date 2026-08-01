@@ -1,9 +1,9 @@
 Title: Open News Protocol (ONP): News Object Lifecycle
 Document Number: ONP-0006
 Status: Working Draft
-Version: 0.1.0
+Version: 0.1.1
 Author: Open News Protocol Working Group
-Last Modified: 2026-07-28
+Last Modified: 2026-08-01
 
 ---
 
@@ -19,7 +19,7 @@ Superseded one, so that a validly signed but outdated Version cannot
 be replayed as though it were still authoritative. It defines a
 lightweight, Core-level Revision Reason field, explicitly not a
 substitute for the richer, structured explanation-of-change that the
-future Corrections Companion (ONP-2700) will define.
+Corrections Companion (ONP-2700) defines.
 
 ---
 
@@ -31,6 +31,11 @@ ONP-1000 and ONP-1001, which will finalize the wire-level structure
 this document specifies illustratively (Section 5), consistent with
 how ONP-0004 and ONP-0001 treated their own illustrative structures.
 It is a Working Draft.
+
+**Change note (v0.1.1):** the Abstract, Section 2.2, and Section 10.2
+described ONP-2700 (Corrections) in future tense as not yet
+published; ONP-2700 has since been published. Corrected throughout.
+Classified PATCH under ONP-0007 Section 4.2, rule 3: editorial only.
 
 **Terminology note:** this document's use of "Version" refers
 exclusively to a News Object Version within a lineage. It is
@@ -85,8 +90,8 @@ This document does NOT define:
 * the wire-level byte format of a Version, OID, or VID (see
   ONP-1000, ONP-1001);
 * the structured, publisher-facing explanation of what changed and
-  why (see ONP-2700, Corrections — not yet published; this document
-  provides the Core-level plumbing that Companion will build on);
+  why (see ONP-2700, Corrections, now published; this document
+  provides the Core-level plumbing that Companion builds on);
 * any pre-publication workflow state (draft, in review, scheduled)
   internal to a publisher's own CMS — per Principle P1 (Adjacent
   Publishing, ONP-0003), that remains entirely the CMS's own concern
@@ -455,9 +460,9 @@ to attach to a given Version.
 
 * ONP-1000, News Object; ONP-1001, Identifiers (forward references —
   authoritative wire-level OID/VID/Version schema).
-* ONP-2700, Corrections (forward reference, not yet published — the
-  structured, human-readable Companion this document's lightweight
-  Revision Reason field defers to).
+* ONP-2700, Corrections (now published) — the structured,
+  human-readable Companion this document's lightweight Revision
+  Reason field defers to.
 * ONP-0007, Versioning Policy — governs Specification versioning, a
   distinct concept from News Object Versioning; see the Terminology
   Note in this document's Status section.
