@@ -1,6 +1,6 @@
 {
   "name": "onp-badge",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "Embeddable <onp-badge> web component: verifies an Open News Protocol (ONP) News Object in the reader's browser and shows a provenance badge. Self-contained, no dependencies at runtime.",
   "main": "./dist/onp-badge.js",
