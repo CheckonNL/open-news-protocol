@@ -12,7 +12,13 @@
  *   - source documents (source_refs -> document_ref): signature + a
  *     re-hash of the file bytes;
  *   - corrections (corrections_ref): signature + whether the correction
- *     names the Version being read.
+ *     names the Version being read;
+ *   - endorsements (endorsement_refs, ONP-2900) — new in v0.3: each is a
+ *     separate News Object, ordinarily signed by a *different* domain
+ *     than this article's own, verified via its own independent Trust
+ *     Anchor resolution. This list is discovery-only and non-exhaustive
+ *     (ONP-2900 §4.7): its absence never means no endorsements exist,
+ *     only that none are self-reported by this article's publisher.
  *
  * All I/O is injectable, so this is a pure function the tests exercise
  * without a browser or a network. Hashing uses a pure-JS SHA-256 (no
@@ -57,6 +63,14 @@ export interface CorrectionResult {
   explanation?: string;
   currentVersion?: boolean;
 }
+export interface EndorsementResult {
+  /** true = signature + Trust Anchor verify · false = failed · null = could not be checked. */
+  ok: boolean | null;
+  /** The endorsing publisher's own domain (ONP-2900 §4.4) — independent of this article's. */
+  domain?: string;
+  stance?: string;
+  rationale?: string;
+}
 export interface DocumentResult {
   ok: boolean | null;
   title?: string;
@@ -79,6 +93,7 @@ export interface BadgeResult {
   payment?: PaymentResult;
   correction?: CorrectionResult;
   documents?: DocumentResult[];
+  endorsements?: EndorsementResult[];
 }
 
 export interface EvaluateOptions {
@@ -183,13 +198,21 @@ export async function evaluateBadge(
   // be retrieved or parsed (an "unchecked" outcome, not a failure).
   async function verifyByOid(
     oid: string
-  ): Promise<{ content: Record<string, unknown>; ok: boolean; vid?: string } | null> {
+  ): Promise<{ content: Record<string, unknown>; ok: boolean; vid?: string; domain?: string } | null> {
     try {
       const obj = await objectFetcher(objectUrlForOid(oid));
       if (typeof obj !== "object" || obj === null) return null;
       const env = obj as NewsObjectEnvelope;
+      // Independent Trust Anchor resolution against *this* Object's own
+      // publisher.domain (ONP-2900 §6.1) — for an Endorsement Object that
+      // domain is the endorser's, deliberately unrelated to this article's.
       const v = await validateCoreWithTrust(env, resolver);
-      return { content: (env.content ?? {}) as Record<string, unknown>, ok: v.core_authenticated, vid: str(env.vid) };
+      return {
+        content: (env.content ?? {}) as Record<string, unknown>,
+        ok: v.core_authenticated,
+        vid: str(env.vid),
+        domain: str(env.publisher?.domain),
+      };
     } catch {
       return null;
     }
@@ -279,12 +302,38 @@ export async function evaluateBadge(
     };
   }
 
+  // Endorsements (ONP-2900): a discovery-only, non-authoritative list this
+  // article's own publisher may choose to link (§4.7) — each entry is a
+  // separate News Object, ordinarily signed by a *different* domain, and
+  // verified via its own independent Trust Anchor resolution (§6.1). A
+  // "disputes" stance that verifies is not a verification failure — it is
+  // shown as-is; only a broken signature/reference sets `ok: false`.
+  let endorsements: EndorsementResult[] | undefined;
+  const endorsementRefs = strArray(content.endorsement_refs);
+  if (endorsementRefs.length) {
+    endorsements = [];
+    for (const oid of endorsementRefs) {
+      const e = await verifyByOid(oid);
+      if (!e) {
+        endorsements.push({ ok: null });
+        continue;
+      }
+      endorsements.push({
+        ok: e.ok,
+        domain: e.domain,
+        stance: str(e.content.stance),
+        rationale: str(e.content.rationale),
+      });
+    }
+  }
+
   const failed =
     (photos?.some((p) => p.ok === false) ?? false) ||
     (documents?.some((d) => d.ok === false) ?? false) ||
     (correction ? !correction.ok : false) ||
     (rights ? !rights.ok : false) ||
-    (payment ? !payment.ok : false);
+    (payment ? !payment.ok : false) ||
+    (endorsements?.some((e) => e.ok === false) ?? false);
 
   return {
     status: failed ? "attention" : "verified",
@@ -300,6 +349,7 @@ export async function evaluateBadge(
     payment,
     correction,
     documents,
+    endorsements,
   };
 }
 

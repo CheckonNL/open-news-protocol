@@ -64,6 +64,29 @@ function mediaObject(priv: Uint8Array, localId: string, bytes: Uint8Array) {
 
 const objectUrl = (localId: string) => `https://${DOMAIN}/.well-known/onp/objects/${localId}`;
 
+const ENDORSER_DOMAIN = "nos.example.dev";
+const objectUrlOn = (domain: string, localId: string) => `https://${domain}/.well-known/onp/objects/${localId}`;
+
+function endorsementObject(
+  priv: Uint8Array,
+  localId: string,
+  targetVid: string,
+  stance: string,
+  rationale = "Independently confirmed."
+) {
+  return signObject(
+    {
+      oid: buildOid(ENDORSER_DOMAIN, localId),
+      publisher: { domain: ENDORSER_DOMAIN, key_id: KEY },
+      signed_at: "2026-08-01T09:00:00Z",
+      content_type: "onp:companion:endorsement",
+      content: { target_ref: targetVid, stance, rationale, endorsed_at: "2026-08-01T09:00:00Z" },
+    },
+    priv,
+    "ed25519"
+  );
+}
+
 const PDF_BYTES = new TextEncoder().encode("the-real-pdf-bytes");
 
 function documentObject(priv: Uint8Array, localId: string, bytes: Uint8Array) {
@@ -205,6 +228,62 @@ test("badge: a source document verifies, and surfaces its origin_url as a citati
   assert.equal(r.status, "verified");
   assert.equal(r.documents?.[0].ok, true);
   assert.equal(r.documents?.[0].originUrl, "https://gemeente.example/besluit-2026");
+});
+
+test("badge: a cross-publisher endorsement verifies against the endorser's own domain", async () => {
+  const kp = generateKeypair();
+  const endorserKp = generateKeypair();
+  const resolver = new TrustAnchorResolver({
+    fetcher: async (domain) => (domain === ENDORSER_DOMAIN ? keyRecord(endorserKp.publicKey, { publisher_domain: ENDORSER_DOMAIN }) : keyRecord(kp.publicKey)),
+    cacheTtlMs: 0,
+  });
+  const art = article(kp.privateKey, "Fusie-onderzoek", { endorsement_refs: [buildOid(ENDORSER_DOMAIN, "endorsement-1")] });
+  const endorsement = endorsementObject(endorserKp.privateKey, "endorsement-1", art.vid!, "confirms");
+
+  const r = await evaluateBadge("https://x/o", {
+    objectFetcher: async (u) => (u === objectUrlOn(ENDORSER_DOMAIN, "endorsement-1") ? endorsement : art),
+    resolver,
+  });
+  assert.equal(r.status, "verified");
+  assert.equal(r.endorsements?.length, 1);
+  assert.equal(r.endorsements?.[0].ok, true);
+  assert.equal(r.endorsements?.[0].domain, ENDORSER_DOMAIN);
+  assert.equal(r.endorsements?.[0].stance, "confirms");
+});
+
+test("badge: a verified 'disputes' endorsement does not flip the article's own badge to 'attention'", async () => {
+  const kp = generateKeypair();
+  const endorserKp = generateKeypair();
+  const resolver = new TrustAnchorResolver({
+    fetcher: async (domain) => (domain === ENDORSER_DOMAIN ? keyRecord(endorserKp.publicKey, { publisher_domain: ENDORSER_DOMAIN }) : keyRecord(kp.publicKey)),
+    cacheTtlMs: 0,
+  });
+  const art = article(kp.privateKey, "Fusie-onderzoek", { endorsement_refs: [buildOid(ENDORSER_DOMAIN, "endorsement-1")] });
+  const endorsement = endorsementObject(endorserKp.privateKey, "endorsement-1", art.vid!, "disputes", "Onze cijfers wijken af.");
+
+  const r = await evaluateBadge("https://x/o", {
+    objectFetcher: async (u) => (u === objectUrlOn(ENDORSER_DOMAIN, "endorsement-1") ? endorsement : art),
+    resolver,
+  });
+  assert.equal(r.status, "verified", "an authentic dispute is not a verification failure of the article itself");
+  assert.equal(r.endorsements?.[0].ok, true);
+  assert.equal(r.endorsements?.[0].stance, "disputes");
+});
+
+test("badge: an unreachable endorsement is 'could not be checked', not a failure", async () => {
+  const kp = generateKeypair();
+  const resolver = new TrustAnchorResolver({ fetcher: async () => keyRecord(kp.publicKey), cacheTtlMs: 0 });
+  const art = article(kp.privateKey, "Fusie-onderzoek", { endorsement_refs: [buildOid(ENDORSER_DOMAIN, "missing")] });
+
+  const r = await evaluateBadge("https://x/o", {
+    objectFetcher: async (u) => {
+      if (u === objectUrlOn(ENDORSER_DOMAIN, "missing")) throw new Error("HTTP 404");
+      return art;
+    },
+    resolver,
+  });
+  assert.equal(r.status, "verified");
+  assert.equal(r.endorsements?.[0].ok, null);
 });
 
 test("badge: a document whose bytes no longer match is 'attention', origin_url still shown", async () => {

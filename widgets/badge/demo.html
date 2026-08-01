@@ -15,13 +15,22 @@
   <!-- Offline demo: mock the network so the badge verifies inline example
        data — a genuine signed Object and a tampered copy — without a server. -->
   <script>
-    const DEMO = {"domain":"regiopurmerend.nl","publisherJson":{"onp_trust_anchor_type":"domain","publisher_domain":"regiopurmerend.nl","current_keys":[{"key_id":"onp:key:2026","algorithm":"Ed25519","public_key":"d447CU2TKTxL3vFQk3ThvTQMuj0MTWG7IDCFOk2mRr0","valid_from":"2026-01-01T00:00:00Z"}],"previous_keys":[]},"objectUrl":"https://regiopurmerend.nl/.well-known/onp/objects/fusie-onderzoek","verified":{"oid":"onp:oid:regiopurmerend.nl:fusie-onderzoek","publisher":{"domain":"regiopurmerend.nl","key_id":"onp:key:2026"},"signed_at":"2026-07-30T10:00:00Z","content_type":"onp:companion:article","content":{"headline":"Fusie-onderzoek Purmerend gepubliceerd","body":"…","canonical_url":"https://regiopurmerend.nl/artikel/fusie-onderzoek"},"vid":"onp:vid:sha-256:u3RP2GYOk8cS5Pc8TmCTJK5Clexl-ig9lfaVSt4Lr8s","signature":"onp:sig:ed25519:PD3GWv3x_JLJtL3DfFQmrzUlsyECAUmmxPNAvWGO_XTHwM2ZdGM5quAqQkdJDk_SUZYXoLyeujyC4Am_4ebKAA"},"tamperedUrl":"https://regiopurmerend.nl/.well-known/onp/objects/tampered","tampered":{"oid":"onp:oid:regiopurmerend.nl:fusie-onderzoek","publisher":{"domain":"regiopurmerend.nl","key_id":"onp:key:2026"},"signed_at":"2026-07-30T10:00:00Z","content_type":"onp:companion:article","content":{"headline":"NEP: Purmerend stapt uit de EU","body":"…","canonical_url":"https://regiopurmerend.nl/artikel/fusie-onderzoek"},"vid":"onp:vid:sha-256:u3RP2GYOk8cS5Pc8TmCTJK5Clexl-ig9lfaVSt4Lr8s","signature":"onp:sig:ed25519:PD3GWv3x_JLJtL3DfFQmrzUlsyECAUmmxPNAvWGO_XTHwM2ZdGM5quAqQkdJDk_SUZYXoLyeujyC4Am_4ebKAA"}};
+    const DEMO = {"domain":"regiopurmerend.nl","publisherJson":{"onp_trust_anchor_type":"domain","publisher_domain":"regiopurmerend.nl","current_keys":[{"key_id":"onp:key:2026","algorithm":"Ed25519","public_key":"d447CU2TKTxL3vFQk3ThvTQMuj0MTWG7IDCFOk2mRr0","valid_from":"2026-01-01T00:00:00Z"},{"key_id":"onp:key:2026-endorsed-demo","algorithm":"Ed25519","public_key":"1Tt9EhW_gXghDEowUqZD4S7Tb2kvKoGPPcfiFlExKMo","valid_from":"2026-01-01T00:00:00Z"}],"previous_keys":[]},"objectUrl":"https://regiopurmerend.nl/.well-known/onp/objects/fusie-onderzoek","verified":{"oid":"onp:oid:regiopurmerend.nl:fusie-onderzoek","publisher":{"domain":"regiopurmerend.nl","key_id":"onp:key:2026"},"signed_at":"2026-07-30T10:00:00Z","content_type":"onp:companion:article","content":{"headline":"Fusie-onderzoek Purmerend gepubliceerd","body":"…","canonical_url":"https://regiopurmerend.nl/artikel/fusie-onderzoek"},"vid":"onp:vid:sha-256:u3RP2GYOk8cS5Pc8TmCTJK5Clexl-ig9lfaVSt4Lr8s","signature":"onp:sig:ed25519:PD3GWv3x_JLJtL3DfFQmrzUlsyECAUmmxPNAvWGO_XTHwM2ZdGM5quAqQkdJDk_SUZYXoLyeujyC4Am_4ebKAA"},"tamperedUrl":"https://regiopurmerend.nl/.well-known/onp/objects/tampered","tampered":{"oid":"onp:oid:regiopurmerend.nl:fusie-onderzoek","publisher":{"domain":"regiopurmerend.nl","key_id":"onp:key:2026"},"signed_at":"2026-07-30T10:00:00Z","content_type":"onp:companion:article","content":{"headline":"NEP: Purmerend stapt uit de EU","body":"…","canonical_url":"https://regiopurmerend.nl/artikel/fusie-onderzoek"},"vid":"onp:vid:sha-256:u3RP2GYOk8cS5Pc8TmCTJK5Clexl-ig9lfaVSt4Lr8s","signature":"onp:sig:ed25519:PD3GWv3x_JLJtL3DfFQmrzUlsyECAUmmxPNAvWGO_XTHwM2ZdGM5quAqQkdJDk_SUZYXoLyeujyC4Am_4ebKAA"}};
+    // ONP-2900 (Endorsement): a second, unrelated publisher (nos.nl) signs its
+    // own Object confirming regiopurmerend.nl's article — two independent
+    // keypairs, two independent Publisher Key Records, verified separately.
+    // (regiopurmerend.nl's record above carries a second current key just for
+    // this example, so it doesn't disturb the first two demos' key.)
+    const ENDORSEMENT_DEMO = {"nosPublisherJson":{"onp_trust_anchor_type":"domain","publisher_domain":"nos.nl","current_keys":[{"key_id":"onp:key:2026","algorithm":"Ed25519","public_key":"6fq4J1_Yu5PPYXsbt3-_g9aWN0auPCG1F3y3aD6GNV4","valid_from":"2026-01-01T00:00:00Z"}],"previous_keys":[]},"objectUrl":"https://regiopurmerend.nl/.well-known/onp/objects/fusie-onderzoek-endorsed","endorsementUrl":"https://nos.nl/.well-known/onp/objects/endorsement-fusie-onderzoek","article":{"oid":"onp:oid:regiopurmerend.nl:fusie-onderzoek-endorsed","publisher":{"domain":"regiopurmerend.nl","key_id":"onp:key:2026-endorsed-demo"},"signed_at":"2026-07-30T10:00:00Z","content_type":"onp:companion:article","content":{"headline":"Fusie-onderzoek Purmerend gepubliceerd","body":"…","canonical_url":"https://regiopurmerend.nl/artikel/fusie-onderzoek","endorsement_refs":["onp:oid:nos.nl:endorsement-fusie-onderzoek"]},"vid":"onp:vid:sha-256:ool-1tmLcvVLAkgetlBtVAnduMYE-uWn6KxADsZTUF4","signature":"onp:sig:ed25519:DWGwgStCnfO777mfytSm-m7Adk1aXDkSwh_JNIdHF5YGKO3LPU_oB_siSEU1WhDgSyM3tKFS5TfYTD2qwu-yDQ"},"endorsement":{"oid":"onp:oid:nos.nl:endorsement-fusie-onderzoek","publisher":{"domain":"nos.nl","key_id":"onp:key:2026"},"signed_at":"2026-08-01T09:00:00Z","content_type":"onp:companion:endorsement","content":{"target_ref":"onp:vid:sha-256:ool-1tmLcvVLAkgetlBtVAnduMYE-uWn6KxADsZTUF4","stance":"confirms","rationale":"Eigen onderzoek bevestigt de cijfers uit het Necker van Naem-rapport.","endorsed_at":"2026-08-01T09:00:00Z"},"vid":"onp:vid:sha-256:cKzgRyFQZPlhS2jllUQh0rVxNhROEqOub-jKJLNmjmQ","signature":"onp:sig:ed25519:9yoatgjHN2vrWUXpWVpaMeRudjLxYlCoTCFjdbKrqKcM8gWZ_rmDKg2dnX8ZMzimLJl7cbfDwqCJXNO30aCGAQ"}};
     const RESP = (data) => ({ ok: true, status: 200, headers: { get: () => null }, json: async () => data });
     window.fetch = async (url) => {
       const u = String(url);
+      if (u === "https://nos.nl/.well-known/onp/publisher.json") return RESP(ENDORSEMENT_DEMO.nosPublisherJson);
       if (u.endsWith("/.well-known/onp/publisher.json")) return RESP(DEMO.publisherJson);
       if (u === DEMO.objectUrl) return RESP(DEMO.verified);
       if (u === DEMO.tamperedUrl) return RESP(DEMO.tampered);
+      if (u === ENDORSEMENT_DEMO.objectUrl) return RESP(ENDORSEMENT_DEMO.article);
+      if (u === ENDORSEMENT_DEMO.endorsementUrl) return RESP(ENDORSEMENT_DEMO.endorsement);
       return { ok: false, status: 404, headers: { get: () => null }, json: async () => ({}) };
     };
   </script>
@@ -53,6 +62,19 @@
     The two Objects share a key and a claimed VID, but one character of the
     headline changed — so the recomputed fingerprint no longer matches, and
     the badge says so.
+  </p>
+
+  <h2>An article, cross-publisher endorsed (ONP-2900)</h2>
+  <article>
+    <h3>Fusie-onderzoek Purmerend gepubliceerd</h3>
+    <p class="byline">RegioPurmerend · 30 July 2026</p>
+    <onp-badge object="https://regiopurmerend.nl/.well-known/onp/objects/fusie-onderzoek-endorsed"></onp-badge>
+  </article>
+  <p class="note">
+    <code>nos.nl</code> signed its own, separate Object confirming this one —
+    a different domain, a different keypair, resolved against its own
+    Publisher Key Record entirely independently of regiopurmerend.nl's.
+    Expand the badge to see the endorsement.
   </p>
 </body>
 </html>

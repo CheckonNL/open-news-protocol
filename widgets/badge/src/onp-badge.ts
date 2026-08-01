@@ -144,6 +144,13 @@ class OnpBadge extends HTMLElement {
         : bad("correction unverified");
       rows.push(row("Correction", v));
     }
+    r.endorsements?.forEach((e, i) => {
+      const key = r.endorsements!.length > 1 ? `Endorsement ${i + 1}` : "Endorsement";
+      const stanceLabel = e.stance ? `${e.stance}${e.domain ? " — " + e.domain : ""}` : e.domain ?? "endorsement";
+      const v = e.ok === true ? ok(stanceLabel) : e.ok === false ? bad(`unverified${e.domain ? " — " + e.domain : ""}`) : dim("could not check");
+      rows.push(row(key, v));
+      if (e.ok === true && e.rationale) rows.push(row("", dim(e.rationale)));
+    });
 
     rows.push(row("Verdict", esc(r.detail)));
     return rows.join("");

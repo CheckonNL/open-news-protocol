@@ -510,6 +510,14 @@ Privacy Considerations in their own owning documents, not here.
 | Comment Object | ONP-2800 | Informal name for a News Object whose content_type is onp:companion:comments. | active |
 | Publisher-Attested Comment | ONP-2800 | A Comment Object's trust model, reusing ONP-2300's Publisher-Asserted Identity pattern. | active |
 
+## Endorsement terms (owned by ONP-2900)
+
+| Term | Owning Document | Gloss | Status |
+|---|---|---|---|
+| Endorsement Object | ONP-2900 | Informal name for a News Object whose content_type is onp:companion:endorsement. | active |
+| Stance | ONP-2900 | The `stance` field: `confirms`/`disputes`/`adds-context`, the endorsing publisher's structured position on a target Object. | active |
+| Cross-Publisher Reference | ONP-2900 | An Object Reference whose target is signed by a different publisher.domain than the referencing Object — the defining feature of an Endorsement Object. | active |
+
 ## Extension Framework terms (owned by ONP-3000)
 
 | Term | Owning Document | Gloss | Status |
