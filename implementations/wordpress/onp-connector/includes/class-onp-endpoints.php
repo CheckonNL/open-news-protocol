@@ -82,7 +82,10 @@ final class ONP_Endpoints {
 		$etag = '"' . $vid . '"';
 		header( 'Cache-Control: no-cache, must-revalidate' );
 		header( 'ETag: ' . $etag );
-		$inm = trim( $_SERVER['HTTP_IF_NONE_MATCH'] ?? '' );
+		// wp_magic_quotes() addslashes()-escapes $_SERVER; unslash before
+		// comparing, or a quoted ETag never matches (found via a real
+		// local WordPress run, not by inspection).
+		$inm = trim( wp_unslash( $_SERVER['HTTP_IF_NONE_MATCH'] ?? '' ) );
 		if ( $inm !== '' && ( $inm === $etag || $inm === 'W/' . $etag || $inm === '*' ) ) {
 			status_header( 304 );
 			exit;
