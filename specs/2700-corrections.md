@@ -1,9 +1,9 @@
 Title: Open News Protocol (ONP): Corrections
 Document Number: ONP-2700
 Status: Working Draft
-Version: 0.1.0
+Version: 0.1.1
 Author: Open News Protocol Working Group
-Last Modified: 2026-07-28
+Last Modified: 2026-08-01
 
 ---
 
@@ -30,6 +30,15 @@ This document is part of the ONP Companion series (ONP-2000-2999).
 It is directly implementable. Concurrently with its publication,
 ONP-2100 (Article) is updated with a new OPTIONAL, discovery-only
 `corrections_ref` field (Section 10.3). It is a Working Draft.
+
+**Change note (v0.1.1):** corrected Sections 2.2, 4.7, and 10.2, which
+had informally pointed to ONP-3200 (Search) as the future home for
+correction discovery. ONP-3200 was published addressing indexing
+consent and result snippets only; it does not define any enumeration
+or ranking mechanism and never resolved this limitation. No wording
+elsewhere in this document depended on that assumption. Classified
+PATCH under ONP-0007 Section 4.2, rule 3: purely editorial, no
+normative requirement changed.
 
 ---
 
@@ -76,9 +85,10 @@ the Object it concerns.
 This document does NOT define:
 
 * a mechanism for discovering every Corrections Object that concerns
-  a given Article — that remains a search/indexing problem, most
-  likely addressed by the forthcoming ONP-3200 (Search), not solved
-  here (Section 4.7);
+  a given Article — that remains a search/indexing problem with no
+  current owning document (ONP-3200 addresses indexing consent and
+  search-result snippets only, not enumeration or ranking, and does
+  not solve it either), not solved here (Section 4.7);
 * any correction taxonomy beyond the small enum in Section 4.5 —
   publishers with more elaborate internal classification MAY extend
   via `onp:extensions`, not by redefining `correction_type`;
@@ -183,8 +193,11 @@ progresses).
 
 This document does not provide, and ONP does not otherwise mandate, a
 mechanism for discovering every Corrections Object that concerns a
-given `subject_oid` without either the publisher's own indexing or a
-future Search Extension (ONP-3200, forward reference). A Node
+given `subject_oid` without either the publisher's own indexing or an
+independent aggregator service. No current ONP document owns this
+problem: ONP-3200 (Search) addresses indexing consent and result
+snippets only, not enumeration or ranking, despite this document
+previously pointing to it as a forward reference. A Node
 encountering an Article has no guaranteed way to enumerate its
 corrections short of already knowing to look, consistent with the "no
 global resolver" posture ONP-1001 Section 4.6 already established for
@@ -345,8 +358,16 @@ establishes.
 
 ## 10.2 Informative References
 
-* ONP-3200, Search (forward reference — the discovery mechanism
-  Section 4.7 defers to).
+* ONP-1006, Retrieval — Section 4.4 (feed carriage, a workable
+  discovery channel) and Section 8.4 (no enumeration endpoint,
+  deliberately) — together the reason Section 4.7's limitation exists
+  and one concrete way around part of it.
+* ONP-3200, Search — addresses indexing consent and search-result
+  snippets only; despite being informally treated elsewhere (including
+  an earlier version of this document, and ONP-2900) as a forward
+  reference for correction/endorsement discovery, it does not define
+  any enumeration or ranking mechanism and does not resolve Section
+  4.7's limitation.
 
 ## 10.3 Corresponding Update to ONP-2100
 
