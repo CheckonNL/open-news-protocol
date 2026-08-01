@@ -9,6 +9,7 @@ signed as a News Object, and the site serves:
 | `/.well-known/onp/publisher.json` | Publisher Key Record | ONP-0004 §4.2 |
 | `/.well-known/onp/objects/{local-id}` | current Version, VID as ETag, `If-None-Match` → 304 | ONP-1006 §4.1–4.2 |
 | `/.well-known/onp/objects/{local-id}/versions/{vid}` | a specific immutable Version | ONP-1006 §4.3 |
+| `/.well-known/onp/objects/{local-id}/versions` | the full supersedes chain, oldest first: `[{vid, signed_at, lifecycle_state?}, ...]` | not in ONP-1006 — a discovery convenience |
 
 The RSS feed carries `<onp:object>` per item (namespace
 `https://opennewsprotocol.org/ns/feed`) and article pages get

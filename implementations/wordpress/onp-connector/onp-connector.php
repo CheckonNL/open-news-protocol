@@ -3,7 +3,7 @@
  * Plugin Name: Open News Protocol Connector
  * Plugin URI:  https://github.com/open-news-protocol/open-news-protocol
  * Description: Turns this WordPress site into an ONP publisher: signs posts as News Objects (ONP-1000–1003), serves the Publisher Key Record (ONP-0004) and Object/Version URLs with VID-as-ETag (ONP-1006), and carries Object URLs in the RSS feed and article pages. Signs Companions too: photos with photographer credit/rights/payment (ONP-2200/2400/2500), source documents (ONP-2600), and corrections (ONP-2700). Auto-embeds the <onp-badge> reader widget on signed articles.
- * Version:     0.3.1
+ * Version:     0.3.2
  * Requires PHP: 7.4
  * Author:      Open News Protocol Working Group
  * License:     Apache-2.0

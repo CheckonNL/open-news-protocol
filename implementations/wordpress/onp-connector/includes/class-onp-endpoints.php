@@ -42,6 +42,16 @@ final class ONP_Endpoints {
 			self::serve_version( $m[1], $m[2] );
 		}
 
+		// Not part of ONP-1006: a discovery convenience so the full
+		// supersedes chain can be browsed without already knowing every
+		// VID. Lists what this Node holds; a Node holding fewer Versions
+		// than another is not a statement about any Version's validity
+		// (same "404 proves nothing" principle as ONP-1006 Section 4.2
+		// rule 6, applied to a list instead of a single Object).
+		if ( preg_match( '#^objects/([a-z0-9-]{1,128})/versions$#', $rest, $m ) ) {
+			self::serve_version_list( $m[1] );
+		}
+
 		// ONP-1006 Section 4.1: /objects/{local-id}
 		if ( preg_match( '#^objects/([a-z0-9-]{1,128})$#', $rest, $m ) ) {
 			self::serve_current( $m[1] );
@@ -78,6 +88,51 @@ final class ONP_Endpoints {
 			exit;
 		}
 		self::serve_json( $json );
+	}
+
+	/**
+	 * The full supersedes chain, oldest first: [{vid, signed_at,
+	 * lifecycle_state?}, ...]. Read-only — never signs, never mutates.
+	 * lifecycle_state is omitted when a Version is neither retracted
+	 * nor otherwise marked, matching how the envelope itself carries it.
+	 */
+	private static function serve_version_list( string $local_id ): void {
+		$versions = null;
+		$post     = ONP_Object::find_by_local_id( $local_id );
+		if ( $post ) {
+			$raw      = get_post_meta( $post->ID, ONP_Object::META_VERSIONS, true );
+			$versions = is_array( $raw ) ? $raw : array();
+		}
+		if ( $versions === null && class_exists( 'ONP_Registry' ) ) {
+			$versions = ONP_Registry::all_versions( $local_id );
+		}
+		if ( $versions === null ) {
+			self::not_found();
+		}
+
+		$list = array();
+		foreach ( $versions as $vid => $json ) {
+			$envelope = json_decode( (string) $json, true );
+			if ( ! is_array( $envelope ) ) {
+				continue;
+			}
+			$entry = array(
+				'vid'       => $vid,
+				'signed_at' => $envelope['signed_at'] ?? null,
+			);
+			if ( isset( $envelope['lifecycle_state'] ) ) {
+				$entry['lifecycle_state'] = $envelope['lifecycle_state'];
+			}
+			$list[] = $entry;
+		}
+		usort( $list, static function ( $a, $b ) {
+			return strcmp( (string) $a['signed_at'], (string) $b['signed_at'] );
+		} );
+
+		// The list itself grows on every re-sign; forbid stale copies,
+		// same reasoning as the current-version pointer above.
+		header( 'Cache-Control: no-cache, must-revalidate' );
+		self::serve_json( wp_json_encode( $list ), 'application/json' );
 	}
 
 	private static function serve_version( string $local_id, string $vid ): void {

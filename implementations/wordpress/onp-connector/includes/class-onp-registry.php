@@ -118,6 +118,16 @@ final class ONP_Registry {
 		return self::row( $local_id ) !== null;
 	}
 
+	/** vid => canonical JSON for every Version ever stored, or null. */
+	public static function all_versions( string $local_id ): ?array {
+		$row = self::row( $local_id );
+		if ( ! $row ) {
+			return null;
+		}
+		$versions = json_decode( $row['versions'], true );
+		return is_array( $versions ) ? $versions : array();
+	}
+
 	private static function row( string $local_id ): ?array {
 		global $wpdb;
 		$table = self::table();
