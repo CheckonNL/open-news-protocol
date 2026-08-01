@@ -1,0 +1,15 @@
+{
+  "name": "onp-index-node",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Prototype Endorsement index-node (ONP-2900 §4.8 / ONP-3200 forward reference): reads publishers' existing RSS/Atom feeds, verifies each referenced Endorsement Object, and dumps a queryable, mirrorable reverse index. Local-only prototype, not deployed.",
+  "scripts": {
+    "crawl": "node src/crawl.mjs",
+    "query": "node src/query.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "open-news-protocol": "^0.3.0"
+  }
+}
