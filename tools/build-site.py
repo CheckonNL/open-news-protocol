@@ -155,7 +155,7 @@ def render(path):
 def build_index(entries):
     blocks = []
     for prefix, name, blurb in SERIES:
-        rows = [e for e in entries if e["num"].startswith(prefix)]
+        rows = [e for e in entries if e["num"].split("-", 1)[-1].startswith(prefix)]
         if not rows:
             continue
         items = "".join(
