@@ -75,7 +75,7 @@ final class ONP_Media {
 
 		$content = ONP_Companions::media_content(
 			'image',
-			(string) wp_get_attachment_url( $att_id ),
+			ONP_Keys::canonicalize_url( (string) wp_get_attachment_url( $att_id ) ),
 			ONP_Companions::asset_hash( (string) file_get_contents( $file ) ),
 			(string) ( get_post_mime_type( $att_id ) ?: 'application/octet-stream' ),
 			$opt

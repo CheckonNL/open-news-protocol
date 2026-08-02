@@ -21,11 +21,19 @@ edit needed). It re-verifies everything client-side — text, photos,
 source documents, corrections — against the Object it fetches; the
 plugin's role ends at serving that Object correctly. To place the tag
 yourself instead (e.g. inside a template rather than prepended to
-`the_content`), disable the auto-injection:
+`the_content` — needed when a page builder like Elementor renders the
+article body outside the normal content filter chain), disable the
+auto-injection:
 
 ```php
 add_filter( 'onp_badge_auto_inject', '__return_false' );
 ```
+
+Then place it with the `[onp_badge]` shortcode (works in any
+shortcode-capable widget or block; renders nothing on unsigned posts
+or non-article pages), or for full control over the markup, with
+`ONP_Feed::object_url( $post )` to build the `<onp-badge object="...">`
+tag by hand.
 
 The script tag itself can be swapped (e.g. to self-host the widget)
 with the `onp_badge_script_url` filter.

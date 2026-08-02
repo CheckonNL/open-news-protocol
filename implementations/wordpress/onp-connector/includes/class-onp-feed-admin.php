@@ -27,6 +27,7 @@ final class ONP_Feed {
 		add_action( 'wp_head', array( self::class, 'html_link' ) );
 		add_action( 'wp_enqueue_scripts', array( self::class, 'enqueue_badge_script' ) );
 		add_filter( 'the_content', array( self::class, 'inject_badge' ) );
+		add_shortcode( 'onp_badge', array( self::class, 'shortcode_badge' ) );
 	}
 
 	/**
@@ -80,13 +81,35 @@ final class ONP_Feed {
 		if ( ! $enabled || ! is_singular( 'post' ) || ! in_the_loop() || ! is_main_query() ) {
 			return $content;
 		}
-		$post = get_post();
-		$url  = $post ? self::object_url( $post ) : null;
-		if ( ! $url ) {
+		$post  = get_post();
+		$badge = $post ? self::badge_html( $post ) : null;
+		if ( ! $badge ) {
 			return $content;
 		}
-		$badge = '<p class="onp-badge-wrap"><onp-badge object="' . esc_url( $url ) . '"></onp-badge></p>';
 		return $placement === 'after' ? $content . $badge : $badge . $content;
+	}
+
+	/**
+	 * [onp_badge] — the easier alternative to 'manual' placement's
+	 * ONP_Feed::object_url() PHP call: drop this shortcode into a page
+	 * builder's shortcode widget (e.g. an Elementor template) instead
+	 * of editing the theme. Renders nothing off a singular post or an
+	 * unsigned one, so it's safe to leave in a template used elsewhere.
+	 */
+	public static function shortcode_badge(): string {
+		if ( ! is_singular( 'post' ) ) {
+			return '';
+		}
+		$post = get_post();
+		return $post ? (string) self::badge_html( $post ) : '';
+	}
+
+	private static function badge_html( WP_Post $post ): ?string {
+		$url = self::object_url( $post );
+		if ( ! $url ) {
+			return null;
+		}
+		return '<p class="onp-badge-wrap"><onp-badge object="' . esc_url( $url ) . '"></onp-badge></p>';
 	}
 
 	public static function object_url( WP_Post $post ): ?string {
@@ -195,7 +218,7 @@ final class ONP_Admin {
 				</p>
 				<?php submit_button( 'Save badge placement' ); ?>
 			</form>
-			<p style="max-width:900px"><em>For "manual", the widget script is still loaded on signed articles; get the Object URL for a post with <code>ONP_Feed::object_url( $post )</code> to build your own <code>&lt;onp-badge object="..."&gt;</code> tag.</em></p>
+			<p style="max-width:900px"><em>For "manual", the widget script is still loaded on signed articles. Easiest: place the <code>[onp_badge]</code> shortcode wherever you want it (e.g. an Elementor Shortcode widget in a single-post template) — it renders nothing on unsigned posts or non-article pages. For full control over the markup, get the Object URL for a post with <code>ONP_Feed::object_url( $post )</code> instead.</em></p>
 		</div>
 		<?php
 	}

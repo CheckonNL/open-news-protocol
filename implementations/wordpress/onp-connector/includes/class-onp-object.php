@@ -157,7 +157,15 @@ final class ONP_Object {
 		$versions         = is_array( $versions ) ? $versions : array();
 		$versions[ $vid ] = ONP_JCS::canonicalize( $envelope );
 
-		update_post_meta( $post->ID, self::META_VERSIONS, $versions );
+		// update_post_meta() calls wp_unslash() on every value it's
+		// given (WordPress core, meta.php) — meant to undo
+		// wp_magic_quotes()'s slashing of $_POST, but applied
+		// unconditionally even to values that never went through
+		// that layer. Without wp_slash() here, that strips a real
+		// layer of backslash-escaping from the canonical JSON itself
+		// (\n, \r, \", \\ all lose their backslash), corrupting the
+		// stored envelope so it no longer hashes to its own vid.
+		update_post_meta( $post->ID, self::META_VERSIONS, wp_slash( $versions ) );
 		update_post_meta( $post->ID, self::META_CURRENT_VID, $vid );
 		update_post_meta( $post->ID, self::META_CONTENT_HASH, $content_hash );
 

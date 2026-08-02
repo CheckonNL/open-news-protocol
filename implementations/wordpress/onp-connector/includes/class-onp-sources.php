@@ -73,7 +73,7 @@ final class ONP_Sources {
 
 		$doc_content = ONP_Companions::media_content(
 			'document',
-			(string) wp_get_attachment_url( $att_id ),
+			ONP_Keys::canonicalize_url( (string) wp_get_attachment_url( $att_id ) ),
 			ONP_Companions::asset_hash( (string) file_get_contents( $file ) ),
 			(string) ( get_post_mime_type( $att_id ) ?: 'application/octet-stream' ),
 			$title !== '' ? array( 'caption' => $title ) : array()

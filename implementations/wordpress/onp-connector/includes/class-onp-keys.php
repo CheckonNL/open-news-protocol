@@ -77,6 +77,22 @@ final class ONP_Keys {
 		return strtolower( (string) $host );
 	}
 
+	/**
+	 * Force a URL's scheme+host to this publisher's own domain, keeping
+	 * only its path/query. wp_get_attachment_url() (and other core
+	 * attachment URL helpers) build from the stored upload base URL,
+	 * which a domain-mapping setup often leaves un-rewritten even where
+	 * home_url() itself resolves correctly — signing the un-rewritten
+	 * host would embed a URL the badge's own-domain fetch (or a CORS
+	 * policy) may reject. Falls back to the input unchanged if it
+	 * cannot be parsed.
+	 */
+	public static function canonicalize_url( string $url ): string {
+		$path = wp_parse_url( $url, PHP_URL_PATH ) ?: '';
+		$query = wp_parse_url( $url, PHP_URL_QUERY );
+		return 'https://' . self::domain() . $path . ( $query ? '?' . $query : '' );
+	}
+
 	/** ONP-0004 Section 5.1: the Publisher Key Record. */
 	public static function publisher_key_record(): array {
 		return array(
